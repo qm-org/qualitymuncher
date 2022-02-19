@@ -1,5 +1,6 @@
 # Frost#5872's Quality Muncher
 *I'm Frost#5872 if you couldn't tell.*
+
 This is a batch file designedd to create very customizable low-quality videos.
 This is designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work.
 # How to Install
