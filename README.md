@@ -12,5 +12,8 @@ After that, drag it to C:\Users\ YOUR USERNAME HERE\AppData\Roaming\Microsoft\Wi
 To use, simply right click a video and hover over "send to" and click "Frost's Quality Muncher" (there might be 1.x.x or some numbers in front of Frost)
 After that, follow the prompts it gives you. If you have any issues or questions, dm me on discord.
 *note: videos with a lot of movement will look signifigantly worse than more stationairy videos due to bitrate*
+#Examples
+Before: https://youtu.be/CKkuxUq6WQw
+After: https://youtu.be/MxctZRHzquE
 # Credits
 Not all of the code is mine, only most of it. Any time I used someone else's code (usually vladaad or couleur) I have said who in the comments of the code. Please let me know if there are any mistakes I might've made.
