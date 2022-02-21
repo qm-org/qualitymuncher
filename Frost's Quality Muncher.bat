@@ -4,7 +4,8 @@
 :: this makes it so not every line of code is sent
 @echo off
 :: sets the title of the windoww and sends some ascii word art
-title Frost's Quality Muncher 1.2.5
+set version=1.2.7
+title Frost's Quality Muncher %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
@@ -32,8 +33,20 @@ echo  .             .       ..::.                               .::::.      .   
 echo\
 :: hardware acceleration, from vladaad, this helps make rendering faster
 set hwaccel=auto
-:: Input check (from vladaad) this checks if someone used the script correctly
 color 0f
+:: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
+where /q ffmpeg
+if errorlevel 1 (
+     echo You either don't have ffmpeg installed or do not have it in PATH.
+	 echo Please install it as it's needed for this program to work.
+	 echo Here is a tutorial https://www.youtube.com/watch?v=WwWITnuWQW4
+     pause
+	 exit
+) else (
+    goto inputcheck
+)
+:inputcheck
+:: Input check (from vladaad) this checks if someone used the script correctly
 if %1check == check (
      echo ERROR: no input file
      echo Drag this .bat into the SendTo folder - press Windows + R and type in shell:sendto
@@ -42,25 +55,46 @@ if %1check == check (
      exit
 )
 :: intro, questions and defining variables
-echo This version (1.2.5) of Frost#5872's quality muncher is still in development.
-echo Feel free to DM me for support or questions.
+echo Frost's Quality Muncher is still in development. This is version %version%
+echo Please DM me at Frost#5872 for support or questions, or join https://discord.gg/9tRZ6C7tYz
+:: asks where to start clip
+:startquestion
 set /p starttime=Where do you want your clip to start (in seconds): 
+:: checks if it's a positive number, if not then goes back to asking for start time
+if 1%starttime% NEQ +1%starttime% (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto startquestion
+)
+:: asks length of clip
+:timequestion
 set /p time=How long after the start time do you want it to be: 
-echo Pick a preset:
+:: checks if it's a postive number, if not then goes back to asking how long it should be
+if 1%time% NEQ +1%time% (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto timequestion
+)
+:customization
+:: asks for the option and lists them
+echo Options:
 echo Decent (1)
 echo Bad (2)
 echo Terrible (3)
 echo Unbearable (4)
 echo Custom (c)
-set /p customizationquestion=Enter an option from the above list: 
-:: sets the options to decent preset, will be overridden if they have selected a valid preset (its a lazy way of doing it but it works, ill clean it up later)
-set framerate=12
-set videobr=5
-set scaleq=4
-set audiobr=5
-set endingmsg=Decent Quality
+:customizationoption
+set /p customizationquestion=Please enter an option: 
+:: defines a few variables that are important for checking if theres a valid input (validanswer) and one that is only used by one other option (details in custom quality)
 set details=n
 set validanswer=n
+:: defines a few variables that will be replaced later, this is very important for checking if they're valid later as it prevents missing operand errors
+set framerate=a
+set videobr=a
+set audiobr=a
+set scaleq=a
 :: making sure even if people use wrong capitalization it still works
 set fixuserreadingerror=false
 if %customizationquestion% == c set fixuserreadingerror=true
@@ -71,6 +105,9 @@ if %customizationquestion% == C set fixuserreadingerror=true
 if %fixuserreadingerror% == true (
      echo\
 	 echo Custom Quality Selected!
+)
+:customquestioncheckpoint
+if %fixuserreadingerror% == true (
      set /p framerate=What fps do you want it to be rendered at: 
      set /p videobr=On a scale from 1 to 10, how bad should the VIDEO bitrate be? 1 bad, 10 very very bad: 
      set /p audiobr=On a scale from 1 to 10, how bad should the AUDIO bitrate be? 1 bad, 10 very very bad: 
@@ -122,8 +159,40 @@ if %customizationquestion% == 4 (
 :: if a user didn't enter a valid answer, this is what they'll get
 if %validanswer% == n (
      echo\
-	 echo You didn't enter a valid answer! The preset has been set to "decent".
+	 echo Please enter a valid answer!
+	 echo\
+	 goto customizationoption
 )
+:: checks if the variables are all whole numbers, if they aren't it'll ask again for their values
+set /a testforfps=%framerate%
+set /a testforvideobr=%videobr%
+set /a testforaudiobr=%audiobr%
+set /a testforscaleq=%scaleq%
+if NOT %testforfps% == %framerate% (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+     goto customquestioncheckpoint
+)
+if NOT %testforvideobr% == %videobr% (]
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+     goto customquestioncheckpoint
+)
+if NOT %testforaudiobr% == %audiobr% (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+     echo\
+     goto customquestioncheckpoint
+)
+if NOT %testforscaleq% == %scaleq% (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+     goto customquestioncheckpoint
+)
+:setendingmsg
 :: makes the endingmsg contain more details if it's been selected (only available in the custom preset)
 if %details% == y (
      set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
@@ -145,20 +214,64 @@ set /A desiredheighteventest=(%desiredheight%/2)*2
 if %desiredheighteventest% == NOT %desiredheight% (
      set /A desiredheight=%desiredheighteventest%
 )
+echo\
+:lowqualmusicq
+set musicstarttime=0
+set musicstartest=0
+set lowqualmusicquestion=n
+set /p lowqualmusicquestion=Do you want to add low quality music in the background? y/n: 
+if %lowqualmusicquestion% == y (
+     set yeahlowqual=y
+	 set /p lowqualmusic=Please drag the desired file here, it must be an audio file: 
+)
+:musicstartq
+if %lowqualmusicquestion% == y (
+	 set /p musicstarttime=Enter a specific start time of the music in seconds: 
+)
+if %lowqualmusicquestion% == y (
+	 set /a musicstartest=%musicstarttime%
+)
+if %lowqualmusicquestion% == y (
+	 if NOT %musicstarttime% == %musicstartest% (
+         echo\
+         echo Not a valid number, please enter ONLY whole numbers!
+	     echo\
+	     goto musicstartq
+     )
+	 goto filters
+)
+set yeahlowqual=n
+:filters
 :: based off of vladaad's part and i replaced a lot of it with my stuff
 set filters=-vf "fps=%framerate%,scale=-2:h=%desiredheight%,format=yuv420p%videofilters%"
+:encoding
 :: Running (from vladaad) this just tells the user it started encoding
 echo\
 echo Encoding...
 echo\
 color 06
 :: FFmpeg (from vladaad) runs the video, starts encoding, does all of this and i added 2 things
-ffmpeg -loglevel warning -stats %hwaccel% ^
+if %yeahlowqual% == n (
+     goto optionone
+)
+goto optiontwo
+:optionone
+ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
+goto end
+:optiontwo
+ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
+-ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
+%filters% ^
+-c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 -shortest ^
+-vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
+:end
 :: End (from vladaad) just ends the script
 echo\
 echo Done!
