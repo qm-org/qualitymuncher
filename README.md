@@ -20,7 +20,7 @@ Please answer the prompts correctly and read carefully.
 
 *note: videos with a lot of movement will look significantly worse than more stationary videos due to bitrate*
 
-#Examples
+# Examples
 
 Before: https://youtu.be/CKkuxUq6WQw
 
