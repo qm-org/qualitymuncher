@@ -19,6 +19,7 @@ After that, follow the prompts it gives you. If you have any issues or questions
 Please answer the prompts correctly and read carefully.
 
 *note: videos with a lot of movement will look significantly worse than more stationary videos due to bitrate*
+
 #Examples
 
 Before: https://youtu.be/CKkuxUq6WQw
