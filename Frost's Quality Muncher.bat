@@ -215,22 +215,41 @@ if %desiredheighteventest% == NOT %desiredheight% (
      set /A desiredheight=%desiredheighteventest%
 )
 echo\
+:: defines things for music and asks if they want music
 :lowqualmusicq
 set musicstarttime=0
 set musicstartest=0
 set lowqualmusicquestion=n
+set filefound=y
 set /p lowqualmusicquestion=Do you want to add low quality music in the background? y/n: 
+:addingthemusic
+:: asks for a specific file to get music from
 if %lowqualmusicquestion% == y (
      set yeahlowqual=y
 	 set /p lowqualmusic=Please drag the desired file here, it must be an audio file: 
 )
+:: sets a variable if it's a valid file
+if %lowqualmusicquestion% == y (
+     set filefound=n
+     if exist %lowqualmusic% set filefound=y
+)
+:: if its not a valid file it sends the user back to add a valid file
+if %filefound% == n (
+     echo\
+	 echo Invalid file! Please drag an existing file from your computer!
+	 echo\
+	 goto addingthemusic
+)
 :musicstartq
+:: asks the user when the music should start
 if %lowqualmusicquestion% == y (
 	 set /p musicstarttime=Enter a specific start time of the music in seconds: 
 )
+:: tests if it's a number
 if %lowqualmusicquestion% == y (
 	 set /a musicstartest=%musicstarttime%
 )
+:: if its not a number it makes them go back and do it again
 if %lowqualmusicquestion% == y (
 	 if NOT %musicstarttime% == %musicstartest% (
          echo\
@@ -255,6 +274,7 @@ if %yeahlowqual% == n (
      goto optionone
 )
 goto optiontwo
+:: option one, no extra music
 :optionone
 ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 -ss %starttime% -t %time% -i %1 ^
@@ -263,6 +283,7 @@ ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
+::option two, there is music
 :optiontwo
 ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
