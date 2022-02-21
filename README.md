@@ -19,6 +19,8 @@ Third, put the .bat file in C:\Users\ *YOUR USERNAME HERE*\AppData\Roaming\Micro
 
 After that, drag it to C:\Users\ YOUR USERNAME HERE\AppData\Roaming\Microsoft\Windows\SendTo
 # How to Use
+Guide to the simple drag and drop method: https://youtu.be/yXTWX_JEQs4
+
 To use, simply right click a video and hover over "send to" and click "Frost's Quality Muncher" (there might be 1.x.x or some numbers in front of Frost)
 
 After that, follow the prompts it gives you. If you have any issues or questions, dm me on discord.
