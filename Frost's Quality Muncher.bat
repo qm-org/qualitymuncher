@@ -67,11 +67,23 @@ if 1%starttime% NEQ +1%starttime% (
 	 echo\
 	 goto startquestion
 )
+if "%starttime%" == " " (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto startquestion
+)
 :: asks length of clip
 :timequestion
 set /p time=How long after the start time do you want it to be: 
 :: checks if it's a postive number, if not then goes back to asking how long it should be
 if 1%time% NEQ +1%time% (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto timequestion
+)
+if "%time%" == " " (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
 	 echo\
@@ -87,6 +99,12 @@ echo Unbearable (4)
 echo Custom (c)
 :customizationoption
 set /p customizationquestion=Please enter an option: 
+if "%customizationquestion%" == " " (
+     echo\
+     echo Not a valid option, please try again!
+	 echo\
+	 goto customizationoption
+)
 :: defines a few variables that are important for checking if theres a valid input (validanswer) and one that is only used by one other option (details in custom quality)
 set details=n
 set validanswer=n
@@ -115,6 +133,12 @@ if %fixuserreadingerror% == true (
 	 set /p details=Do you want a detailed file name for the output? y or n: 
 	 set endingmsg=Custom Quality
 	 set validanswer=y
+)
+if "%details%" == " " (
+     echo\
+     echo Not a valid option, please try again!
+     echo\
+     goto customquestioncheckpoint
 )
 if %customizationquestion% == 1 (
      echo\
@@ -192,6 +216,30 @@ if NOT %testforscaleq% == %scaleq% (
 	 echo\
      goto customquestioncheckpoint
 )
+if "%framerate%" == " " (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+	 goto customquestioncheckpoint
+)
+if "%videobr%" == " " (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+	 goto customquestioncheckpoint
+)
+if "%audiobr%" == " " (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+	 goto customquestioncheckpoint
+)
+if "%scaleq%" == " " (
+     echo\
+     echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+	 echo\
+	 goto customquestioncheckpoint
+)
 :setendingmsg
 :: makes the endingmsg contain more details if it's been selected (only available in the custom preset)
 if %details% == y (
@@ -222,6 +270,12 @@ set musicstartest=0
 set lowqualmusicquestion=n
 set filefound=y
 set /p lowqualmusicquestion=Do you want to add low quality music in the background? y/n: 
+if "%lowqualmusicquestion%" == " " (
+     echo\
+     echo Not a valid option, please try again!
+	 echo\
+	 goto lowqualmusicq
+)
 :addingthemusic
 :: asks for a specific file to get music from
 if %lowqualmusicquestion% == y (
@@ -245,6 +299,14 @@ if %filefound% == n (
 if %lowqualmusicquestion% == y (
 	 set /p musicstarttime=Enter a specific start time of the music in seconds: 
 )
+if %lowqualmusicquestion% == y (
+	 if "%musicstarttime%" == " " (
+         echo\
+         echo Not a valid number, please enter ONLY whole numbers!
+	     echo\
+	     goto musicstartq
+     )
+)
 :: tests if it's a number
 if %lowqualmusicquestion% == y (
 	 set /a musicstartest=%musicstarttime%
@@ -252,6 +314,12 @@ if %lowqualmusicquestion% == y (
 :: if its not a number it makes them go back and do it again
 if %lowqualmusicquestion% == y (
 	 if NOT %musicstarttime% == %musicstartest% (
+         echo\
+         echo Not a valid number, please enter ONLY whole numbers!
+	     echo\
+	     goto musicstartq
+     )
+	 if "%musicstarttime%" == " " (
          echo\
          echo Not a valid number, please enter ONLY whole numbers!
 	     echo\
