@@ -1,7 +1,7 @@
 # Frost#5872's Quality Muncher
 *I'm Frost#5872 if you couldn't tell.*
 
-This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me if you have any bugs, issues, questions, or suggestions, or join my discord server: discord.gg/9tRZ6C7tYz
+This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
  - changing scale
