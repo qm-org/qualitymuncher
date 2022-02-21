@@ -33,4 +33,4 @@ Before: https://youtu.be/CKkuxUq6WQw
 
 After: https://youtu.be/MxctZRHzquE
 # Credits
-Not all of the code is mine, only most of it. Any time I used someone else's code (usually vladaad or couleur) I have said who in the comments of the code. Please let me know if there are any mistakes I might've made.
+99% of the code used in this program is my original work. Any time I used another person's code I've given them credit in the comments.
