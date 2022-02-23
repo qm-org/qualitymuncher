@@ -4,12 +4,16 @@
 This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
- - changing scale
- - changing audio and videobitrate seperately
- - adding an mp3 file to the video in low quality
+ - adding an audio file to the video
+ - super fast rendering times (up to 15x)
  - custom start and duration times
  - 4 presets
+ - setting custom output fps, audio bitrate, video bitrate, and scale
  - very few bugs or issues, program tells you if you might've entered something wrong (work in progress)
+ - bass boosting audio
+ - stretched resolution output
+ - custom saturation, contrast, and brightness values
+ - and more!
 # How to Install
 First you need ffmpeg (tutorial here https://www.youtube.com/watch?v=WwWITnuWQW4).
 
@@ -36,3 +40,7 @@ Before: https://youtu.be/CKkuxUq6WQw
 After: https://youtu.be/MxctZRHzquE
 # Credits
 99% of the code used in this program is my original work. Any time I used another person's code I've given them credit in the comments.
+
+# License
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
