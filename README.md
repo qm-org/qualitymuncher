@@ -5,7 +5,6 @@ This is a batch file designed to create very customizable low-quality videos. It
 
 # Features
  - adding an audio file to the video
- - super fast rendering times (up to 15x)
  - custom start and duration times
  - 4 presets
  - setting custom output fps, audio bitrate, video bitrate, and scale
