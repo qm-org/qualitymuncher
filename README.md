@@ -8,7 +8,9 @@ This is a batch file designed to create very customizable low-quality videos. It
  - effecient and fast encoding
  - embeds nicely in discord
  - low file size
+ - adding text to video
  - custom start and duration times
+ - consistent updates and new features
  - 4 presets and custom options
  - setting custom output fps, audio bitrate, video bitrate, and scale
  - very few bugs or issues, program tells you if you might've entered something wrong (work in progress)
