@@ -4,7 +4,7 @@
 :: this makes it so not every line of code is sent
 @echo off
 :: sets the title of the windoww and sends some ascii word art
-set version=1.2.7
+set version=1.2.8
 title Frost's Quality Muncher %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -256,11 +256,55 @@ ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% 
 ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
 set /p height=<%temp%\height.txt
 set /p width=<%temp%\width.txt
-:: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
-set /A desiredheight=%height%/%scaleq%
-set /A desiredheighteventest=(%desiredheight%/2)*2
-if %desiredheighteventest% == NOT %desiredheight% (
-     set /A desiredheight=%desiredheighteventest%
+echo\
+:: allows the user to have the choice of modyfying saturation and contrast.
+set contrastvalue=1
+set saturationvalue=1
+set brightnessvalue=0
+set /p colorq=Do you want to customize saturation, contrast, and brightness, y/n: 
+set contrastvaluefalse=n
+set saturationvaluefalse=n
+set brightnessvaluefalse=n
+if %colorq% == y (
+     set /p contrastvalue=Select a contrast value between -1000.0 and 1000.0, default is 1: 
+     set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
+     set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
+)
+:: the next lines test if the values defined above are invalid
+if %colorq% == y (
+	 echo %contrastvalue%| findstr /r ^^[a-z]*$ && set contrastvaluefalse=y || set contrastvaluefalse=n
+	 echo %saturationvalue%| findstr /r ^^[a-z]*$ && set saturationvaluefalse=y || set saturationvaluefalse=n
+	 echo %brightnessvalue%| findstr /r ^^[a-z]*$ && set brightnessvaluefalse=y || set brightnessvaluefalse=n
+)
+if "%contrastvalue%" == " " (
+     set contrastvaluefalse=y
+)
+if "%saturationvalue%" == " " (
+     set saturationvaluefalse=y
+)
+if "%brightnessvalue%" == " " (
+     set brightnessvaluefalse=y
+)
+if %contrastvaluefalse% == y (
+     echo\
+	 echo Contrast value was invalid, it has been set to the default.
+	 set contrastvalue=1
+)
+if %saturationvaluefalse% == y (
+     echo\
+	 echo Saturation value was invalid, it has been set to the default.
+	 set saturationvalue=1
+)
+if %brightnessvaluefalse% == y (
+     echo\
+	 echo Brightness value was invalid, it has been set to the default.
+	 set brightnessvalue=0
+)
+echo\
+:: asks about stretching the video
+set /p stretchres=Do you want to stretch the video horizonatlly, y/n: 
+if "%stretchres%" == " " (
+     set stretchres=n
 )
 echo\
 :: defines things for music and asks if they want music
@@ -329,8 +373,39 @@ if %lowqualmusicquestion% == y (
 )
 set yeahlowqual=n
 :filters
-:: based off of vladaad's part and i replaced a lot of it with my stuff
+:: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
+set /A desiredheight=%height%/%scaleq%
+set /A desiredheighteventest=(%desiredheight%/2)*2
+if %desiredheighteventest% == NOT %desiredheight% (
+     set /A desiredheight=%desiredheighteventest%
+)
+set /A desiredwidth=%width%/%scaleq%
+set /A desiredwidtheventest=(%desiredwidth%/2)*2
+if %desiredwidtheventest% == NOT %desiredwidth% (
+     set /A desiredwidth=%desiredwidtheventest%
+)
+:: defines filters
 set filters=-vf "fps=%framerate%,scale=-2:h=%desiredheight%,format=yuv420p%videofilters%"
+if %stretchres% == y (
+     set filters=-vf "fps=%framerate%,scale=%width%:h=%desiredheight%/2,format=yuv420p%videofilters%,setsar=1:1"
+)
+if %colorq% == y (
+     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:h=%desiredheight%,format=yuv420p%videofilters%"
+	 if %stretchres% == y (
+         set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%width%:h=%desiredheight%/2,format=yuv420p%videofilters%,setsar=1:1"
+     )
+)
+:: bass boosting
+set audiofilters= 
+set bassboosted=n
+echo\
+set /p bassboosted=Do you want to bass boost the audio, y/n (warning, causes distortion): 
+if "%bassboosted%" == " " (
+     set bassboosted=n
+)
+if %bassboosted% == y (
+     set audiofilters=-af "firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
+)
 :encoding
 :: Running (from vladaad) this just tells the user it started encoding
 echo\
@@ -349,16 +424,18 @@ ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
 -c:a aac -b:a %badaudiobitrate%000 ^
+%audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
 ::option two, there is music
 :optiontwo
-ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
+ffmpeg -loglevel warning -stats %hwaccel% ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
+%audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 :end
 :: End (from vladaad) just ends the script
