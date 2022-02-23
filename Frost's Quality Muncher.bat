@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the windoww and sends some ascii word art
-set version=1.2.8
+set version=1.2.9
 title Frost's Quality Muncher %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -241,6 +241,34 @@ if "%scaleq%" == " " (
 if %details% == y (
      set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
 )
+:: add text
+set /p addedtextq=Do you want to add text to the video? y/n: 
+set texttoadd=test
+if %addedtextq% == y (
+     set /p texttoadd=Enter the text now: 
+)
+if %addedtextq% == y (
+     echo %texttoadd% > %temp%\textforquality.txt
+	 set /p addtext=<%temp%\textforquality.txt
+	 set /a scaleqhalf=%scaleq%/2
+	 for %%? in (%temp%\textforquality.txt) do ( set /A strlength=%%~z? - 2 )
+)
+set textfilter="
+if %addedtextq% == y (
+     if %strlength% LSS 4 set strlength=4
+)
+if %addedtextq% == y (
+     set /a halflength=%strlength%/4
+)
+if %addedtextq% == y (
+     set /a fontsize=500/%halflength%
+)
+if %addedtextq% == y (
+     set textfilter="drawtext=fontfile=C\\:/Windows/Fonts/impact.ttf:text='%addtext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(h-text_h)/2,1"
+)
+if %addedtextq% == y (
+     set textfilter=%textfilter:1"=%
+)
 :: hwaccel
 set hwaccel=-hwaccel %hwaccel%
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
@@ -379,16 +407,17 @@ set /A desiredwidth=%width%/%scaleq%
 set /A desiredwidtheventest=(%desiredwidth%/2)*2
 if %stretchres% == y (
      set widthtest1=%desiredwidtheventest%*2
+	 set /a badvideobitrate=%badvideobitrate%*2
 )
 :: defines filters
-set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+set filters=-vf %textfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 if %stretchres% == y (
-	 set filters=-vf "fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	 set filters=-vf %textfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
 )
 if %colorq% == y (
-     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+     set filters=-vf %textfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 	 if %stretchres% == y (
-	     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	     set filters=-vf %textfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
      )
 )
 :: bass boosting
