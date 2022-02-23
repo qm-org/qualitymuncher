@@ -377,18 +377,18 @@ if %desiredheighteventest% == NOT %desiredheight% (
 )
 set /A desiredwidth=%width%/%scaleq%
 set /A desiredwidtheventest=(%desiredwidth%/2)*2
-if %desiredwidtheventest% == NOT %desiredwidth% (
-     set /A desiredwidth=%desiredwidtheventest%
+if %stretchres% == y (
+     set widthtest1=%desiredwidtheventest%*2
 )
 :: defines filters
-set filters=-vf "fps=%framerate%,scale=-2:h=%desiredheight%,format=yuv420p%videofilters%"
+set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 if %stretchres% == y (
-     set filters=-vf "fps=%framerate%,scale=%width%:h=%desiredheight%/2,format=yuv420p%videofilters%,setsar=1:1"
+	 set filters=-vf "fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
 )
 if %colorq% == y (
-     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:h=%desiredheight%,format=yuv420p%videofilters%"
+     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 	 if %stretchres% == y (
-         set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%width%:h=%desiredheight%/2,format=yuv420p%videofilters%,setsar=1:1"
+	     set filters=-vf "eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
      )
 )
 :: bass boosting
