@@ -41,6 +41,18 @@ After: https://youtu.be/MxctZRHzquE
 # Credits
 99% of the code used in this program is my original work. Any time I used another person's code I've given them credit in the comments.
 
-# License
+# Do's and Do Not's
 
-This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+**Do** feel free to publish anything you make with this code.
+
+**Do** credit me appropriately if you distribute this code.
+
+**Do** feel free to modify this program or its code for personal use.
+
+**Do not** claim any part of this program or its code as your own.
+
+**Do not** distribute a modified version of this program or its code.
+
+**Do not** use this program in other programs without asking me personally about it first.
+
+**Do not** attempt to sell this program or its code.
