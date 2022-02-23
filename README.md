@@ -40,8 +40,6 @@ Please answer the prompts correctly and read carefully.
 Before: https://youtu.be/CKkuxUq6WQw
 
 After: https://youtu.be/MxctZRHzquE
-# Credits
-99% of the code used in this program is my original work. Any time I used another person's code I've given them credit in the comments.
 
 # Do's and Do Not's
 
