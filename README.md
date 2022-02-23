@@ -5,8 +5,11 @@ This is a batch file designed to create very customizable low-quality videos. It
 
 # Features
  - adding an audio file to the video
+ - effecient and fast encoding
+ - embeds nicely in discord
+ - low file size
  - custom start and duration times
- - 4 presets
+ - 4 presets and custom options
  - setting custom output fps, audio bitrate, video bitrate, and scale
  - very few bugs or issues, program tells you if you might've entered something wrong (work in progress)
  - bass boosting audio
