@@ -1,7 +1,3 @@
-:: this script is *very* loosely based on vladaad's old discord compressor, all parts of which will be mentioned when the code comes up
-:: a very small amount of this code is also inspired by or directly taken from small portions of Couleur's CTT Upscaler 2.0
-:: if it isn't mentioned in a comment above the code, i wrote it, but if i made a mistake please message me at Frost#5872
-:: this makes it so not every line of code is sent
 @echo off
 :: sets the title of the windoww and sends some ascii word art
 set version=1.2.8
@@ -31,7 +27,7 @@ echo !@7           ~@7  Y#Y^^.    :7GB^^ .^&P         ~GB@P   ?BP7:.    .^^?G5 ?
 echo ^^#!           ^^^&~   :JPPP5PPPY!    BY           7#Y    .!YPPP55PPPJ~  7#:           !#:^^^&G55555555555J ?#:        :JB?
 echo  .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .
 echo\
-:: hardware acceleration, from vladaad, this helps make rendering faster
+:: hardware acceleration
 set hwaccel=auto
 color 0f
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
@@ -46,7 +42,7 @@ if errorlevel 1 (
     goto inputcheck
 )
 :inputcheck
-:: Input check (from vladaad) this checks if someone used the script correctly
+:: checks if someone used the script correctly
 if %1check == check (
      echo ERROR: no input file
      echo Drag this .bat into the SendTo folder - press Windows + R and type in shell:sendto
@@ -245,7 +241,7 @@ if "%scaleq%" == " " (
 if %details% == y (
      set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
 )
-:: hwaccel (from vladaad)
+:: hwaccel
 set hwaccel=-hwaccel %hwaccel%
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
@@ -407,12 +403,10 @@ if %bassboosted% == y (
      set audiofilters=-af "firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
 )
 :encoding
-:: Running (from vladaad) this just tells the user it started encoding
 echo\
 echo Encoding...
 echo\
 color 06
-:: FFmpeg (from vladaad) runs the video, starts encoding, does all of this and i added 2 things
 if %yeahlowqual% == n (
      goto optionone
 )
@@ -438,7 +432,6 @@ ffmpeg -loglevel warning -stats %hwaccel% ^
 %audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 :end
-:: End (from vladaad) just ends the script
 echo\
 echo Done!
 echo\
