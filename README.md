@@ -1,11 +1,10 @@
-# Frost#5872's Quality Muncher
-*I'm Frost#5872 if you couldn't tell.*
+# Quality Muncher
 
-This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
+This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
  - adding an audio file to the video
- - effecient and fast encoding
+ - ability to chose playback speed
  - embeds nicely in discord
  - low file size
  - adding text to video
@@ -31,7 +30,7 @@ Guide to the simple drag and drop method: https://youtu.be/yXTWX_JEQs4
 
 To use, simply right click a video and hover over "send to" and click "Frost's Quality Muncher" (there might be 1.x.x or some numbers in front of Frost)
 
-After that, follow the prompts it gives you. If you have any issues or questions, dm me on discord.
+After that, follow the prompts it gives you. Please try not to use any "poison" characters (spaces, slashes, commas, some symbols) as it will cause the file to malfunction. If you have any issues or questions, dm me on discord.
 
 Please answer the prompts correctly and read carefully.
 
