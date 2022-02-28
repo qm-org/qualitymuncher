@@ -241,19 +241,59 @@ if "%scaleq%" == " " (
 if %details% == y (
      set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
 )
+:speedquestion
+:: speed
+set speedvalid=n
+set speedq=default
+set /p speedq=What should the playback speed of the video be, must be a positive number between 0.01 and 2, default is 1: 
+if "%speedq%" == " " (
+     set speedq=default
+)
+if "%speedq%" == "n" (
+     set speedq=1
+)
+if %speedq% == default (
+     echo\
+	 echo No valid input given, speed has been set to default.
+	 set speedvalid=y
+	 set speedq=1
+	 goto cont
+)
+if %speedvalid% == y (
+     goto cont
+)
+set string=%speedq%
+for /f "delims=." %%a in ("%string%") do if NOT "%%a"=="%string%" set speedvalid=y
+if %speedvalid% == y (
+     goto cont
+)
+set /a speedqCheck=%speedq%
+if NOT %speedqCheck% == %speedq% (set speedvalid=n) else (set speedvalid=y)
+:cont
+set speedfilter="setpts=(1/%speedq%)*PTS,"
+set speedfilter=%speedfilter:"=%
+:addtext
+echo\
 :: add text
 set /p addedtextq=Do you want to add text to the video? y/n: 
+if %addedtextq% == n (
+     goto textfilters
+)
 set texttoadd=test
 if %addedtextq% == y (
      set /p texttoadd=Enter the text now: 
 )
 if %addedtextq% == y (
-     echo %texttoadd% > %temp%\textforquality.txt
+     echo "%texttoadd%" > %temp%\textforquality.txt
 	 set /p addtext=<%temp%\textforquality.txt
 	 set /a scaleqhalf=%scaleq%/2
 	 for %%? in (%temp%\textforquality.txt) do ( set /A strlength=%%~z? - 2 )
 )
+:textfilters
 set textfilter="
+if %addedtextq% == n (
+     goto hwaccel
+)
 if %addedtextq% == y (
      if %strlength% LSS 4 set strlength=4
 )
@@ -262,6 +302,7 @@ if %addedtextq% == y (
 )
 if %addedtextq% == y (
      set /a fontsize=500/%halflength%
+	 set addtext=%addtext:"=%
 )
 if %addedtextq% == y (
      set textfilter="drawtext=fontfile=C\\:/Windows/Fonts/impact.ttf:text='%addtext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(h-text_h)/2,1"
@@ -269,6 +310,7 @@ if %addedtextq% == y (
 if %addedtextq% == y (
      set textfilter=%textfilter:1"=%
 )
+:hwaccel
 :: hwaccel
 set hwaccel=-hwaccel %hwaccel%
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
@@ -294,11 +336,11 @@ if %colorq% == y (
      set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
      set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
 )
-:: the next lines test if the values defined above are invalid
+:: the next lines test if the values defined above are invalid (NOTE: these lines dont work at the moment, since it's not a major issue i'll fix it later
 if %colorq% == y (
-	 echo %contrastvalue%| findstr /r ^^[a-z]*$ && set contrastvaluefalse=y || set contrastvaluefalse=n
-	 echo %saturationvalue%| findstr /r ^^[a-z]*$ && set saturationvaluefalse=y || set saturationvaluefalse=n
-	 echo %brightnessvalue%| findstr /r ^^[a-z]*$ && set brightnessvaluefalse=y || set brightnessvaluefalse=n
+	 @echo %contrastvalue%| findstr /r ^^[a-z]*$ && set contrastvaluefalse=y || set contrastvaluefalse=n
+	 @echo %saturationvalue%| findstr /r ^^[a-z]*$ && set saturationvaluefalse=y || set saturationvaluefalse=n
+	 @echo %brightnessvalue%| findstr /r ^^[a-z]*$ && set brightnessvaluefalse=y || set brightnessvaluefalse=n
 )
 if "%contrastvalue%" == " " (
      set contrastvaluefalse=y
@@ -410,14 +452,14 @@ if %stretchres% == y (
 	 set /a badvideobitrate=%badvideobitrate%*2
 )
 :: defines filters
-set filters=-vf %textfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 if %stretchres% == y (
-	 set filters=-vf %textfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
 )
 if %colorq% == y (
-     set filters=-vf %textfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 	 if %stretchres% == y (
-	     set filters=-vf %textfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
      )
 )
 :: bass boosting
@@ -430,6 +472,13 @@ if "%bassboosted%" == " " (
 )
 if %bassboosted% == y (
      set audiofilters=-af "firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
+)
+:: checks if speed is not the default and if it isnt it changes the audio speed to match
+if NOT %speedq% == 1 (
+     set audiofilters=-af "atempo=%speedq%"
+	 if %bassboosted% == y (
+         set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
+     )
 )
 :encoding
 echo\
