@@ -1,7 +1,7 @@
 @echo off
 :: sets the title of the windoww and sends some ascii word art
-set version=1.2.9
-title Frost's Quality Muncher %version%
+set version=1.3.1
+title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
@@ -27,15 +27,13 @@ echo !@7           ~@7  Y#Y^^.    :7GB^^ .^&P         ~GB@P   ?BP7:.    .^^?G5 ?
 echo ^^#!           ^^^&~   :JPPP5PPPY!    BY           7#Y    .!YPPP55PPPJ~  7#:           !#:^^^&G55555555555J ?#:        :JB?
 echo  .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .
 echo\
-:: hardware acceleration
-set hwaccel=auto
 color 0f
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg
 if errorlevel 1 (
      echo You either don't have ffmpeg installed or do not have it in PATH.
 	 echo Please install it as it's needed for this program to work.
-	 echo Here is a tutorial https://www.youtube.com/watch?v=WwWITnuWQW4
+	 echo Here is a tutorial: https://www.youtube.com/watch?v=WwWITnuWQW4
      pause
 	 exit
 ) else (
@@ -276,6 +274,9 @@ set speedfilter=%speedfilter:"=%
 echo\
 :: add text
 set /p addedtextq=Do you want to add text to the video? y/n: 
+if "%addedtextq%" == " " (
+     set addedtextq=n
+)
 if %addedtextq% == n (
      goto textfilters
 )
@@ -328,6 +329,9 @@ set contrastvalue=1
 set saturationvalue=1
 set brightnessvalue=0
 set /p colorq=Do you want to customize saturation, contrast, and brightness, y/n: 
+if "%colorq%" == " " (
+     set colorq=n
+)
 set contrastvaluefalse=n
 set saturationvaluefalse=n
 set brightnessvaluefalse=n
@@ -336,20 +340,31 @@ if %colorq% == y (
      set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
      set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
 )
-:: the next lines test if the values defined above are invalid (NOTE: these lines dont work at the moment, since it's not a major issue i'll fix it later
+:: the next lines test if the values defined above are invalid, dont ask why we use a different method every time
 if %colorq% == y (
-	 @echo %contrastvalue%| findstr /r ^^[a-z]*$ && set contrastvaluefalse=y || set contrastvaluefalse=n
-	 @echo %saturationvalue%| findstr /r ^^[a-z]*$ && set saturationvaluefalse=y || set saturationvaluefalse=n
-	 @echo %brightnessvalue%| findstr /r ^^[a-z]*$ && set brightnessvaluefalse=y || set brightnessvaluefalse=n
+     set /p contrastvalue=Select a contrast value between -1000.0 and 1000.0, default is 1: 
+     set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
+     set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
 )
-if "%contrastvalue%" == " " (
-     set contrastvaluefalse=y
-)
-if "%saturationvalue%" == " " (
-     set saturationvaluefalse=y
-)
-if "%brightnessvalue%" == " " (
-     set brightnessvaluefalse=y
+if %colorq% == y (
+	 if "%contrastvalue%" == " " (
+         set contrastvaluefalse=y
+     )
+	 if "%saturationvalue%" == " " (
+         set saturationvaluefalse=y
+     )
+	 if "%brightnessvalue%" == " " (
+         set brightnessvaluefalse=y
+     )
+	 for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (
+  	     if not "%%k"=="" set contrastvaluefalse=y
+	 )
+	 for /f "tokens=1* delims=-.0123456789" %%l in ("l0%saturationvalue:"=%") do (
+   	     if not "%%m"=="" set saturationvaluefalse=y
+	 )
+	 for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (
+ 	     if not "%%o"=="" set brightnessvaluefalse=y
+	 )
 )
 if %contrastvaluefalse% == y (
      echo\
@@ -366,6 +381,7 @@ if %brightnessvaluefalse% == y (
 	 echo Brightness value was invalid, it has been set to the default.
 	 set brightnessvalue=0
 )
+:stretch
 echo\
 :: asks about stretching the video
 set /p stretchres=Do you want to stretch the video horizonatlly, y/n: 
@@ -491,7 +507,7 @@ if %yeahlowqual% == n (
 goto optiontwo
 :: option one, no extra music
 :optionone
-ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
+ffmpeg -hide_banner -loglevel error -stats ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
@@ -501,7 +517,7 @@ ffmpeg -hide_banner -loglevel error -stats %hwaccel% ^
 goto end
 ::option two, there is music
 :optiontwo
-ffmpeg -loglevel warning -stats %hwaccel% ^
+ffmpeg -loglevel warning -stats ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
