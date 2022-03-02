@@ -342,11 +342,6 @@ if %colorq% == y (
 )
 :: the next lines test if the values defined above are invalid, dont ask why we use a different method every time
 if %colorq% == y (
-     set /p contrastvalue=Select a contrast value between -1000.0 and 1000.0, default is 1: 
-     set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
-     set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
-)
-if %colorq% == y (
 	 if "%contrastvalue%" == " " (
          set contrastvaluefalse=y
      )
