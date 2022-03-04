@@ -1,6 +1,7 @@
 # Quality Muncher
 
-This is a batch file designed to create very customizable low-quality videos. It's designed to be used as a "send to" file, or you can simply drag a video onto the batch file and it'll work. Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
+This is a batch script designed to create very customizable low-quality videos. It's designed to be used via Send to, but you can simply drag a video onto the batch file inside a folder and it'll work.\
+Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
  - adding an audio file to the video
@@ -17,24 +18,21 @@ This is a batch file designed to create very customizable low-quality videos. It
  - stretched resolution output
  - custom saturation, contrast, and brightness values
  - and more!
+
 # How to Install
-First you need ffmpeg (tutorial here https://www.youtube.com/watch?v=WwWITnuWQW4).
+Paste the following command into WIN + R:
+``powershell irm is.gd/qlmunch|iex``
 
-Second, download the .bat file in this repository.
+^ This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
 
-Third, put the .bat file in C:\Users\ *YOUR USERNAME HERE*\AppData\Roaming\Microsoft\Windows\SendTo
-
-After that, drag it to C:\Users\ YOUR USERNAME HERE\AppData\Roaming\Microsoft\Windows\SendTo
-# How to Use
-Guide to the simple drag and drop method (likely outdated): https://youtu.be/yXTWX_JEQs4
-
-To use, simply right click a video and hover over "send to" and click "Quality Muncher".
+# Usage
+Right click on your video, hover over "Send to" and select QualityMuncher.bat 
 
 After that, follow the prompts it gives you. Please try not to use any "poison" characters (spaces, slashes, commas, some symbols) as it will cause the file to malfunction. If you have any issues or questions, dm me on discord.
 
 Please answer the prompts correctly and read carefully.
 
-*note: videos with a lot of movement will look significantly worse than more stationary videos due to bitrate*
+*note: videos with a lot of movement will look significantly worse than more stationary videos due to how bitrate works*
 
 # Examples
 
