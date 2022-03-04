@@ -2,12 +2,6 @@
 <html>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
-ul.g {
-  list-style-position: outside;
-  font-family:quicksand;
-  font-size: 24px;
-  text-align: center;
-}
 p {
   font-family:quicksand;
   font-size: 24px;
@@ -208,16 +202,6 @@ li a:hover {
   animation-timing-function: ease-in;
   animation-iteration-count: 1;
 }
-@keyframes fadeout {
-  0%   {opacity: 1; position: relative;}
-  100% {opacity: 0; position: relative;}
-}
-.fadeout {
-  animation-name: fadeout;
-  animation-duration: 1s;
-  animation-timing-function: ease-in;
-  animation-iteration-count: 1;
-}
 @keyframes movedown {
   0%   {left:0px; top:0px; opacity: 1; position: relative;}
   100% {left:0px; top:300px; opacity: 0; position: relative;}
@@ -244,14 +228,33 @@ span.highlight {
 	<li><a href="features.html">Features</a></li>
     <li><a href="https://github.com/Thqrn/qualitymuncher" target="_blank">GitHub</a></li>
     <li><a href="https://discord.gg/9tRZ6C7tYz" target="_blank">Discord</a></li>
-	<li><a href="faq.html">FAQ</a></li>
-    <li><a class="active" href="about.html">About</a></li>
+	<li><a class="active" href="faq.html">FAQ</a></li>
+    <li><a href="about.html">About</a></li>
   </ul>
 </head>
 <body>
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
-<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>About</strong></div>
-<p class="centertext fadein" style="animation-duration: 2.5s;"><b>Information about Quality Muncher</b></p>
-<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
+<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>FAQ</strong></div>
+<p class="centertext fadein" style="animation-duration: 2.5s;"><b>Frequently Asked Questions</b></p>
+<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">
+<b>Q: How do you install Quality Muncher manually?</b>
+<br><br>A: First, use the download button from the home page, and type <span class="highlight">shell:sendto</span>, and press enter. Then drag QualityMuncher.bat into that folder. Next, find the video you want to use, right-click it, then click QualityMuncher.bat and follow the prompts it gives you.
+<br><br><br>
+<b>Q: How do you use Quality Muncher?</b>
+<br><br>
+A: Once installed, find the video you want to use, right-click it, then click QualityMuncher.bat and follow the prompts it gives you.
+<br><br><br>
+<b>Q: What does Quality Muncher do?</b>
+<br><br>
+A: Quality Muncher has a simple concept with many features. You can compress videos, make them look worse, add music, stretch a video, clip a video, modify the colors, and more, which you can find on the features page.
+<br><br><br>
+<b>Who are you?</b>
+<br><br>
+A: Currently, Quality Muncher has two developers: Frost and Atzur.
+<br><br><br>
+<b>Q: Where can I contact you?</b>
+<br><br>
+The best way to contact us is through the Discord Server, which can be accessed by clicking the "discord" button at the top of the page. Alternatively, you can contact us directly, also on Discord: Frost#5872 and atzur#8008
+</p>
 </body>
 </html>
