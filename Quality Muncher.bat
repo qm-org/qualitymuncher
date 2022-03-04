@@ -243,7 +243,7 @@ if %details% == y (
 :: speed
 set speedvalid=n
 set speedq=default
-set /p speedq=What should the playback speed of the video be, must be a positive number between 0.01 and 2, default is 1: 
+set /p speedq=What should the playback speed of the video be, must be a positive number between 0.5 and 100, default is 1: 
 if "%speedq%" == " " (
      set speedq=default
 )
@@ -312,8 +312,6 @@ if %addedtextq% == y (
      set textfilter=%textfilter:1"=%
 )
 :hwaccel
-:: hwaccel
-set hwaccel=-hwaccel %hwaccel%
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
 set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
@@ -354,7 +352,7 @@ if %colorq% == y (
 	 for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (
   	     if not "%%k"=="" set contrastvaluefalse=y
 	 )
-	 for /f "tokens=1* delims=-.0123456789" %%l in ("l0%saturationvalue:"=%") do (
+	 for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (
    	     if not "%%m"=="" set saturationvaluefalse=y
 	 )
 	 for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (
