@@ -20,7 +20,7 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - and more!
 
 # How to Install
-Paste the following command into WIN + R:
+Paste the following command into WIN + R:\
 ``powershell irm is.gd/qlmunch|iex``
 
 ^ This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
