@@ -1,6 +1,6 @@
 @echo off
-:: sets the title of the windoww and sends some ascii word art
-set version=1.3.1
+:: sets the title of the window and sends some ascii word art
+set version=1.3.2
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -70,7 +70,7 @@ if "%starttime%" == " " (
 :: asks length of clip
 :timequestion
 set /p time=How long after the start time do you want it to be: 
-:: checks if it's a postive number, if not then goes back to asking how long it should be
+:: checks if it's a positive number, if not then goes back to asking how long it should be
 if 1%time% NEQ +1%time% (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
@@ -99,7 +99,7 @@ if "%customizationquestion%" == " " (
 	 echo\
 	 goto customizationoption
 )
-:: defines a few variables that are important for checking if theres a valid input (validanswer) and one that is only used by one other option (details in custom quality)
+:: defines a few variables that are important for checking if there's a valid input (validanswer) and one that is only used by one other option (details in custom quality)
 set details=n
 set validanswer=n
 :: defines a few variables that will be replaced later, this is very important for checking if they're valid later as it prevents missing operand errors
@@ -113,7 +113,7 @@ if %customizationquestion% == c set fixuserreadingerror=true
 if %customizationquestion% == C set fixuserreadingerror=true
 :: Sets the quality based on customizationquestion
 :: validanswer is used to determine if they entered a valid answer to customization question
-:: endingmsg is added to the end of the video for the output name (if you dont understand, just run the script and look at the name of the output)
+:: endingmsg is added to the end of the video for the output name (if you don't understand, just run the script and look at the name of the output)
 if %fixuserreadingerror% == true (
      echo\
 	 echo Custom Quality Selected!
@@ -192,7 +192,7 @@ if NOT %testforfps% == %framerate% (
 	 echo\
      goto customquestioncheckpoint
 )
-if NOT %testforvideobr% == %videobr% (]
+if NOT %testforvideobr% == %videobr% (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
 	 echo\
@@ -243,7 +243,7 @@ if %details% == y (
 :: speed
 set speedvalid=n
 set speedq=default
-set /p speedq=What should the playback speed of the video be, must be a positive number between 0.01 and 2, default is 1: 
+set /p speedq=What should the playback speed of the video be, must be a positive number between 0.5 and 100, default is 1: 
 if "%speedq%" == " " (
      set speedq=default
 )
@@ -312,8 +312,6 @@ if %addedtextq% == y (
      set textfilter=%textfilter:1"=%
 )
 :hwaccel
-:: hwaccel
-set hwaccel=-hwaccel %hwaccel%
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
 set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
@@ -324,7 +322,7 @@ ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo%
 set /p height=<%temp%\height.txt
 set /p width=<%temp%\width.txt
 echo\
-:: allows the user to have the choice of modyfying saturation and contrast.
+:: allows the user to have the choice of modifying saturation and contrast.
 set contrastvalue=1
 set saturationvalue=1
 set brightnessvalue=0
@@ -340,7 +338,7 @@ if %colorq% == y (
      set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
      set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
 )
-:: the next lines test if the values defined above are invalid, dont ask why we use a different method every time
+:: the next lines test if the values defined above are invalid, don't ask why we use a different method every time
 if %colorq% == y (
 	 if "%contrastvalue%" == " " (
          set contrastvaluefalse=y
@@ -354,7 +352,7 @@ if %colorq% == y (
 	 for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (
   	     if not "%%k"=="" set contrastvaluefalse=y
 	 )
-	 for /f "tokens=1* delims=-.0123456789" %%l in ("l0%saturationvalue:"=%") do (
+	 for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (
    	     if not "%%m"=="" set saturationvaluefalse=y
 	 )
 	 for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (
@@ -383,7 +381,6 @@ set /p stretchres=Do you want to stretch the video horizonatlly, y/n:
 if "%stretchres%" == " " (
      set stretchres=n
 )
-echo\
 :: defines things for music and asks if they want music
 :lowqualmusicq
 set musicstarttime=0
