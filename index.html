@@ -33,6 +33,7 @@ p {
   transition-duration: 0.4s;
   cursor: pointer;
   font-family:quicksand;
+  border-radius: 32px;
 }
 
 .buttondiscord {
@@ -157,6 +158,26 @@ li a:hover {
   opacity: 0.5;
   border-radius: 50%;
 }
+@keyframes example {
+  0%   {left:0px; top:300px; opacity: 0; position: relative;}
+  100% {left:0px; top:0px; opacity: 1; position: relative;}
+}
+.moveup {
+  animation-name: example;
+  animation-duration: 1s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+}
+@keyframes fadein {
+  0%   {opacity: 0; position: relative;}
+  100% {opacity: 1; position: relative;}
+}
+.fadein {
+  animation-name: fadein;
+  animation-duration: 1.3s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 1;
+}
 </style>
 <head>
   <title>Quality Muncher</title>
@@ -164,6 +185,7 @@ li a:hover {
     <li><a class="active" href="index.html">Home</a></li>
     <li><a href="https://github.com/Thqrn/qualitymuncher" target="_blank">GitHub</a></li>
     <li><a href="https://discord.gg/9tRZ6C7tYz" target="_blank">Discord</a></li>
+	<li><a href="faq.html">FAQ</a></li>
     <li><a href="about.html">About</a></li>
   </ul>
 </head>
@@ -246,14 +268,14 @@ function initComparisons() {
 }
 </script>
 <body>
-<p class="header centertext">Quality Muncher</p><p class="centertext">
-<p class="centertext"><b>Next Level Compression</b></p>
-<p style="word-break: keep-all;" class="center textbox">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over "send to" and clicking "Quality Muncher".</p>
-<button class="button button5 center" type="submit" onclick="window.open('installer.ps1')">Automated Installer</button>
+<p class="header centertext fadein" style="text-shadow: 3px 3px 10px black;" ><strong>Quality Muncher</strong></p>
+<p class="centertext moveup" style="animation-duration: 0.75s;"><b>Next Level Compression</b></p>
+<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over "send to" and clicking "Quality Muncher".</p>
+<button class="button button5 center moveup" type="submit" onclick="window.open('installer.ps1')" style="animation-duration: 1.25s;">Automated Installer</button>
 <p></p>
-<button class="button button5 center" type="submit" onclick="window.open('Quality Muncher.bat')">Manual Download</button>
-<p class="centertext">Drag the slider to see some of what Quality Muncher does:</p>
-<div class="img-comp-container center">
+<button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
+<p class="centertext moveup" style="animation-duration: 1.75s;">Drag the slider to see some of what Quality Muncher can do:</p>
+<div class="img-comp-container center moveup" style="animation-duration: 2s;">
   <div class="img-comp-img">
     <img src="badquality.png" width="768" height="432">
   </div>
