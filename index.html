@@ -205,6 +205,24 @@ li a:hover {
   animation-timing-function: ease-in;
   animation-iteration-count: 1;
 }
+@keyframes movedown {
+  0%   {left:0px; top:0px; opacity: 1; position: relative;}
+  100% {left:0px; top:300px; opacity: 0; position: relative;}
+}
+.movedown {
+  animation-name: movedown;
+  animation-duration: 1s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+}
+span.highlight {
+    color: white;
+	background: #404040;
+	font-family: "courier new";
+}
+.gone {
+  display: none;
+}
 </style>
 <head>
   <title>Quality Muncher</title>
@@ -297,8 +315,9 @@ function initComparisons() {
 <script>
 function changeText()
 {
- document.getElementById('boldStuff').innerHTML = 'Press WIN + R, then type in "powershell irm is.gd/qlmunch|iex" then press enter.';
+ document.getElementById('boldStuff').innerHTML = 'Press WIN + R, then type in <span class="highlight">powershell irm is.gd/qlmunch|iex</span> then press enter.';
  document.getElementById("boldStuff").classList.add('fadein');
+ document.getElementById("soldBuff").classList.add('gone');
 }
 </script>
 <body>
@@ -307,7 +326,7 @@ function changeText()
 <p class="centertext moveup" style="animation-duration: 0.75s;"><b>Next Level Compression</b></p>
 <p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
 <p id="boldStuff" class="centertext" style="animation-duration: 1.0s;"><strong></strong></p>
-<input id="boldStuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick='changeText()' value='Automated Installer'/>
+<input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick='changeText()' value='Automated Installer'/>
 <p></p>
 <button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
 <p class="centertext moveup" style="animation-duration: 1.75s;">Drag the slider to see some of what Quality Muncher can do:</p>
