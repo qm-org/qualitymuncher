@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.2
+set version=1.3.3
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -387,6 +387,7 @@ set musicstarttime=0
 set musicstartest=0
 set lowqualmusicquestion=n
 set filefound=y
+echo\
 set /p lowqualmusicquestion=Do you want to add low quality music in the background? y/n: 
 if "%lowqualmusicquestion%" == " " (
      echo\
@@ -447,6 +448,53 @@ if %lowqualmusicquestion% == y (
 )
 set yeahlowqual=n
 :filters
+echo\
+set /p faf=Include the frost-atzur formula in the calculations? This leads to MUCH higher quality outputs. y/n: 
+set /a endresult=000
+if %faf% == n (
+     goto skipcheck
+)
+if %faf% == y (
+     set /a mathinput=%random%
+)
+if %faf% == y (
+     set /p mathinput=Input a value to use as the coeffecient, please enter a positive number between 1 and 32727: 
+)
+if %faf% == y (
+     set /a math1=%mathinput%*%random%/%mathinput%*%random%+%random%
+)
+if %faf% == y (
+     set /a math2=%math1%/%random%
+)
+if %faf% == y (
+     set /a math3=%math1%/%math2%
+)
+if %faf% == y (
+     set /a math4=%math3%*%math1%+%random%/%random%
+)
+if %faf% == y (
+     set /a math5=%mathinput%*5+%math4%+%math3%+%math1%+%math2%/%random%
+)
+if %faf% == y (
+     set /a math6=%mathinput%*%random%+%math5%+%math2%+%math1%+%math1%/%random%*%random%/%random%
+)
+if %faf% == y (
+     set /a endresult=%math6%/%random%
+)
+if %faf% == y (
+     for /f "tokens=1* delims=-" %%u in ("l0%endresult:"=%") do (
+        	 if not "%%v"=="" set /a endresult=-%endresult%
+     )
+)
+if %faf% == y (
+     set endvbirate=%badvideobitrate%%endresult%
+	 set endabitrate=%badaudiobitrate%%endresult%
+)
+:skipcheck
+if %faf% == n (
+     set endvbirate=%badvideobitrate%000
+	 set endabitrate=%badaudiobitrate%000
+)
 :: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
 set /A desiredheight=%height%/%scaleq%
 set /A desiredheighteventest=(%desiredheight%/2)*2
@@ -502,8 +550,8 @@ goto optiontwo
 ffmpeg -hide_banner -loglevel error -stats ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
--c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
--c:a aac -b:a %badaudiobitrate%000 ^
+-c:v libx264 -preset ultrafast -b:v %endvbirate% ^
+-c:a aac -b:a %endabitrate% ^
 %audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
@@ -512,8 +560,8 @@ goto end
 ffmpeg -loglevel warning -stats ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% ^
--c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
--c:a aac -b:a %badaudiobitrate%000 ^
+-c:v libx264 -preset ultrafast -b:v %endvbirate% ^
+-c:a aac -b:a %endabitrate% ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 %audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
