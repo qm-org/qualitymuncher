@@ -82,7 +82,7 @@ p {
 .button4:hover {background-color: #e7e7e7;}
 
 .button5 {
-  background-color: white;
+  background-color: lightgrey;
   color: black;
   border: 2px solid #555555;
 }
@@ -99,7 +99,7 @@ p {
   border: 2px solid #303030;
 }
 .buttontextoverlay {
-  background-color: white;
+  background-color: lightgrey;
   color: black;
   border: 2px solid #555555;
 }
@@ -159,7 +159,7 @@ li a:hover {
 }
 .img-comp-container {
   position: relative;
-  height: 768px; /*should be the same height as the images*/
+  height: 432px; /*should be the same height as the images*/
 }
 
 .img-comp-img {
@@ -167,11 +167,14 @@ li a:hover {
   width: auto;
   height: auto;
   overflow: hidden;
+  horizontal-align: middle;
+  
 }
 
 .img-comp-img img {
-  display: block;
+  display: flex;
   vertical-align: middle;
+  horizontal-align: middle;
 }
 
 .img-comp-slider {
@@ -328,22 +331,24 @@ function changeText()
  document.getElementById("soldBuff").classList.add('gone');
 }
 </script>
-<body>
+<script>
+</script>
+<body style="background-color:lightgrey;">
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>Quality Muncher</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Next Level Compression</b></p>
 <p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
-<p id="boldStuff" class="centertext" style="animation-duration: 1.0s;"><strong></strong></p>
+<p id="boldStuff" class="centertext center textbox" style="animation-duration: 1.0s; font-size: 18px;"><strong></strong></p>
 <input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick='changeText()' value='Automated Installer'/>
 <p></p>
 <button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
-<p class="centertext moveup" style="animation-duration: 1.6s;" onclick="window.open('faq.html')"><i>Click here if you're having trouble installing Quality Muncher manually.</i></p>
+<p class="centertext moveup" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
 <p class="centertext moveup" style="animation-duration: 1.7s;">Drag the slider to see some of what Quality Muncher can do:</p>
-<div class="img-comp-container center moveup" style="animation-duration: 1.8s;">
+<div class="center img-comp-container moveup" style="animation-duration: 1.8s;">
   <div class="img-comp-img">
     <img src="badquality.png" width="768" height="432">
   </div>
-  <div class="img-comp-img img-comp-overlay center">
+  <div class="img-comp-img img-comp-overlay">
     <img src="nativequality.png" width="768" height="432">
   </div>
 </div>
