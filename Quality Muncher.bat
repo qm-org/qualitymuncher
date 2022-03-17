@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.3
+set version=1.3.5
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -51,38 +51,24 @@ if %1check == check (
 :: intro, questions and defining variables
 echo Frost's Quality Muncher is still in development. This is version %version%
 echo Please DM me at Frost#5872 for support or questions, or join https://discord.gg/9tRZ6C7tYz
-:: asks where to start clip
-:startquestion
-set /p starttime=Where do you want your clip to start (in seconds): 
-:: checks if it's a positive number, if not then goes back to asking for start time
-if 1%starttime% NEQ +1%starttime% (
+:: asks advanced or simple version
+echo\
+set complexity=s
+set /p complexity=Would you like the simple mode (s) or advanced mode (a): 
+echo\
+if %complexity% == s (
+     echo Simple mode selected!
+	 set stretchres=n
+	 set colorq=n
+	 set addedtextq=n
      echo\
-     echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto startquestion
+) else (
+     echo Advanced mode selected!
 )
-if "%starttime%" == " " (
-     echo\
-     echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto startquestion
+if NOT %complexity% == s (
+     goto advancedfour
 )
-:: asks length of clip
-:timequestion
-set /p time=How long after the start time do you want it to be: 
-:: checks if it's a positive number, if not then goes back to asking how long it should be
-if 1%time% NEQ +1%time% (
-     echo\
-     echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto timequestion
-)
-if "%time%" == " " (
-     echo\
-     echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto timequestion
-)
+:continuefour
 :customization
 :: asks for the option and lists them
 echo Options:
@@ -121,8 +107,8 @@ if %fixuserreadingerror% == true (
 :customquestioncheckpoint
 if %fixuserreadingerror% == true (
      set /p framerate=What fps do you want it to be rendered at: 
-     set /p videobr=On a scale from 1 to 10, how bad should the VIDEO bitrate be? 1 bad, 10 very very bad: 
-     set /p audiobr=On a scale from 1 to 10, how bad should the AUDIO bitrate be? 1 bad, 10 very very bad: 
+     set /p videobr=On a scale from 1 to 10, how bad should the video bitrate be? 1 bad, 10 very very bad: 
+     set /p audiobr=On a scale from 1 to 10, how bad should the audio bitrate be? 1 bad, 10 very very bad: 
      set /p scaleq=On a scale from 1 to 10, how much should the video be shrunk by? 1 none, 10 a lot: 
 	 set /p details=Do you want a detailed file name for the output? y or n: 
 	 set endingmsg=Custom Quality
@@ -239,7 +225,117 @@ if "%scaleq%" == " " (
 if %details% == y (
      set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
 )
-:speedquestion
+if NOT %complexity% == s (
+     goto advancedone
+)
+:continueone
+:: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
+set /A badaudiobitrate=80/%audiobr%
+set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
+:: grabs info from video to be used later
+set inputvideo=%*
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
+set /p height=<%temp%\height.txt
+set /p width=<%temp%\width.txt
+if NOT %complexity% == s (
+     echo\
+	 goto advancedtwo
+)
+:continuetwo
+set yeahlowqual=n
+:filters
+echo\
+:: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
+set /A desiredheight=%height%/%scaleq%
+set /A desiredheighteventest=(%desiredheight%/2)*2
+if %desiredheighteventest% == NOT %desiredheight% (
+     set /A desiredheight=%desiredheighteventest%
+)
+set /A desiredwidth=%width%/%scaleq%
+set /A desiredwidtheventest=(%desiredwidth%/2)*2
+if %stretchres% == y (
+     set widthtest1=%desiredwidtheventest%*2
+	 set /a badvideobitrate=%badvideobitrate%*2
+)
+:: defines filters
+set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+if %stretchres% == y (
+	 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+)
+if %colorq% == y (
+     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+	 if %stretchres% == y (
+	     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+     )
+)
+if %complexity% == s (
+     set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+)
+:: bass boosting
+set audiofilters= 
+set bassboosted=n
+if NOT %complexity% == s (
+     echo\
+	 goto advancedthree
+)
+:encoding
+echo Encoding...
+echo\
+color 06
+if %complexity% == s (
+     set time=32727
+	 set starttime=0
+     goto optionthree
+)
+if %yeahlowqual% == n (
+     goto optionone
+)
+goto optiontwo
+:: option one, no extra music
+:optionone
+ffmpeg -hide_banner -loglevel error -stats ^
+-ss %starttime% -t %time% -i %1 ^
+%filters% ^
+-c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+%audiofilters% ^
+-vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
+goto end
+::option two, there is music
+:optiontwo
+ffmpeg -hide_banner -loglevel warning -stats ^
+-ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
+%filters% ^
+-c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 -shortest ^
+%audiofilters% ^
+-vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
+goto end
+:optionthree
+ffmpeg -hide_banner -loglevel error -stats ^
+-i %1 ^
+%filters% ^
+-c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
+goto end
+:end
+if exist "%temp%\height.txt" (del "%temp%\height.txt")
+if exist "%temp%\width.txt" (del "%temp%\width.txt")
+echo\
+echo Done!
+echo\
+color 0A
+pause
+exit
+
+
+
+
+
+:advancedone
 :: speed
 set speedvalid=n
 set speedq=default
@@ -293,7 +389,7 @@ if %addedtextq% == y (
 :textfilters
 set textfilter="
 if %addedtextq% == n (
-     goto hwaccel
+     goto continueone
 )
 if %addedtextq% == y (
      if %strlength% LSS 4 set strlength=4
@@ -311,17 +407,12 @@ if %addedtextq% == y (
 if %addedtextq% == y (
      set textfilter=%textfilter:1"=%
 )
-:hwaccel
-:: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
-set /A badaudiobitrate=80/%audiobr%
-set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
-:: Credits to Couleur's CTT Upscaler 2.0 for the next 5 lines of code, used to grab the width and height of the input video and set them to variables for use later
-set inputvideo=%*
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
-echo\
+goto continueone
+
+
+
+
+:advancedtwo
 :: allows the user to have the choice of modifying saturation and contrast.
 set contrastvalue=1
 set saturationvalue=1
@@ -446,82 +537,13 @@ if %lowqualmusicquestion% == y (
      )
 	 goto filters
 )
-set yeahlowqual=n
-:filters
-echo\
-set /p faf=Include the frost-atzur formula in the calculations? This leads to MUCH higher quality outputs. y/n: 
-set /a endresult=000
-if %faf% == n (
-     goto skipcheck
-)
-if %faf% == y (
-     set /a mathinput=%random%
-)
-if %faf% == y (
-     set /p mathinput=Input a value to use as the coeffecient, please enter a positive number between 1 and 32727: 
-)
-if %faf% == y (
-     set /a math1=%mathinput%*%random%/%mathinput%*%random%+%random%
-)
-if %faf% == y (
-     set /a math2=%math1%/%random%
-)
-if %faf% == y (
-     set /a math3=%math1%/%math2%
-)
-if %faf% == y (
-     set /a math4=%math3%*%math1%+%random%/%random%
-)
-if %faf% == y (
-     set /a math5=%mathinput%*5+%math4%+%math3%+%math1%+%math2%/%random%
-)
-if %faf% == y (
-     set /a math6=%mathinput%*%random%+%math5%+%math2%+%math1%+%math1%/%random%*%random%/%random%
-)
-if %faf% == y (
-     set /a endresult=%math6%/%random%
-)
-if %faf% == y (
-     for /f "tokens=1* delims=-" %%u in ("l0%endresult:"=%") do (
-        	 if not "%%v"=="" set /a endresult=-%endresult%
-     )
-)
-if %faf% == y (
-     set endvbirate=%badvideobitrate%%endresult%
-	 set endabitrate=%badaudiobitrate%%endresult%
-)
-:skipcheck
-if %faf% == n (
-     set endvbirate=%badvideobitrate%000
-	 set endabitrate=%badaudiobitrate%000
-)
-:: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
-set /A desiredheight=%height%/%scaleq%
-set /A desiredheighteventest=(%desiredheight%/2)*2
-if %desiredheighteventest% == NOT %desiredheight% (
-     set /A desiredheight=%desiredheighteventest%
-)
-set /A desiredwidth=%width%/%scaleq%
-set /A desiredwidtheventest=(%desiredwidth%/2)*2
-if %stretchres% == y (
-     set widthtest1=%desiredwidtheventest%*2
-	 set /a badvideobitrate=%badvideobitrate%*2
-)
-:: defines filters
-set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
-if %stretchres% == y (
-	 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
-)
-if %colorq% == y (
-     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
-	 if %stretchres% == y (
-	     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
-     )
-)
-:: bass boosting
-set audiofilters= 
-set bassboosted=n
-echo\
+goto continuetwo
+
+
+
+
+
+:advancedthree
 set /p bassboosted=Do you want to bass boost the audio, y/n (warning, causes distortion): 
 if "%bassboosted%" == " " (
      set bassboosted=n
@@ -536,38 +558,43 @@ if NOT %speedq% == 1 (
          set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
      )
 )
-:encoding
 echo\
-echo Encoding...
+goto encoding
+
+
+
+:advancedfour
 echo\
-color 06
-if %yeahlowqual% == n (
-     goto optionone
+:: asks where to start clip
+:startquestion
+set /p starttime=In seconds, where do you want your clip to start: 
+:: checks if it's a positive number, if not then goes back to asking for start time
+if 1%starttime% NEQ +1%starttime% (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto startquestion
 )
-goto optiontwo
-:: option one, no extra music
-:optionone
-ffmpeg -hide_banner -loglevel error -stats ^
--ss %starttime% -t %time% -i %1 ^
-%filters% ^
--c:v libx264 -preset ultrafast -b:v %endvbirate% ^
--c:a aac -b:a %endabitrate% ^
-%audiofilters% ^
--vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
-goto end
-::option two, there is music
-:optiontwo
-ffmpeg -loglevel warning -stats ^
--ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
-%filters% ^
--c:v libx264 -preset ultrafast -b:v %endvbirate% ^
--c:a aac -b:a %endabitrate% ^
--map 0:v:0 -map 1:a:0 -shortest ^
-%audiofilters% ^
--vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
-:end
-echo\
-echo Done!
-echo\
-color 0A
-pause
+if "%starttime%" == " " (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto startquestion
+)
+:: asks length of clip
+:timequestion
+set /p time=In seconds, how long after the start time do you want it to be: 
+:: checks if it's a positive number, if not then goes back to asking how long it should be
+if 1%time% NEQ +1%time% (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto timequestion
+)
+if "%time%" == " " (
+     echo\
+     echo Not a valid number, please enter ONLY whole numbers!
+	 echo\
+	 goto timequestion
+)
+goto continuefour
