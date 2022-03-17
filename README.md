@@ -21,7 +21,7 @@ Please note that it's still in development, so please message me (Frost#5872) if
 
 # How to Install
 Paste the following command into WIN + R:\
-``powershell irm is.gd/qlmunch|iex``
+``powershell "iex(iwr -useb is.gd/qlmunch)"``
 
 ^ This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
 
