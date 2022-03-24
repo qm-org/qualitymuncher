@@ -2,6 +2,13 @@
 <html>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
+.noscrollbar::-webkit-scrollbar {
+  display: none;
+}
+.noscrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 p {
   font-family:quicksand;
   font-size: 24px;
@@ -243,7 +250,7 @@ span.highlight {
     <li><a href="about.html">About</a></li>
   </ul>
 </head>
-<body style="background-color:lightgrey;">
+<body style="background-color:lightgrey;" class="noscrollbar">
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>FAQ</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Frequently Asked Questions</b></p>

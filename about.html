@@ -2,6 +2,13 @@
 <html>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
+.noscrollbar::-webkit-scrollbar {
+  display: none;
+}
+.noscrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 ul.g {
   list-style-position: outside;
   font-family:quicksand;
@@ -249,7 +256,7 @@ span.highlight {
     <li><a class="active" href="about.html">About</a></li>
   </ul>
 </head>
-<body style="background-color:lightgrey;">
+<body style="background-color:lightgrey;" class="noscrollbar">
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>About</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Information about Quality Muncher</b></p>

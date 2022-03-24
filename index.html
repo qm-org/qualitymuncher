@@ -2,6 +2,13 @@
 <html>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
+.noscrollbar::-webkit-scrollbar {
+  display: none;
+}
+.noscrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 p {
   font-family:quicksand;
   font-size: 24px;
@@ -334,7 +341,7 @@ function changeText()
 </script>
 <script>
 </script>
-<body style="background-color:lightgrey;">
+<body class="noscrollbar" style="background-color:lightgrey;">
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>Quality Muncher</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Next Level Compression</b></p>
