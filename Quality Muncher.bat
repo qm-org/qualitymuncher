@@ -262,6 +262,7 @@ if %stretchres% == y (
      set widthtest1=%desiredwidtheventest%*2
      set /a badvideobitrate=%badvideobitrate%*2
 )
+set interpq=n
 if %framerate% gtr %fpsvalue% (
      echo The framerate of your input exceeds the framerate of the output. Interpolate to fix this?
 	 echo Note that this will increase the render time.
