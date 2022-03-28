@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.5
+set version=1.3.6
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -32,10 +32,10 @@ color 0f
 where /q ffmpeg
 if errorlevel 1 (
      echo You either don't have ffmpeg installed or do not have it in PATH.
-	 echo Please install it as it's needed for this program to work.
-	 echo Here is a tutorial: https://www.youtube.com/watch?v=WwWITnuWQW4
+     echo Please install it as it's needed for this program to work.
+     echo Here is a tutorial: https://www.youtube.com/watch?v=WwWITnuWQW4
      pause
-	 exit
+     exit
 ) else (
     goto inputcheck
 )
@@ -58,9 +58,10 @@ set /p complexity=Would you like the simple mode (s) or advanced mode (a):
 echo\
 if %complexity% == s (
      echo Simple mode selected!
-	 set stretchres=n
-	 set colorq=n
-	 set addedtextq=n
+     set stretchres=n
+     set colorq=n
+     set addedtextq=n
+	 set interpq=n
      echo\
 ) else (
      echo Advanced mode selected!
@@ -82,8 +83,8 @@ set /p customizationquestion=Please enter an option:
 if "%customizationquestion%" == " " (
      echo\
      echo Not a valid option, please try again!
-	 echo\
-	 goto customizationoption
+     echo\
+     goto customizationoption
 )
 :: defines a few variables that are important for checking if there's a valid input (validanswer) and one that is only used by one other option (details in custom quality)
 set details=n
@@ -102,17 +103,17 @@ if %customizationquestion% == C set fixuserreadingerror=true
 :: endingmsg is added to the end of the video for the output name (if you don't understand, just run the script and look at the name of the output)
 if %fixuserreadingerror% == true (
      echo\
-	 echo Custom Quality Selected!
+     echo Custom Quality Selected!
 )
 :customquestioncheckpoint
 if %fixuserreadingerror% == true (
-     set /p framerate=What fps do you want it to be rendered at: 
+  set /p framerate=What fps do you want it to be rendered at: 
      set /p videobr=On a scale from 1 to 10, how bad should the video bitrate be? 1 bad, 10 very very bad: 
      set /p audiobr=On a scale from 1 to 10, how bad should the audio bitrate be? 1 bad, 10 very very bad: 
      set /p scaleq=On a scale from 1 to 10, how much should the video be shrunk by? 1 none, 10 a lot: 
-	 set /p details=Do you want a detailed file name for the output? y or n: 
-	 set endingmsg=Custom Quality
-	 set validanswer=y
+     set /p details=Do you want a detailed file name for the output? y or n: 
+     set endingmsg=Custom Quality
+     set validanswer=y
 )
 if "%details%" == " " (
      echo\
@@ -122,50 +123,50 @@ if "%details%" == " " (
 )
 if %customizationquestion% == 1 (
      echo\
-	 echo Decent Quality Selected!
+     echo Decent Quality Selected!
      set framerate=24
      set videobr=3
      set scaleq=2
-	 set audiobr=3
-	 set endingmsg=Decent Quality
-	 set validanswer=y
+     set audiobr=3
+     set endingmsg=Decent Quality
+     set validanswer=y
 )
 if %customizationquestion% == 2 (
      echo\
-	 echo Bad Quality Selected!
+     echo Bad Quality Selected!
      set framerate=12
      set videobr=5
      set scaleq=4
-	 set audiobr=5
-	 set endingmsg=Bad Quality
-	 set validanswer=y
+     set audiobr=5
+     set endingmsg=Bad Quality
+     set validanswer=y
 )
 if %customizationquestion% == 3 (
      echo\
-	 echo Terrible Quality Selected!
+     echo Terrible Quality Selected!
      set framerate=6
      set videobr=8
      set scaleq=8
-	 set audiobr=8
-	 set endingmsg=Terrible Quality
-	 set validanswer=y
+     set audiobr=8
+     set endingmsg=Terrible Quality
+     set validanswer=y
 )
 if %customizationquestion% == 4 (
      echo\
-	 echo Unbearable Quality Selected!
+     echo Unbearable Quality Selected!
      set framerate=1
      set videobr=16
      set scaleq=12
-	 set audiobr=9
-	 set endingmsg=Unbearable Quality
-	 set validanswer=y
+     set audiobr=9
+     set endingmsg=Unbearable Quality
+     set validanswer=y
 )
 :: if a user didn't enter a valid answer, this is what they'll get
 if %validanswer% == n (
      echo\
-	 echo Please enter a valid answer!
-	 echo\
-	 goto customizationoption
+     echo Please enter a valid answer!
+     echo\
+     goto customizationoption
 )
 :: checks if the variables are all whole numbers, if they aren't it'll ask again for their values
 set /a testforfps=%framerate%
@@ -175,13 +176,13 @@ set /a testforscaleq=%scaleq%
 if NOT %testforfps% == %framerate% (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
+     echo\
      goto customquestioncheckpoint
 )
 if NOT %testforvideobr% == %videobr% (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
+     echo\
      goto customquestioncheckpoint
 )
 if NOT %testforaudiobr% == %audiobr% (
@@ -193,32 +194,32 @@ if NOT %testforaudiobr% == %audiobr% (
 if NOT %testforscaleq% == %scaleq% (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
+     echo\
      goto customquestioncheckpoint
 )
 if "%framerate%" == " " (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
-	 goto customquestioncheckpoint
+     echo\
+     goto customquestioncheckpoint
 )
 if "%videobr%" == " " (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
-	 goto customquestioncheckpoint
+     echo\
+     goto customquestioncheckpoint
 )
 if "%audiobr%" == " " (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
-	 goto customquestioncheckpoint
+     echo\
+     goto customquestioncheckpoint
 )
 if "%scaleq%" == " " (
      echo\
      echo One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
-	 echo\
-	 goto customquestioncheckpoint
+     echo\
+     goto customquestioncheckpoint
 )
 :setendingmsg
 :: makes the endingmsg contain more details if it's been selected (only available in the custom preset)
@@ -234,13 +235,16 @@ set /A badaudiobitrate=80/%audiobr%
 set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
 :: grabs info from video to be used later
 set inputvideo=%*
+ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
+set /p fpsvalue=<%temp%\fps.txt
+set /a fpsvalue=%fpsvalue%
 ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
 ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
 set /p height=<%temp%\height.txt
 set /p width=<%temp%\width.txt
 if NOT %complexity% == s (
      echo\
-	 goto advancedtwo
+     goto advancedtwo
 )
 :continuetwo
 set yeahlowqual=n
@@ -256,28 +260,54 @@ set /A desiredwidth=%width%/%scaleq%
 set /A desiredwidtheventest=(%desiredwidth%/2)*2
 if %stretchres% == y (
      set widthtest1=%desiredwidtheventest%*2
-	 set /a badvideobitrate=%badvideobitrate%*2
+     set /a badvideobitrate=%badvideobitrate%*2
+)
+if %framerate% gtr %fpsvalue% (
+     echo The framerate of your input exceeds the framerate of the output. Interpolate to fix this?
+	 echo Note that this will increase the render time.
+     set /p interpq=y/n: 
+	 echo\
 )
 :: defines filters
+:: filters not working bc interpolating, need fix (filters work but interp doesnt)
 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
+if %interpq% == y (
+     echo 1
+     set filters=-vf %textfilter%%speedfilter%scale=-2:%desiredheight%,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
+)
 if %stretchres% == y (
-	 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+     set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	 echo 2
+	 if %interpq% == y (
+	     echo 3
+         set filters=-vf %textfilter%%speedfilter%scale=%widthtest1%:%desiredheight%,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
+     )
 )
 if %colorq% == y (
+     echo 4
      set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
-	 if %stretchres% == y (
-	     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+	 if %interpq% == y (
+	     echo 5
+         set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=-2:%desiredheight%,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
+     )
+     if %stretchres% == y (
+	     echo 6
+          set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
+		 if %interpq% == y (
+		     echo 7
+             set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=%widthtest1%:%desiredheight%,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
+         )
      )
 )
 if %complexity% == s (
+     echo 8
      set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 )
 :: bass boosting
 set audiofilters= 
 set bassboosted=n
 if NOT %complexity% == s (
-     echo\
-	 goto advancedthree
+     goto advancedthree
 )
 :encoding
 echo Encoding...
@@ -285,7 +315,7 @@ echo\
 color 06
 if %complexity% == s (
      set time=32727
-	 set starttime=0
+     set starttime=0
      goto optionthree
 )
 if %yeahlowqual% == n (
@@ -324,6 +354,7 @@ goto end
 :end
 if exist "%temp%\height.txt" (del "%temp%\height.txt")
 if exist "%temp%\width.txt" (del "%temp%\width.txt")
+if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
 echo\
 echo Done!
 echo\
@@ -339,6 +370,7 @@ exit
 :: speed
 set speedvalid=n
 set speedq=default
+echo\
 set /p speedq=What should the playback speed of the video be, must be a positive number between 0.5 and 100, default is 1: 
 if "%speedq%" == " " (
      set speedq=default
@@ -348,10 +380,10 @@ if "%speedq%" == "n" (
 )
 if %speedq% == default (
      echo\
-	 echo No valid input given, speed has been set to default.
-	 set speedvalid=y
-	 set speedq=1
-	 goto cont
+     echo No valid input given, speed has been set to default.
+     set speedvalid=y
+     set speedq=1
+     goto cont
 )
 if %speedvalid% == y (
      goto cont
@@ -381,10 +413,25 @@ if %addedtextq% == y (
      set /p texttoadd=Enter the text now: 
 )
 if %addedtextq% == y (
+     set /p textpos=Do you want the text at the top, middle or bottom: 
+)
+if %addedtextq% == y (
+     if %textpos% == middle (
+	     goto middletext
+	 )
+     if %textpos% == bottom (
+	     goto bottomtext
+	 )
+     if %textpos% == top (
+	     goto toptext
+	 )
+)
+:afterpos
+if %addedtextq% == y (
      echo "%texttoadd%" > %temp%\textforquality.txt
-	 set /p addtext=<%temp%\textforquality.txt
-	 set /a scaleqhalf=%scaleq%/2
-	 for %%? in (%temp%\textforquality.txt) do ( set /A strlength=%%~z? - 2 )
+     set /p addtext=<%temp%\textforquality.txt
+     set /a scaleqhalf=%scaleq%/2
+     for %%? in (%temp%\textforquality.txt) do ( set /A strlength=%%~z? - 2 )
 )
 :textfilters
 set textfilter="
@@ -399,10 +446,10 @@ if %addedtextq% == y (
 )
 if %addedtextq% == y (
      set /a fontsize=500/%halflength%
-	 set addtext=%addtext:"=%
+     set addtext=%addtext:"=%
 )
 if %addedtextq% == y (
-     set textfilter="drawtext=fontfile=C\\:/Windows/Fonts/impact.ttf:text='%addtext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(h-text_h)/2,1"
+     set textfilter="drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%addtext%':fontcolor=white:fontsize=%fontsize%:x=%textposx%:y=%textposy%,1"
 )
 if %addedtextq% == y (
      set textfilter=%textfilter:1"=%
@@ -431,39 +478,39 @@ if %colorq% == y (
 )
 :: the next lines test if the values defined above are invalid, don't ask why we use a different method every time
 if %colorq% == y (
-	 if "%contrastvalue%" == " " (
-         set contrastvaluefalse=y
+     if "%contrastvalue%" == " " (
+          set contrastvaluefalse=y
      )
-	 if "%saturationvalue%" == " " (
-         set saturationvaluefalse=y
+     if "%saturationvalue%" == " " (
+          set saturationvaluefalse=y
      )
-	 if "%brightnessvalue%" == " " (
-         set brightnessvaluefalse=y
+     if "%brightnessvalue%" == " " (
+          set brightnessvaluefalse=y
      )
-	 for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (
-  	     if not "%%k"=="" set contrastvaluefalse=y
-	 )
-	 for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (
-   	     if not "%%m"=="" set saturationvaluefalse=y
-	 )
-	 for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (
- 	     if not "%%o"=="" set brightnessvaluefalse=y
-	 )
+     for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (
+          if not "%%k"=="" set contrastvaluefalse=y
+     )
+     for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (
+          if not "%%m"=="" set saturationvaluefalse=y
+     )
+     for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (
+          if not "%%o"=="" set brightnessvaluefalse=y
+     )
 )
 if %contrastvaluefalse% == y (
      echo\
-	 echo Contrast value was invalid, it has been set to the default.
-	 set contrastvalue=1
+     echo Contrast value was invalid, it has been set to the default.
+     set contrastvalue=1
 )
 if %saturationvaluefalse% == y (
      echo\
-	 echo Saturation value was invalid, it has been set to the default.
-	 set saturationvalue=1
+     echo Saturation value was invalid, it has been set to the default.
+     set saturationvalue=1
 )
 if %brightnessvaluefalse% == y (
      echo\
-	 echo Brightness value was invalid, it has been set to the default.
-	 set brightnessvalue=0
+     echo Brightness value was invalid, it has been set to the default.
+     set brightnessvalue=0
 )
 :stretch
 echo\
@@ -483,14 +530,14 @@ set /p lowqualmusicquestion=Do you want to add low quality music in the backgrou
 if "%lowqualmusicquestion%" == " " (
      echo\
      echo Not a valid option, please try again!
-	 echo\
-	 goto lowqualmusicq
+     echo\
+     goto lowqualmusicq
 )
 :addingthemusic
 :: asks for a specific file to get music from
 if %lowqualmusicquestion% == y (
      set yeahlowqual=y
-	 set /p lowqualmusic=Please drag the desired file here, it must be an audio file: 
+     set /p lowqualmusic=Please drag the desired file here, it must be an audio file: 
 )
 :: sets a variable if it's a valid file
 if %lowqualmusicquestion% == y (
@@ -500,42 +547,42 @@ if %lowqualmusicquestion% == y (
 :: if its not a valid file it sends the user back to add a valid file
 if %filefound% == n (
      echo\
-	 echo Invalid file! Please drag an existing file from your computer!
-	 echo\
-	 goto addingthemusic
+     echo Invalid file! Please drag an existing file from your computer!
+     echo\
+     goto addingthemusic
 )
 :musicstartq
 :: asks the user when the music should start
 if %lowqualmusicquestion% == y (
-	 set /p musicstarttime=Enter a specific start time of the music in seconds: 
+     set /p musicstarttime=Enter a specific start time of the music in seconds: 
 )
 if %lowqualmusicquestion% == y (
-	 if "%musicstarttime%" == " " (
-         echo\
-         echo Not a valid number, please enter ONLY whole numbers!
-	     echo\
-	     goto musicstartq
+     if "%musicstarttime%" == " " (
+          echo\
+          echo Not a valid number, please enter ONLY whole numbers!
+          echo\
+          goto musicstartq
      )
 )
 :: tests if it's a number
 if %lowqualmusicquestion% == y (
-	 set /a musicstartest=%musicstarttime%
+     set /a musicstartest=%musicstarttime%
 )
 :: if its not a number it makes them go back and do it again
 if %lowqualmusicquestion% == y (
-	 if NOT %musicstarttime% == %musicstartest% (
-         echo\
-         echo Not a valid number, please enter ONLY whole numbers!
-	     echo\
-	     goto musicstartq
+     if NOT %musicstarttime% == %musicstartest% (
+          echo\
+          echo Not a valid number, please enter ONLY whole numbers!
+          echo\
+          goto musicstartq
      )
-	 if "%musicstarttime%" == " " (
-         echo\
-         echo Not a valid number, please enter ONLY whole numbers!
-	     echo\
-	     goto musicstartq
+     if "%musicstarttime%" == " " (
+          echo\
+          echo Not a valid number, please enter ONLY whole numbers!
+          echo\
+          goto musicstartq
      )
-	 goto filters
+     goto filters
 )
 goto continuetwo
 
@@ -544,18 +591,24 @@ goto continuetwo
 
 
 :advancedthree
-set /p bassboosted=Do you want to bass boost the audio, y/n (warning, causes distortion): 
+set /p bassboosted=Do you want to heavily distort the audio (earrape)? y/n: 
 if "%bassboosted%" == " " (
      set bassboosted=n
 )
 if %bassboosted% == y (
-     set audiofilters=-af "firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
+     set /p distortionseverity=How distorted should the audio be, 1-10: 
+)
+if %bassboosted% == y (
+     set /a distsev=%distortionseverity%*10
+)
+if %bassboosted% == y (
+     set audiofilters=-af "firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 )
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %speedq% == 1 (
      set audiofilters=-af "atempo=%speedq%"
-	 if %bassboosted% == y (
-         set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,-3);entry(75,2);entry(250,15);entry(500,1);entry(1000,-5);entry(4000,-5);entry(16000,-5)'"
+     if %bassboosted% == y (
+          set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,100);entry(600,100);entry(1500,100);entry(3000,100);entry(6000,100);entry(12000,100);entry(16000,100)'"
      )
 )
 echo\
@@ -572,14 +625,14 @@ set /p starttime=In seconds, where do you want your clip to start:
 if 1%starttime% NEQ +1%starttime% (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto startquestion
+     echo\
+     goto startquestion
 )
 if "%starttime%" == " " (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto startquestion
+     echo\
+     goto startquestion
 )
 :: asks length of clip
 :timequestion
@@ -588,13 +641,32 @@ set /p time=In seconds, how long after the start time do you want it to be:
 if 1%time% NEQ +1%time% (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto timequestion
+     echo\
+     goto timequestion
 )
 if "%time%" == " " (
      echo\
      echo Not a valid number, please enter ONLY whole numbers!
-	 echo\
-	 goto timequestion
+     echo\
+     goto timequestion
 )
+echo\
 goto continuefour
+
+
+:middletext
+set textposx=(w-text_w)/2
+set textposy=(h-text_h)/2
+goto afterpos
+
+
+:bottomtext
+set textposx=(w-text_w)/2
+set textposy=(h-1.5*text_h)
+goto afterpos
+
+
+:toptext
+set textposx=(w-text_w)/2
+set textposy=(0.5*text_h)
+goto afterpos
