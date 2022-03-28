@@ -8,13 +8,14 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - ability to chose playback speed
  - embeds nicely in discord
  - low file size
+ - interpolation
  - adding text to video
  - custom start and duration times
  - consistent updates and new features
  - 4 presets and custom options
  - setting custom output fps, audio bitrate, video bitrate, and scale
  - very few bugs or issues, program tells you if you might've entered something wrong (work in progress)
- - bass boosting audio
+ - audio distortion (earrape)
  - stretched resolution output
  - custom saturation, contrast, and brightness values
  - and more!
@@ -23,16 +24,14 @@ Please note that it's still in development, so please message me (Frost#5872) if
 Paste the following command into WIN + R:\
 ``powershell "iex(iwr -useb is.gd/qlmunch)"``
 
-^ This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
+This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
 
 # Usage
 Right click on your video, hover over "Send to" and select QualityMuncher.bat 
 
 After that, follow the prompts it gives you. Please try not to use any "poison" characters (spaces, slashes, commas, some symbols) as it will cause the file to malfunction. If you have any issues or questions, dm me on discord.
 
-Please answer the prompts correctly and read carefully.
-
-*note: videos with a lot of movement will look significantly worse than more stationary videos due to how bitrate works*
+Please answer the prompts correctly and read carefully, as answering incorrectly may cause errors or crashes.
 
 # Examples
 
