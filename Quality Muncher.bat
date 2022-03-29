@@ -273,35 +273,27 @@ if %framerate% gtr %fpsvalue% (
 :: filters not working bc interpolating, need fix (filters work but interp doesnt)
 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 if %interpq% == y (
-     echo 1
      set filters=-vf %textfilter%%speedfilter%scale=-2:%desiredheight%,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
 )
 if %stretchres% == y (
      set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
-	 echo 2
 	 if %interpq% == y (
-	     echo 3
          set filters=-vf %textfilter%%speedfilter%scale=%widthtest1%:%desiredheight%,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
      )
 )
 if %colorq% == y (
-     echo 4
      set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 	 if %interpq% == y (
-	     echo 5
          set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=-2:%desiredheight%,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
      )
      if %stretchres% == y (
-	     echo 6
           set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%widthtest1%:%desiredheight%,setsar=1:1,format=yuv420p%videofilters%"
 		 if %interpq% == y (
-		     echo 7
              set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=%widthtest1%:%desiredheight%,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
          )
      )
 )
 if %complexity% == s (
-     echo 8
      set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%,format=yuv420p%videofilters%"
 )
 :: bass boosting
@@ -516,7 +508,7 @@ if %brightnessvaluefalse% == y (
 :stretch
 echo\
 :: asks about stretching the video
-set /p stretchres=Do you want to stretch the video horizonatlly, y/n: 
+set /p stretchres=Do you want to stretch the video horizontally, y/n: 
 if "%stretchres%" == " " (
      set stretchres=n
 )
