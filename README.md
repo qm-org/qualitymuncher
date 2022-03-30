@@ -33,6 +33,8 @@ After that, follow the prompts it gives you. Please try not to use any "poison" 
 
 Please answer the prompts correctly and read carefully, as answering incorrectly may cause errors or crashes.
 
+If you want specific features of QM without having to go through the entire process, check out https://github.com/Thqrn/batchscripts.
+
 # Examples
 
 Before: https://youtu.be/CKkuxUq6WQw
