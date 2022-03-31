@@ -286,17 +286,6 @@ span.highlight {
 
 </style>
 <head>
-<!-- Hotjar Tracking Code for https://thqrn.github.io/qualitymuncher/ -->
-<script>
-    (function(h,o,t,j,a,r){
-        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-        h._hjSettings={hjid:2892691,hjsv:6};
-        a=o.getElementsByTagName('head')[0];
-        r=o.createElement('script');r.async=1;
-        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-        a.appendChild(r);
-    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
-</script>
   <title>Quality Muncher</title>
   <ul>
     <li><a class="active" href="index.html">Home</a></li>
@@ -308,20 +297,23 @@ span.highlight {
   </ul>
 </head>
 <script>
-function changeText()
-{
- document.getElementById('boldStuff').innerHTML = 'Press WIN + R, then type in <span class="highlight">powershell "iex(iwr -useb is.gd/qlmunch)"</span> and press enter.';
- document.getElementById("boldStuff").classList.add('fadein');
- document.getElementById("soldBuff").classList.add('gone');
-}
+    function copyEvent(id)
+    {
+	   	document.getElementById('boldStuff').innerHTML = 'Press WIN + R, then type in <span class="highlight" id="copy">powershell "iex(iwr -useb is.gd/qlmunch)"</span> and press enter. This text has been automatically copied.';
+        document.getElementById("boldStuff").classList.add('fadein');
+        document.getElementById("soldBuff").classList.add('gone');
+        var str = document.getElementById(id);
+        window.getSelection().selectAllChildren(str);
+        document.execCommand("Copy")
+    }
 </script>
 <body class="noscrollbar" style="background-color:lightgrey;">
 <button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
-<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>Quality Muncher</strong></div>
+<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" id="p1"><strong>Quality Muncher</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Next Level Compression</b></p>
 <p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
 <p id="boldStuff" class="centertext center textbox" style="animation-duration: 1.0s; font-size: 18px;"><strong></strong></p>
-<input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick='changeText()' value='Automated Installer'/>
+<input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick="copyEvent('copy')" value='Automated Installer'/>
 <p></p>
 <button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
 <p class="centertext moveup smallertext" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
