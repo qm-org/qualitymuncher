@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.6
+set version=1.3.7
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -54,6 +54,7 @@ echo Please DM me at Frost#5872 for support or questions, or join https://discor
 :: asks advanced or simple version
 echo\
 set complexity=s
+if not 1%2 == 1 goto skippedlol
 set /p complexity=Would you like the simple mode (s) or advanced mode (a): 
 echo\
 if %complexity% == s (
@@ -80,6 +81,14 @@ echo Unbearable (4)
 echo Custom (c)
 :customizationoption
 set /p customizationquestion=Please enter an option: 
+:skippedlol
+if %complexity% == s (
+     set stretchres=n
+     set colorq=n
+     set addedtextq=n
+	 set interpq=n
+)
+if not 1%2 == 1 set customizationquestion=%2
 if "%customizationquestion%" == " " (
      echo\
      echo Not a valid option, please try again!
@@ -234,7 +243,7 @@ if NOT %complexity% == s (
 set /A badaudiobitrate=80/%audiobr%
 set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
 :: grabs info from video to be used later
-set inputvideo=%*
+set inputvideo=%1
 ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
 set /p fpsvalue=<%temp%\fps.txt
 set /a fpsvalue=%fpsvalue%
@@ -258,16 +267,19 @@ if %desiredheighteventest% == NOT %desiredheight% (
 )
 set /A desiredwidth=%width%/%scaleq%
 set /A desiredwidtheventest=(%desiredwidth%/2)*2
+if %complexity% == s set stretchres=n
 if %stretchres% == y (
      set widthtest1=%desiredwidtheventest%*2
      set /a badvideobitrate=%badvideobitrate%*2
 )
 set interpq=n
+if NOT %complexity% == s (
 if %framerate% gtr %fpsvalue% (
      echo The framerate of your input exceeds the framerate of the output. Interpolate to fix this?
 	 echo Note that this will increase the render time.
      set /p interpq=y/n: 
 	 echo\
+)
 )
 :: defines filters
 :: filters not working bc interpolating, need fix (filters work but interp doesnt)
@@ -348,12 +360,14 @@ goto end
 if exist "%temp%\height.txt" (del "%temp%\height.txt")
 if exist "%temp%\width.txt" (del "%temp%\width.txt")
 if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
+if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
+if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
 echo\
 echo Done!
 echo\
 color 0A
-pause
-exit
+if 1%2 == 1 goto :exiting
+if not 1%2 == 1 goto :ending
 
 
 
@@ -395,58 +409,39 @@ set speedfilter=%speedfilter:"=%
 echo\
 :: add text
 set /p addedtextq=Do you want to add text to the video? y/n: 
-if "%addedtextq%" == " " (
-     set addedtextq=n
-)
-if %addedtextq% == n (
-     goto textfilters
-)
-set texttoadd=test
-if %addedtextq% == y (
-     set /p texttoadd=Enter the text now: 
-)
-if %addedtextq% == y (
-     set /p textpos=Do you want the text at the top, middle or bottom: 
-)
-if %addedtextq% == y (
-     if %textpos% == middle (
-	     goto middletext
-	 )
-     if %textpos% == bottom (
-	     goto bottomtext
-	 )
-     if %textpos% == top (
-	     goto toptext
-	 )
-)
-:afterpos
-if %addedtextq% == y (
-     echo "%texttoadd%" > %temp%\textforquality.txt
-     set /p addtext=<%temp%\textforquality.txt
-     set /a scaleqhalf=%scaleq%/2
-     for %%? in (%temp%\textforquality.txt) do ( set /A strlength=%%~z? - 2 )
-)
-:textfilters
-set textfilter="
-if %addedtextq% == n (
-     goto continueone
-)
-if %addedtextq% == y (
-     if %strlength% LSS 4 set strlength=4
-)
-if %addedtextq% == y (
-     set /a halflength=%strlength%/4
-)
-if %addedtextq% == y (
-     set /a fontsize=500/%halflength%
-     set addtext=%addtext:"=%
-)
-if %addedtextq% == y (
-     set textfilter="drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%addtext%':fontcolor=white:fontsize=%fontsize%:x=%textposx%:y=%textposy%,1"
-)
-if %addedtextq% == y (
-     set textfilter=%textfilter:1"=%
-)
+if %addedtextq% == n goto continueone
+
+set toptext=hiuhgIU8768768G67967hwgd73
+set /p toptext=Top text: 
+if "%toptext%" == "hiuhgIU8768768G67967hwgd73" set "toptext= "
+set toptextnospace=%toptext: =_%
+echo "%toptextnospace%" > %temp%\toptext.txt
+set /p toptextnospace=<%temp%\toptext.txt
+for %%? in (%temp%\toptext.txt) do ( set /A strlength=%%~z? - 2 )
+if %strlength% LSS 16 set strlength=16
+set /a halflength=%strlength%/4
+set /a fontsize=750/%halflength%
+set topypos=(0.25*text_h)
+if %fontsize% GTR 240 set topypos=0
+set toptext=%toptext:"=%
+
+set bottomtext=OAUWGIU21i3g8972g48bh8976BHV
+set /p bottomtext=Bottom text: 
+if "%bottomtext%" == "OAUWGIU21i3g8972g48bh8976BHV" set "bottomtext= "
+set bottomtextnospace=%bottomtext: =_%
+echo "%bottomtextnospace%" > %temp%\bottomtext.txt
+set /p bottomtextnospace=<%temp%\bottomtext.txt
+for %%? in (%temp%\bottomtext.txt) do ( set /A strlength=%%~z? - 2 )
+if %strlength% LSS 16 set strlength=16
+set /a halflength=%strlength%/4
+set /a fontsizebottom=750/%halflength%
+set bottomypos=(h-1.25*text_h)
+if %fontsizebottom% GTR 240 set bottomypos=(h-text_h)
+set bottomtext=%bottomtext:"=%
+
+set "textfilter=1drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=%topypos%,drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=%bottomypos%,"
+set textfilter=%textfilter:1drawtext="drawtext%
+
 goto continueone
 
 
@@ -663,3 +658,9 @@ goto afterpos
 set textposx=(w-text_w)/2
 set textposy=(0.5*text_h)
 goto afterpos
+
+:exiting
+pause
+exit
+
+:ending
