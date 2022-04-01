@@ -35,6 +35,9 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
 
 If you want specific features of QM without having to go through the entire process, check out https://github.com/Thqrn/batchscripts.
 
+# Multiqueue
+The normal Quality Muncher batch file does not support multiqueue. However, with the "!!qualitymuncher multiqueue.bat" file, it does. To use this, select as many videos as you'd like, then send them to the multiqueue file. Then enter in the preset and watch as your videos are processed. For this to work, your both the multiqueue file and quality muncher MUST be in the same directory.
+
 # Examples
 
 Before: https://youtu.be/CKkuxUq6WQw
