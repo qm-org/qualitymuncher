@@ -1,6 +1,6 @@
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.7
+set version=1.3.8
 title Quality Muncher Version %version%
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -333,7 +333,7 @@ ffmpeg -hide_banner -loglevel error -stats ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
--c:a aac -b:a %badaudiobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
@@ -353,7 +353,7 @@ ffmpeg -hide_banner -loglevel error -stats ^
 -i %1 ^
 %filters% ^
 -c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
--c:a aac -b:a %badaudiobitrate%000 ^
+-c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
 :end
@@ -409,6 +409,7 @@ set speedfilter=%speedfilter:"=%
 echo\
 :: add text
 set /p addedtextq=Do you want to add text to the video? y/n: 
+if %addedtextq% == n set textfilter="
 if %addedtextq% == n goto continueone
 
 set toptext=hiuhgIU8768768G67967hwgd73
