@@ -73,6 +73,7 @@ set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
 :skippedlol
 if not 1%2 == 1 set customizationquestion=%2
+if 1%2 == 1 goto skipcustommultiqueue
 if not 1%2 == 1 (
      if %2 == c (
          echo\
@@ -87,6 +88,7 @@ if not 1%2 == 1 (
 		 goto setendingmsg
 	 )
 )
+:skipcustommultiqueue
 :: defines a few variables that will be replaced later, this is important for checking if they're valid later as it prevents missing operand errors
 set framerate=a
 set videobr=a
@@ -177,6 +179,14 @@ if "%scaleq%" == " " (
      goto errorcustom
 )
 :setendingmsg
+set inputvideo=%1
+ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
+set /p fpsvalue=<%temp%\fps.txt
+set /a fpsvalue=%fpsvalue%
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
+set /p height=<%temp%\height.txt
+set /p width=<%temp%\width.txt
 :: makes the endingmsg contain more details if it's been selected (only available in the custom preset)
 if /I %details% == y set endingmsg=Custom Quality - %framerate% fps^, %videobr% video bitrate input^, %audiobr% audio bitrate input^, %scaleq% scale
 if NOT %complexity% == s goto advancedone
@@ -186,13 +196,6 @@ set /A badaudiobitrate=80/%audiobr%
 set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
 :: grabs info from video to be used later
 set inputvideo=%1
-ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
-set /p fpsvalue=<%temp%\fps.txt
-set /a fpsvalue=%fpsvalue%
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
 if NOT %complexity% == s goto advancedtwo
 :continuetwo
 set yeahlowqual=n
@@ -358,7 +361,7 @@ if %strlengthb% LSS 16 set strlengthb=16
 set /a fontsizebottom=(%width%/%strlengthb%)*2
 set bottomtext=%bottomtext:"=%
 :: setting text filter
-set "textfilter=1drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h)"
+set "textfilter=1drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h),"
 set textfilter=%textfilter:1drawtext="drawtext%
 goto continueone
 
