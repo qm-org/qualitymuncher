@@ -8,6 +8,7 @@ set stretchres=n
 set colorq=n
 set addedtextq=n
 set interpq=n
+set "qs=Quality Selected!"
 echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
@@ -66,19 +67,26 @@ set complexity=s
 echo\
 :continuefour
 :customization
-:: asks for the option and lists them
-echo Options:
-echo Decent (1)
-echo Bad (2)
-echo Terrible (3)
-echo Unbearable (4)
-echo Custom (c)
 :customizationoption
 choice /n /c 1234c /m "Your options for quality are decent (1), bad (2), terrible (3), unbearable (4), and custom (c)."
 set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
 :skippedlol
 if not 1%2 == 1 set customizationquestion=%2
+if not 1%2 == 1 (
+     if %2 == c (
+         echo\
+         echo Custom %qs%
+	     echo\
+         set framerate=%3
+         set videobr=%4
+         set audiobr=%5
+         set scaleq=%6
+	     if %7 == 1 set details=y
+         set endingmsg=Custom Quality
+		 goto setendingmsg
+	 )
+)
 :: defines a few variables that will be replaced later, this is important for checking if they're valid later as it prevents missing operand errors
 set framerate=a
 set videobr=a
@@ -88,10 +96,9 @@ set details=n
 :: Sets the quality based on customizationquestion
 :: endingmsg is added to the end of the video for the output name (if you don't understand, just run the script and look at the name of the output)
 :customquestioncheckpoint
-set "qs=Quality Selected!"
 if "%customizationquestion%" == "c" (
      echo\
-     echo Custom Quality Selected!
+     echo Custom %qs%
 	 echo\
      set /p framerate=What fps do you want it to be rendered at: 
      set /p videobr=On a scale from 1 to 10, how bad should the video bitrate be? 1 bad, 10 very very bad: 
@@ -331,35 +338,27 @@ if %errorlevel% == 1 set addedtextq=y
 if %addedtextq% == n set textfilter="
 if %addedtextq% == n goto continueone
 :: top text
-set toptext=hiuhgIU8768768G67967hwgd73
+set "toptext= "
 set /p toptext=Top text: 
-if "%toptext%" == "hiuhgIU8768768G67967hwgd73" set "toptext= "
 set toptextnospace=%toptext: =_%
 echo "%toptextnospace%" > %temp%\toptext.txt
 set /p toptextnospace=<%temp%\toptext.txt
 for %%? in (%temp%\toptext.txt) do ( set /A strlength=%%~z? - 2 )
 if %strlength% LSS 16 set strlength=16
-set /a halflength=%strlength%/4
-set /a fontsize=750/%halflength%
-set topypos=(0.25*text_h)
-if %fontsize% GTR 240 set topypos=0
+set /a fontsize=(%width%/%strlength%)*2
 set toptext=%toptext:"=%
 :: bottom text
-set bottomtext=OAUWGIU21i3g8972g48bh8976BHV
+set "bottomtext= "
 set /p bottomtext=Bottom text: 
-if "%bottomtext%" == "OAUWGIU21i3g8972g48bh8976BHV" set "bottomtext= "
 set bottomtextnospace=%bottomtext: =_%
 echo "%bottomtextnospace%" > %temp%\bottomtext.txt
 set /p bottomtextnospace=<%temp%\bottomtext.txt
-for %%? in (%temp%\bottomtext.txt) do ( set /A strlength=%%~z? - 2 )
-if %strlength% LSS 16 set strlength=16
-set /a halflength=%strlength%/4
-set /a fontsizebottom=750/%halflength%
-set bottomypos=(h-1.25*text_h)
-if %fontsizebottom% GTR 240 set bottomypos=(h-text_h)
+for %%? in (%temp%\bottomtext.txt) do ( set /A strlengthb=%%~z? - 2 )
+if %strlengthb% LSS 16 set strlengthb=16
+set /a fontsizebottom=(%width%/%strlengthb%)*2
 set bottomtext=%bottomtext:"=%
 :: setting text filter
-set "textfilter=1drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=%topypos%,drawtext=borderw=10:fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=%bottomypos%,"
+set "textfilter=1drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h)"
 set textfilter=%textfilter:1drawtext="drawtext%
 goto continueone
 
