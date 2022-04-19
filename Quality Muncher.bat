@@ -36,14 +36,14 @@ echo  .             .       ..::.                               .::::.      .   
 echo\
 color 0f
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
-where /q ffmpeg
-if errorlevel 1 (
-     echo You either don't have ffmpeg installed or do not have it in PATH.
-     echo Please install it as it's needed for this program to work.
-	 choice /n /c gc /m "Press (g) for a guide on installing it, or (c) to close the script."
-     if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
-     exit
-)
+::where /q ffmpeg
+::if errorlevel 1 (
+::     echo You either don't have ffmpeg installed or do not have it in PATH.
+::     echo Please install it as it's needed for this program to work.
+::	 choice /n /c gc /m "Press (g) for a guide on installing it, or (c) to close the script."
+::     if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
+::     exit
+::)
 :inputcheck
 set confirmselec=n
 :: checks if someone used the script correctly
