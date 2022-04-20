@@ -1,7 +1,18 @@
 :: if you have any questions about this script, feel free to DM me on Discord, Frost#5872
 @echo off
+set version=1.3.11
+set fromprompt=false
+::set this to false to disable automatic update checks
+set autoupdatecheck=true
+:: sets the title of the window, some variables, and sends some ascii word art
+set isupdate=false
+title Quality Muncher Version %version%
+if not 1%2 == 1 goto verystart
+::checks for updates
+if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
+if %autoupdatecheck% == true goto updatecheck
+
 :: sets the title of the window and sends some ascii word art
-set version=1.3.10
 title Quality Muncher Version %version%
 :verystart
 set stretchres=n
@@ -9,7 +20,6 @@ set colorq=n
 set addedtextq=n
 set interpq=n
 set "qs=Quality Selected!"
-echo\
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
 echo   ~BG7:       :?BG:  ^^@J           :@Y     .BB5@~      !@!           Y@:       .@Y          7BG~    .?#G~
@@ -49,14 +59,26 @@ set confirmselec=n
 :: checks if someone used the script correctly
 if %1check == check goto noinput
 :: intro, questions and defining variables
-echo Frost's Quality Muncher is still in development. This is version %version%
+echo Frost's Quality Muncher is still in development. This is version %version%.
 echo Please DM me at Frost#5872 for support or questions, or join https://discord.gg/9tRZ6C7tYz
 :: asks advanced or simple version
 echo\
 set complexity=s
 if not 1%2 == 1 goto skippedlol
+
+::offer update
+if not %isupdate% == true goto modeselect
+if not %fromprompt% == false goto modeselect
+echo There is a new version (%newversion%) of Quality Muncher available!
+echo Press (g) to open the GitHub page or (s) to skip.
+echo To hide this message in the future, set the variable "autoupdatecheck" on line 4 to false.
+choice /c GS /n
+echo\
+if %errorlevel% == 2 goto modeselect
+start "" %download%
+
 :modeselect
-choice /n /c SAWDC /m "Press (s) for simple quality muncher, (a) for advanced), (w) to open the website, (d) to open the discord server, and (c) to exit."
+choice /n /c SAWDC /m "Press (s) for simple, (a) for advanced), (w) to open the website, (d) to open the discord server, and (c) to exit."
 echo\
 if %errorlevel% == 2 goto advancedfour
 if %errorlevel% == 3 goto website
@@ -536,6 +558,9 @@ cls && goto verystart
 echo ERROR: no input file
 echo Drag this .bat into the SendTo folder - press Windows + R and type in shell:sendto
 echo After that, right click on your video, drag over to Send To and click on this bat there.
+echo\
+if not %isupdate% == true goto choicenoinput
+goto choicenoinputupdate
 :choicenoinput
 choice /n /c WDC /m "Press (w) to open the website, (d) to open the discord server, or (c) to exit."
 echo\
@@ -543,8 +568,37 @@ set confirmselec=y
 if %errorlevel% == 1 goto website
 if %errorlevel% == 2 goto discord
 exit
+:choicenoinputupdate
+echo Press (w) to open the website, (d) to open the discord server, or (c) to exit.
+echo There is a new version (%newversion%) available to download. Press (g) to open.
+choice /n /c WDCG
+echo\
+set confirmselec=y
+if %errorlevel% == 1 goto website
+if %errorlevel% == 2 goto discord
+if %errorlevel% == 3 exit
+set "download=https://github.com/Thqrn/qualitymuncher/blob/main/Quality%%20Muncher.bat"
+start "" %download%
+cls && goto verystart
 
 :exiting
 pause && exit
+
+:updatecheck
+set "download=https://github.com/Thqrn/qualitymuncher/blob/main/Quality%%20Muncher.bat"
+ping /n 1 github.com  | find "Reply" > nul
+if %errorlevel% == 1 goto nointernet
+set internet=true
+curl -s "https://raw.githubusercontent.com/Thqrn/qualitymuncher/main/version.txt" --output %temp%\QMnewversion.txt
+set /p newversion=<%temp%\QMnewversion.txt
+if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
+if "%version%" == "%newversion%" (set isupdate=false) else (set isupdate=true)
+goto verystart
+
+:nointernet
+set internet=false
+echo Update check failed, skipping.
+echo\
+goto verystart
 
 :ending
