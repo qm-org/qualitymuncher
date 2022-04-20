@@ -71,7 +71,7 @@ if not %isupdate% == true goto modeselect
 if not %fromprompt% == false goto modeselect
 echo There is a new version (%newversion%) of Quality Muncher available!
 echo Press (g) to open the GitHub page or (s) to skip.
-echo To hide this message in the future, set the variable "autoupdatecheck" on line 4 to false.
+echo To hide this message in the future, set the variable "autoupdatecheck" on line 6 of the script to false.
 choice /c GS /n
 echo\
 if %errorlevel% == 2 goto modeselect
