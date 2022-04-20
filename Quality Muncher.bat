@@ -1,7 +1,7 @@
 :: if you have any questions about this script, feel free to DM me on Discord, Frost#5872
 @echo off
 :: sets the title of the window and sends some ascii word art
-set version=1.3.9
+set version=1.3.10
 title Quality Muncher Version %version%
 :verystart
 set stretchres=n
