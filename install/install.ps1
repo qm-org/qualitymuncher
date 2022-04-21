@@ -1,7 +1,7 @@
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
 
 # filename
-$FileName = "QualityMuncher"
+$FileName = "Quality Muncher"
 
 # download link
 $Dl = "https://raw.githubusercontent.com/Thqrn/qualitymuncher/main/Quality%20Muncher.bat"
