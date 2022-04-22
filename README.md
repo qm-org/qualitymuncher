@@ -31,7 +31,7 @@ This will install Quality Muncher along with all of it's dependencies and add it
 # Usage
 Right click on your video, hover over "Send to" and select QualityMuncher.bat 
 
-After that, follow the prompts it gives you. Please try not to use any "poison" characters (spaces, slashes, commas, some symbols) as it will cause the file to malfunction. If you have any issues or questions, dm me on discord.
+After that, follow the prompts it gives you. If you have any issues or questions, message me on discord or join the server.
 
 Please answer the prompts correctly and read carefully, as answering incorrectly may cause errors or crashes.
 
