@@ -1,25 +1,32 @@
 :: if you have any questions about this script, feel free to DM me on Discord, Frost#5872
 @echo off
-set version=1.3.11
-set fromprompt=false
-::set this to false to disable automatic update checks
-set autoupdatecheck=true
+
+::OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE
+     ::automatic update checks
+     set autoupdatecheck=true
+     ::stay open after the file is done rendering
+     set stayopen=true
+     ::shows title
+     set showtitle=true
+::END OF OPTIONS
+
 :: sets the title of the window, some variables, and sends some ascii word art
+set version=1.3.12
 set isupdate=false
-title Quality Muncher Version %version%
+title Quality Muncher v%version%
 if not 1%2 == 1 goto verystart
 ::checks for updates
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 if %autoupdatecheck% == true goto updatecheck
 
 :: sets the title of the window and sends some ascii word art
-title Quality Muncher Version %version%
 :verystart
 set stretchres=n
 set colorq=n
 set addedtextq=n
 set interpq=n
 set "qs=Quality Selected!"
+if %showtitle% == false goto skiptitle
 echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
 echo   ~BG7:       :?BG:  ^^@J           :@Y     .BB5@~      !@!           Y@:       .@Y          7BG~    .?#G~
@@ -44,41 +51,32 @@ echo !@7           ~@7  Y#Y^^.    :7GB^^ .^&P         ~GB@P   ?BP7:.    .^^?G5 ?
 echo ^^#!           ^^^&~   :JPPP5PPPY!    BY           7#Y    .!YPPP55PPPJ~  7#:           !#:^^^&G55555555555J ?#:        :JB?
 echo  .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .
 echo\
+:skiptitle
 color 0f
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg
 if %errorlevel% == 1 (
-     echo You either don't have ffmpeg installed or do not have it in PATH.
+     echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
      echo Please install it as it's needed for this program to work.
-	 choice /n /c gc /m "Press (g) for a guide on installing it, or (c) to close the script."
+	 choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
      if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
      exit
 )
 :inputcheck
 set confirmselec=n
 :: checks if someone used the script correctly
+echo Frost's Quality Muncher is still in development. This is version %version%.
+echo Please DM me at Frost#5872 for any questions or support, or join the discord server.
+echo\
 if %1check == check goto noinput
 :: intro, questions and defining variables
-echo Frost's Quality Muncher is still in development. This is version %version%.
-echo Please DM me at Frost#5872 for support or questions, or join https://discord.gg/9tRZ6C7tYz
 :: asks advanced or simple version
-echo\
 set complexity=s
-if not 1%2 == 1 goto skippedlol
-
-::offer update
-if not %isupdate% == true goto modeselect
-if not %fromprompt% == false goto modeselect
-echo There is a new version (%newversion%) of Quality Muncher available!
-echo Press (g) to open the GitHub page or (s) to skip.
-echo To hide this message in the future, set the variable "autoupdatecheck" on line 6 of the script to false.
-choice /c GS /n
-echo\
-if %errorlevel% == 2 goto modeselect
-start "" %download%
+if not 1%2 == 1 goto skipped
 
 :modeselect
-choice /n /c SAWDC /m "Press (s) for simple, (a) for advanced), (w) to open the website, (d) to open the discord server, and (c) to exit."
+echo Press [S] for simple, [A] for advanced), [W] to open the website, [D] to join the discord server, and [C] to close.
+choice /n /c SAWDC
 echo\
 if %errorlevel% == 2 goto advancedfour
 if %errorlevel% == 3 goto website
@@ -90,10 +88,11 @@ echo\
 :continuefour
 :customization
 :customizationoption
-choice /n /c 1234c /m "Your options for quality are decent (1), bad (2), terrible (3), unbearable (4), and custom (c)."
+echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], and custom [C].
+choice /n /c 1234C
 set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
-:skippedlol
+:skipped
 if not 1%2 == 1 set customizationquestion=%2
 if 1%2 == 1 goto skipcustommultiqueue
 if not 1%2 == 1 (
@@ -125,9 +124,9 @@ if "%customizationquestion%" == "c" (
      echo Custom %qs%
 	 echo\
      set /p framerate=What fps do you want it to be rendered at: 
-     set /p videobr=On a scale from 1 to 10, how bad should the video bitrate be? 1 bad, 10 very very bad: 
-     set /p audiobr=On a scale from 1 to 10, how bad should the audio bitrate be? 1 bad, 10 very very bad: 
-     set /p scaleq=On a scale from 1 to 10, how much should the video be shrunk by? 1 none, 10 a lot: 
+     set /p videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: 
+     set /p audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: 
+     set /p scaleq=[93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot: 
 	 choice /m "Do you want a detailed file name for the output?"
      set endingmsg=Custom Quality
 )
@@ -175,7 +174,7 @@ set /a testforfps=%framerate%
 set /a testforvideobr=%videobr%
 set /a testforaudiobr=%audiobr%
 set /a testforscaleq=%scaleq%
-set errormsg=One or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters!
+set errormsg=[91mOne or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters![0m
 if NOT %testforfps% == %framerate% (
      goto errorcustom
 )
@@ -323,8 +322,9 @@ echo\
 echo Done!
 echo\
 color 0A
+if %stayopen% == false goto ending
 if 1%2 == 1 goto :exiting
-if not 1%2 == 1 goto :ending
+if not 1%2 == 1 goto ending
 
 
 
@@ -334,14 +334,14 @@ if not 1%2 == 1 goto :ending
 set speedvalid=n
 set speedq=default
 echo\
-set /p speedq=What should the playback speed of the video be, must be a positive number between 0.5 and 100, default is 1: 
+set /p speedq=What should the playback speed of the video be, [93mmust be a positive number between 0.5 and 100[0m, default is 1: 
 if "%speedq%" == " " (
      set speedq=default
 )
 if "%speedq%" == "n" set speedq=1
 if %speedq% == default (
      echo\
-     echo No valid input given, speed has been set to default.
+     echo [91mNo valid input given, speed has been set to default.[0m
      set speedvalid=y
      set speedq=1
      goto cont
@@ -367,21 +367,17 @@ set "toptext= "
 set /p toptext=Top text: 
 set toptextnospace=%toptext: =_%
 echo "%toptextnospace%" > %temp%\toptext.txt
-set /p toptextnospace=<%temp%\toptext.txt
 for %%? in (%temp%\toptext.txt) do ( set /A strlength=%%~z? - 2 )
 if %strlength% LSS 16 set strlength=16
 set /a fontsize=(%width%/%strlength%)*2
-set toptext=%toptext:"=%
 :: bottom text
 set "bottomtext= "
 set /p bottomtext=Bottom text: 
 set bottomtextnospace=%bottomtext: =_%
 echo "%bottomtextnospace%" > %temp%\bottomtext.txt
-set /p bottomtextnospace=<%temp%\bottomtext.txt
 for %%? in (%temp%\bottomtext.txt) do ( set /A strlengthb=%%~z? - 2 )
 if %strlengthb% LSS 16 set strlengthb=16
 set /a fontsizebottom=(%width%/%strlengthb%)*2
-set bottomtext=%bottomtext:"=%
 :: setting text filter
 set "textfilter=1drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h),"
 set textfilter=%textfilter:1drawtext="drawtext%
@@ -400,9 +396,9 @@ set contrastvaluefalse=n
 set saturationvaluefalse=n
 set brightnessvaluefalse=n
 if %colorq% == y (
-     set /p contrastvalue=Select a contrast value between -1000.0 and 1000.0, default is 1: 
-     set /p saturationvalue=Select a saturation value between 0.0 and 3.0, default is 1: 
-     set /p brightnessvalue=Select a brightness value between -1.0 and 1.0, default is 0: 
+     set /p contrastvalue=Select a contrast value [93mbetween -1000.0 and 1000.0[0m, default is 1: 
+     set /p saturationvalue=Select a saturation value [93mbetween 0.0 and 3.0[0m, default is 1: 
+     set /p brightnessvalue=Select a brightness value [93mbetween -1.0 and 1.0[0m, default is 0: 
 )
 :: the next lines test if the values defined above are invalid, don't ask why we use a different method every time
 if %colorq% == y (
@@ -428,17 +424,17 @@ if %colorq% == y (
 )
 if %contrastvaluefalse% == y (
      echo\
-     echo Contrast %errormsgcol%
+     echo [91mContrast %errormsgcol%[0m
      set contrastvalue=1
 )
 if %saturationvaluefalse% == y (
      echo\
-     echo Saturation %errormsgcol%
+     echo [91mSaturation %errormsgcol%[0m
      set saturationvalue=1
 )
 if %brightnessvaluefalse% == y (
      echo\
-     echo Brightness %errormsgcol%
+     echo [91mBrightness %errormsgcol%[0m
      set brightnessvalue=0
 )
 :stretch
@@ -459,7 +455,7 @@ if %errorlevel% == 1 set lowqualmusicquestion=y
 :: asks for a specific file to get music from
 if %lowqualmusicquestion% == y (
      set yeahlowqual=y
-     set /p lowqualmusic=Please drag the desired file here, it must be an audio file: 
+     set /p lowqualmusic=Please drag the desired file here, [93mit must be an audio/video file[0m: 
 )
 :: sets a variable if it's a valid file
 if %lowqualmusicquestion% == y (
@@ -469,14 +465,14 @@ if %lowqualmusicquestion% == y (
 :: if its not a valid file it sends the user back to add a valid file
 if %filefound% == n (
      echo\
-     echo Invalid file! Please drag an existing file from your computer!
+     echo [91mInvalid file! Please drag an existing file from your computer![0m
      echo\
      goto addingthemusic
 )
 :musicstartq
 :: asks the user when the music should start
 if %lowqualmusicquestion% == y (
-     set /p musicstarttime=Enter a specific start time of the music in seconds: 
+     set /p musicstarttime=Enter a specific start time of the music [93min seconds[0m: 
      goto filters
 )
 goto continuetwo
@@ -485,21 +481,43 @@ goto continuetwo
 :advancedthree
 choice /c YN /m "Do you want to distort the audio (earrape)?"
 if %errorlevel% == 1 set bassboosted=y
-if %bassboosted% == y set /p distortionseverity=How distorted should the audio be, 1-10: 
-if %bassboosted% == y set /a distsev=%distortionseverity%*10
-if %bassboosted% == y (
-     set audiofilters=-af "firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+if %bassboosted% == n (
+     set audiofilters= 
+	 if NOT %speedq% == 1 (
+         set audiofilters=-af "atempo=%speedq%"
+     )
+	 goto encoding
 )
+choice /c 12 /m "Which distortion method should be used?"
+if %errorlevel% == 1 goto classic
+::new method
+set /p distortionseverity=How distorted should the audio be, [93m1-10[0m: 
+set /a distsev=%distortionseverity%*10
+set audiofilters=-af "firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=150|170|250,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %speedq% == 1 (
      set audiofilters=-af "atempo=%speedq%"
      if %bassboosted% == y (
-          set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,100);entry(600,100);entry(1500,100);entry(3000,100);entry(6000,100);entry(12000,100);entry(16000,100)'"
+          set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=150|170|250,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
      )
 )
 echo\
 goto encoding
 
+::old method
+:classic
+set /p distortionseverity=How distorted should the audio be, [93m1-10[0m: 
+set /a distsev=%distortionseverity%*10
+set audiofilters=-af "firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+:: checks if speed is not the default and if it isnt it changes the audio speed to match
+if NOT %speedq% == 1 (
+     set audiofilters=-af "atempo=%speedq%"
+     if %bassboosted% == y (
+          set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+     )
+)
+echo\
+goto encoding
 
 
 :advancedfour
@@ -509,12 +527,12 @@ echo\
 :: asks where to start clip
 :startquestion
 set starttime=0
-set /p starttime=In seconds, where do you want your clip to start: 
+set /p starttime=[93mIn seconds[0m, where do you want your clip to start: 
 if "%starttime%" == " " set starttime=0
 :: asks length of clip
 :timequestion
 set time=32727
-set /p time=In seconds, how long after the start time do you want it to be: 
+set /p time=[93mIn seconds[0m, how long after the start time do you want it to be: 
 if "%time%" == " " set time=32727
 echo\
 goto continuefour
@@ -543,43 +561,29 @@ set textposy=(0.5*text_h)
 goto afterpos
 
 :discord
-echo Sending to Discord!
+echo [96mSending to Discord![0m
 start "" https://discord.com/invite/9tRZ6C7tYz
 echo\
 cls && goto verystart
 
 :website
-echo Sending to website!
+echo [96mSending to website![0m
 start "" http://catgirl.church/
 echo\
 cls && goto verystart
 
 :noinput
-echo ERROR: no input file
-echo Drag this .bat into the SendTo folder - press Windows + R and type in shell:sendto
-echo After that, right click on your video, drag over to Send To and click on this bat there.
+echo [91mERROR: no input file![0m
+echo Drag this .bat into the SendTo folder - press [90;7mWindows + R[0m and type in [90;7mshell:sendto[0m
+echo After that, right click on your video, drag over to Send To and click on [90;7mQuality Muncher.bat[0m.
 echo\
-if not %isupdate% == true goto choicenoinput
-goto choicenoinputupdate
-:choicenoinput
-choice /n /c WDC /m "Press (w) to open the website, (d) to open the discord server, or (c) to exit."
+echo Press [W] to open the website, [D] to join the discord server, or [C] to close.
+choice /n /c WDC
 echo\
 set confirmselec=y
 if %errorlevel% == 1 goto website
 if %errorlevel% == 2 goto discord
 exit
-:choicenoinputupdate
-echo Press (w) to open the website, (d) to open the discord server, or (c) to exit.
-echo There is a new version (%newversion%) available to download. Press (g) to open.
-choice /n /c WDCG
-echo\
-set confirmselec=y
-if %errorlevel% == 1 goto website
-if %errorlevel% == 2 goto discord
-if %errorlevel% == 3 exit
-set "download=https://github.com/Thqrn/qualitymuncher/blob/main/Quality%%20Muncher.bat"
-start "" %download%
-cls && goto verystart
 
 :exiting
 pause && exit
@@ -593,11 +597,26 @@ curl -s "https://raw.githubusercontent.com/Thqrn/qualitymuncher/main/version.txt
 set /p newversion=<%temp%\QMnewversion.txt
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 if "%version%" == "%newversion%" (set isupdate=false) else (set isupdate=true)
-goto verystart
+cls
+if not %isupdate% == true goto verystart
+echo [96mThere is a new version (%newversion%) of Quality Muncher available!
+echo Press [U] to update or [S] to skip.
+echo [90mTo hide this message in the future, set the variable "autoupdatecheck" on line 6 of the script to false.[0m
+choice /c US /n
+echo\
+set isupdate=false
+if %errorlevel% == 2 cls && goto verystart
+echo Automatic updating will only work properly if Quality Muncher is in send-to. Proceed?
+choice
+if %errorlevel% == 2 exit
+echo\
+echo [7mWhen prompted, make sure you press o and then press enter.[0m
+echo\
+powershell "iex(iwr -useb is.gd/qlmunch)" && cls && "C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\SendTo\Quality Muncher.bat" %1
 
 :nointernet
 set internet=false
-echo Update check failed, skipping.
+echo [91mUpdate check failed, skipping.[0m
 echo\
 goto verystart
 
