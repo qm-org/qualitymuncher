@@ -11,7 +11,7 @@
 ::END OF OPTIONS
 
 :: sets the title of the window, some variables, and sends some ascii word art
-set version=1.3.12
+set version=1.3.13
 set isupdate=false
 title Quality Muncher v%version%
 if not 1%2 == 1 goto verystart
@@ -175,30 +175,14 @@ set /a testforvideobr=%videobr%
 set /a testforaudiobr=%audiobr%
 set /a testforscaleq=%scaleq%
 set errormsg=[91mOne or more of your inputs for custom quality was invalid! Please only use whole numbers and no letters![0m
-if NOT %testforfps% == %framerate% (
-     goto errorcustom
-)
-if NOT %testforvideobr% == %videobr% (
-     goto errorcustom
-)
-if NOT %testforaudiobr% == %audiobr% (
-     goto errorcustom
-)
-if NOT %testforscaleq% == %scaleq% (
-     goto errorcustom
-)
-if "%framerate%" == " " (
-     goto errorcustom
-)
-if "%videobr%" == " " (
-     goto errorcustom
-)
-if "%audiobr%" == " " (
-     goto errorcustom
-)
-if "%scaleq%" == " " (
-     goto errorcustom
-)
+if NOT %testforfps% == %framerate% goto errorcustom
+if NOT %testforvideobr% == %videobr% goto errorcustom
+if NOT %testforaudiobr% == %audiobr% goto errorcustom
+if NOT %testforscaleq% == %scaleq% goto errorcustom
+if "%framerate%" == " " goto errorcustom
+if "%videobr%" == " " goto errorcustom
+if "%audiobr%" == " " goto errorcustom
+if "%scaleq%" == " " goto errorcustom
 :setendingmsg
 set inputvideo=%1
 ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
@@ -214,7 +198,6 @@ if NOT %complexity% == s goto advancedone
 :continueone
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
-set /A badvideobitrate=(100*%framerate%/%videobr%)/%scaleq%
 :: grabs info from video to be used later
 set inputvideo=%1
 if NOT %complexity% == s goto advancedtwo
@@ -243,6 +226,8 @@ if NOT %complexity% == s (
 	     echo\
      )
 )
+set /A badvideobitrate=(%desiredheight%*%desiredwidth%*%framerate%/%videobr%)
+if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: defines filters
 :: filters not working bc interpolating, need fix (filters work but interp doesnt)
 set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
@@ -273,6 +258,7 @@ set audiofilters=
 set bassboosted=n
 if NOT %complexity% == s goto advancedthree
 :encoding
+set metadata=-metadata comment="Made with Quality Muncher v%version%"
 echo Encoding...
 echo\
 color 06
@@ -288,7 +274,7 @@ goto optiontwo
 ffmpeg -hide_banner -loglevel error -stats ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
--c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
@@ -298,7 +284,7 @@ goto end
 ffmpeg -hide_banner -loglevel warning -stats ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% ^
--c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 %audiofilters% ^
@@ -308,7 +294,7 @@ goto end
 ffmpeg -hide_banner -loglevel error -stats ^
 -i %1 ^
 %filters% ^
--c:v libx264 -preset ultrafast -b:v %badvideobitrate%000 ^
+-c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +faststart "%~dpn1 (%endingmsg%).mp4"
 goto end
@@ -318,6 +304,7 @@ if exist "%temp%\width.txt" (del "%temp%\width.txt")
 if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
 if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
+if exist "%temp%\badvideobitrate.txt" (del "%temp%\badvideobitrate.txt")
 echo\
 echo Done!
 echo\
