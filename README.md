@@ -4,18 +4,20 @@ This is a batch script designed to create very customizable low-quality videos. 
 Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
- - adding an audio file to the video
- - ability to chose playback speed
+ - replacing audio
+ - chosing playback speed
  - embeds nicely in discord
  - low file size
  - interpolation
  - adding text to video
+ - multiqueue when used with the multiqueue script
  - custom start and duration times
  - consistent updates and new features
  - 4 presets and custom options
+ - automatic update checking
  - setting custom output fps, audio bitrate, video bitrate, and scale
- - very few bugs or issues, program tells you if you might've entered something wrong (work in progress)
- - audio distortion (earrape)
+ - minimal bugs or issues
+ - two different methods for audio distortion (earrape)
  - stretched resolution output
  - custom saturation, contrast, and brightness values
  - and more!
@@ -37,6 +39,9 @@ If you want specific features of QM without having to go through the entire proc
 
 # Multiqueue
 The normal Quality Muncher batch file does not support multiqueue. However, with the "!!qualitymuncher multiqueue.bat" file, it does. To use this, select as many videos as you'd like, then send them to the multiqueue file. Then enter in the preset and watch as your videos are processed. For this to work, your both the multiqueue file and quality muncher MUST be in the same directory.
+
+# Automatic Updates
+This feature checks for updates by comparing the version of the current file with the version on this GitHub. You can disable it by changing the variable "autoupdatecheck" on line 6 of the script to false.
 
 # Examples
 
