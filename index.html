@@ -32,6 +32,7 @@ p {
   font-size: 24px;
   margin: 4px 8px;
   font-family:quicksand;
+  min-width: 600px;
 }
 
 .textboxwide {
@@ -47,6 +48,7 @@ p {
 
 .header {
   font-size: 72px;
+  min-width: 500px;
 }
 .button {
   background-color: #4CAF50; /* Green */
@@ -62,6 +64,7 @@ p {
   cursor: pointer;
   font-family:quicksand;
   border-radius: 32px;
+  min-width: 600px;
 }
 
 .buttondiscord {
@@ -266,15 +269,8 @@ span.highlight {
 .previewimage {
     max-height: 100%;
     max-width: 100%;
-    width: auto;
 	height: auto;
-}
-
-.fill {
-    overflow: hidden;
-    background-size: cover;
-    background-position: center;
-    background-image: url('qualitymuncher.gif');
+	min-width: 600px;
 }
 
 .smallertext {
@@ -323,7 +319,7 @@ span.highlight {
 <p></p>
 <button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
 <p class="centertext moveup smallertext" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
-<img class="previewimage center moveup secret" src="qualitymuncher.gif" style="animation-duration: 1.7s;">
+<img class="previewimage center previewimage moveup secret" src="qualitymuncher.gif" style="animation-duration: 1.7s;">
 <div class="textboxwide center moveup secret" style="animation-duration: 1.9s;">
 </div>
 </body>
