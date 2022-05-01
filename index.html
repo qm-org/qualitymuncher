@@ -9,7 +9,6 @@
 <title>Quality Muncher</title>
 <meta name="title" content="Quality Muncher">
 <meta name="description" content="An open-source program for making extremely customizable low-quality videos, with lots of features.">
-<meta name="theme-color" content="#0066ff">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Open Graph / Facebook -->
@@ -54,7 +53,7 @@ p {
   font-size: 24px;
   margin: 4px 8px;
   font-family:quicksand;
-  min-width: 600px;
+  min-width: 300px;
 }
 
 .textboxwide {
@@ -69,8 +68,8 @@ p {
 }
 
 .header {
-  font-size: 72px;
-  min-width: 500px;
+  font-size: max(48px, 6vw);
+  min-width: 300px;
 }
 .button {
   background-color: #4CAF50; /* Green */
@@ -86,7 +85,7 @@ p {
   cursor: pointer;
   font-family:quicksand;
   border-radius: 32px;
-  min-width: 600px;
+  min-width: 300px;
 }
 
 .buttondiscord {
@@ -200,8 +199,9 @@ li a {
   display: block;
   color: white;
   text-align: center;
-  padding: 14px 16px;
+  padding: min(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
   text-decoration: none;
+  font-size: max(12px, 1vw);
 }
 li a:hover {
   background-color: #111;
@@ -292,11 +292,11 @@ span.highlight {
     max-height: 100%;
     max-width: 100%;
 	height: auto;
-	min-width: 600px;
+	min-width: 300px;
 }
 
 .smallertext {
-    font-size: 20px;
+    font-size: max(16px, 1vw);
 }
 
 .secret:after{
@@ -329,15 +329,15 @@ span.highlight {
     }
 </script>
 <body class="noscrollbar" style="background-color:lightgrey;">
-<button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
+<div style="font-size: 8px;"><br/><br/><br/></div>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" id="p1"><strong>Quality Muncher</strong></div>
 <p class="centertext fadein" style="animation-duration: 2.5s;"><b>Next Level Compression</b></p>
-<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a batch file designed to customize your videos with a simple, command-line based tool. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
+<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a script for creating extremely customizable low-quality videos. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
 <p id="boldStuff" class="centertext center textbox" style="animation-duration: 1.0s; font-size: 18px;"><strong></strong></p>
 <input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick="copyEvent('copy')" value='Automated Installer'/>
 <p></p>
-<button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" style="animation-duration: 1.5s;">Manual Download</button>
-<p class="centertext moveup smallertext" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
+<button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" type='button' style="animation-duration: 1.5s;">Manual Download</button>
+<p class="centertext moveup center textbox smallertext" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
 <img class="previewimage center previewimage moveup secret" src="qualitymuncher.gif" style="animation-duration: 1.7s;">
 <div class="textboxwide center moveup secret" style="animation-duration: 1.9s;">
 </div>
