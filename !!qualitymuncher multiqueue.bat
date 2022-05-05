@@ -1,8 +1,8 @@
 @echo off
-set version=1.2
+set version=1.3
 title Quality Muncher Multiqueue Edition Version %version%
 SET mypath=%~dp0
-choice /n /c 1234c /m "Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], and custom [C]."
+choice /n /c 1234CR /m "Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], and random [R]."
 set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
 if %customizationquestion% == c goto custom

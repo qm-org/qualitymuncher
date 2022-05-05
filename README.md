@@ -23,25 +23,23 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - and more!
 
 # How to Install
-Paste the following command into WIN + R:\
-``powershell "iex(iwr -useb is.gd/qlmunch)"``
+Video Guide: https://youtu.be/VBxPHoUQDzo
 
-This will install Quality Muncher along with all of it's dependencies and add it to SendTo automatically.
+Paste the following command into WIN + R:\
+``powershell "iex(iwr -useb install.qualitymuncher.lgbt)"``
+
+This will install Quality Muncher, along with all of its dependencies, and add it to Send to automatically.
 
 # Usage
-Right click on your video, hover over "Send to" and select QualityMuncher.bat 
-
-After that, follow the prompts it gives you. If you have any issues or questions, message me on discord or join the server.
+Right click on your video, hover over "Send to" and select Quality Muncher. After that, follow the prompts it gives you. If you have any issues or questions, message me on discord or join the server.
 
 Please answer the prompts correctly and read carefully, as answering incorrectly may cause errors or crashes.
 
-If you want specific features of QM without having to go through the entire process, check out https://github.com/Thqrn/batchscripts.
-
 # Multiqueue
-The normal Quality Muncher batch file does not support multiqueue. However, with the "!!qualitymuncher multiqueue.bat" file, it does. To use this, select as many videos as you'd like, then send them to the multiqueue file. Then enter in the preset and watch as your videos are processed. For this to work, your both the multiqueue file and quality muncher MUST be in the same directory.
+The normal Quality Muncher batch file does not support multiqueue. However, with the "!!qualitymuncher multiqueue.bat" file, it does. To use this, select as many videos as you'd like, then send them to the multiqueue file. Then enter in the preset and watch as your videos are processed. For this to work, both the multiqueue file and Quality Muncher MUST be in the same directory.
 
 # Automatic Updates
-This feature checks for updates by comparing the version of the current file with the version on this GitHub. You can disable it by changing the variable "autoupdatecheck" on line 6 of the script to false.
+This feature checks for updates by comparing the version of the current file with the version on this GitHub. You can disable it by changing the variable "autoupdatecheck" in the options of the code to false.
 
 # Examples
 

@@ -12,10 +12,18 @@
 	 set meta=true
 	 :: enables saving a log, VERY useful for debugging (if enabled, also enabled metadata)
 	 set log=false
+	 :: cool animations
+	 set animate=true
 :: END OF OPTIONS
 
-:: sets the title of the window, some variables, and sends some ascii word art
-set version=1.3.14
+:: if you mess with stuff after this things might break
+if not check%2 == check set animate=false
+set cols=14
+set lines=8
+if %animate% == true goto loadingbar
+:init
+:: sets the title of the window, some variables, and sends some fun ascii art
+set version=1.3.15
 set isupdate=false
 title Quality Muncher v%version%
 if %log% == true set meta=true
@@ -32,32 +40,31 @@ set addedtextq=n
 set interpq=n
 set "qs=Quality Selected!"
 if %showtitle% == false goto skiptitle
-echo        :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
-echo     !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
-echo   ~BG7:       :?BG:  ^^@J           :@Y     .BB5@~      !@!           Y@:       .@Y          7BG~    .?#G~
-echo  7@J            .5^&^^ ^^@J           :@J     P^&: P^&:     !@!           Y@:       :@Y            7BG~.?#G~
-echo :^&5               BB :@J           :@J    Y@^^  .B#.    !@!           Y@:       :@Y              7B^&G~
-echo ~@7               5@.:@J           :@Y   ?@!    :^&G    !@!           Y@:       :@Y               ?@:
-echo .#G              .^&P :@J           :@J  !@?      ^^@5   !@!           Y@:       :@Y               ?@^^
-echo  ^^^&P:           .B#.  5^&^^          P^&: ^^@Y        !@J  !@!           Y@:       :@Y               ?@^^
-echo   .YB5!:.   . !!:Y^&!   Y#5~.   .^^?BG^^ :^&P          ?@7 !@7           Y@:       :@Y               ?@^^
-echo     .7YPPPPPP^^!YPP^&@7   :?5PPPPPPY~   5G.           YB.^^#GPPPPPPPPPJ ?B.       .B?               7#:
-echo          ...     .^^?!       ....      .              .   ...........                              .
+echo [38;2;39;55;210m       :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
+echo [38;2;39;61;210m    !5GP5YYY5PPY^^    :@?           :@J      :#@7       ~@!           Y^&..JYYYYYY@BJYYYYY! !BG~        .?#P:
+echo [38;2;40;68;209m  ~BG7:       :?BG:  ^^@J           :@Y     .BB5@~      !@!           Y@:       .@Y          7BG~    .?#G~
+echo [38;2;40;74;209m 7@J            .5^&^^ ^^@J           :@J     P^&: P^&:     !@!           Y@:       :@Y            7BG~.?#G~
+echo [38;2;41;81;209m:^&5               BB :@J           :@J    Y@^^  .B#.    !@!           Y@:       :@Y              7B^&G~
+echo [38;2;41;87;209m~@7               5@.:@J           :@Y   ?@!    :^&G    !@!           Y@:       :@Y               ?@:
+echo [38;2;42;94;208m.#G              .^&P :@J           :@J  !@?      ^^@5   !@!           Y@:       :@Y               ?@^^
+echo [38;2;42;100;208m ^^^&P:           .B#.  5^&^^          P^&: ^^@Y        !@J  !@!           Y@:       :@Y               ?@^^
+echo [38;2;43;107;208m  .YB5!:.   . !!:Y^&!   Y#5~.   .^^?BG^^ :^&P          ?@7 !@7           Y@:       :@Y               ?@^^
+echo [38;2;43;113;207m    .7YPPPPPP^^!YPP^&@7   :?5PPPPPPY~   5G.           YB.^^#GPPPPPPPPPJ ?B.       .B?               7#:
+echo [38;2;44;120;207m         ...     .^^?!       ....      .              .   ...........                              .
 echo\
-echo  ^^.            ^^. :.            :. ::            :.       .:^^~~^^:     .:            .:     :~~~~~~~~~^^ .^^~~~~~~~~^^:
-echo ~@#!         ~B@!:@?           :^&J #^&J          .#5    :?PP5YYY5PG57. 7@^^           7@^^ .YGPYYYYYYYYY? J@5YYYYYYY5PG?.
-echo ~@P#P:     :P#5@!:@J           :@Y ^&BGB~        .^&P  .Y#Y~.      .!PY ?@^^           ?@^^.#B:            J@:         ^^BB.
-echo ~@!.5^&J  .J^&Y.~@!:@J           :@Y ^&5 ?#P:      .^&P .BB:              ?@^^           7@^^~@!             J@:          ?@^^
-echo ~@7  ~BB~JP^^  ~@!:@J           :@Y ^&P  .5^&J     .^&P 5@:               ?@~.:::::::::.J@^^~@7.::::::::.   J@:...:::::~J#Y
-echo ~@7    ?P:    ~@!:@J           :@Y ^&P    ~BB~   .^&P BB                ?@G5PPPPPPPPP5B@^^~@G55555555P?   J@^^Y^&^&G55555?:
-echo ~@7           ~@!:@J           :@J ^&P      ?#P: .^&P J@^^               ?@^^           ?@^^~@!             J@: ~5B5^^
-echo ~@7           ~@7 P^&^^          5@^^ ^&P       .5^&?.^&P  P^&~            . ?@^^           ?@^^~@!             J@:   :?BG7.
-echo !@7           ~@7  Y#Y^^.    :7GB^^ .^&P         ~GB@P   ?BP7:.    .^^?G5 ?@^^           ?@^^~@!             J@:      !PBY^^
-echo ^^#!           ^^^&~   :JPPP5PPPY!    BY           7#Y    .!YPPP55PPPJ~  7#:           !#:^^^&G55555555555J ?#:        :JB?
-echo  .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .
+echo [38;2;44;126;207m ^^.            ^^. :.            :. ::            :.       .:^^~~^^:     .:            .:     :~~~~~~~~~^^ .^^~~~~~~~~^^:
+echo [38;2;45;133;207m~@#!         ~B@!:@?           :^&J #^&J          .#5    :?PP5YYY5PG57. 7@^^           7@^^ .YGPYYYYYYYYY? J@5YYYYYYY5PG?.
+echo [38;2;45;139;206m~@P#P:     :P#5@!:@J           :@Y ^&BGB~        .^&P  .Y#Y~.      .!PY ?@^^           ?@^^.#B:            J@:         ^^BB.
+echo [38;2;46;146;206m~@!.5^&J  .J^&Y.~@!:@J           :@Y ^&5 ?#P:      .^&P .BB:              ?@^^           7@^^~@!             J@:          ?@^^
+echo [38;2;46;152;206m~@7  ~BB~JP^^  ~@!:@J           :@Y ^&P  .5^&J     .^&P 5@:               ?@~.:::::::::.J@^^~@7.::::::::.   J@:...:::::~J#Y
+echo [38;2;47;159;205m~@7    ?P:    ~@!:@J           :@Y ^&P    ~BB~   .^&P BB                ?@G5PPPPPPPPP5B@^^~@G55555555P?   J@^^Y^&^&G55555?:
+echo [38;2;47;165;205m~@7           ~@!:@J           :@J ^&P      ?#P: .^&P J@^^               ?@^^           ?@^^~@!             J@: ~5B5^^
+echo [38;2;48;172;205m~@7           ~@7 P^&^^          5@^^ ^&P       .5^&?.^&P  P^&~            . ?@^^           ?@^^~@!             J@:   :?BG7.
+echo [38;2;48;178;205m!@7           ~@7  Y#Y^^.    :7GB^^ .^&P         ~GB@P   ?BP7:.    .^^?G5 ?@^^           ?@^^~@!             J@:      !PBY^^
+echo [38;2;49;185;204m^^#!           ^^^&~   :JPPP5PPPY!    BY           7#Y    .!YPPP55PPPJ~  7#:           !#:^^^&G55555555555J ?#:        :JB?
+echo [38;2;49;191;204m .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .[0m
 echo\
 :skiptitle
-color 0f
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg
 if %errorlevel% == 1 (
@@ -78,23 +85,24 @@ set complexity=s
 if not check%2 == check goto skipped
 
 :modeselect
-echo Press [S] for simple, [A] for advanced), [W] to open the website, [D] to join the discord server, and [C] to close.
+echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, or [C] to close.
 choice /n /c SAWDC
 echo\
 if %errorlevel% == 2 goto advancedfour
 if %errorlevel% == 3 goto website
 if %errorlevel% == 4 goto discord
-if %errorlevel% == 5 exit
+if %errorlevel% == 5 goto closingbar
 echo Simple mode selected!
 set complexity=s
 echo\
 :continuefour
 :customization
 :customizationoption
-echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], and custom [C].
-choice /n /c 1234C
+echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+choice /n /c 1234CR
 set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
+if %customizationquestion% == 6 set customizationquestion=r&goto random
 :skipped
 if 1%2 == 1 goto skipcustommultiqueue
 set customizationquestion=%2
@@ -112,6 +120,7 @@ if %2 == c (
      goto setendingmsg
 )
 :skipcustommultiqueue
+if %customizationquestion% == 6 set customizationquestion=r&goto random
 :: defines a few variables that will be replaced later, this is important for checking if they're valid later as it prevents missing operand errors
 set framerate=a
 set videobr=a
@@ -200,7 +209,6 @@ if not %complexity% == s goto advancedone
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
 :: grabs info from video to be used later
-set inputvideo=%1
 if NOT %complexity% == s goto advancedtwo
 :continuetwo
 set yeahlowqual=n
@@ -216,8 +224,7 @@ set /A desiredwidth=%width%/%scaleq%
 set /A desiredwidtheventest=(%desiredwidth%/2)*2
 if %complexity% == s set stretchres=n
 if %stretchres% == y (
-     set desiredwidtheventest=%desiredwidtheventest%*2
-     set /a badvideobitrate=%badvideobitrate%*2
+     set desiredwidtheventest=%desiredwidtheventest%*2								   
 )
 set interpq=n
 if NOT %complexity% == s (
@@ -227,7 +234,7 @@ if NOT %complexity% == s (
 	     echo\
      )
 )
-set /A badvideobitrate=(%desiredheight%*%desiredwidth%*%framerate%/%videobr%)
+set /A badvideobitrate=(%desiredheight%/2*%desiredwidtheventest%*%framerate%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: defines filters
 :: filters not working bc interpolating, need fix (filters work but interp doesnt)
@@ -261,14 +268,15 @@ if NOT %complexity% == s goto advancedthree
 :encoding
 :: metadata
 if %meta% == false goto encodingmsg
-if NOT %complexity% == s goto advancedmeta
 set meta1=-metadata comment="Made with Quality Muncher v%version% - https://github.com/Thqrn/qualitymuncher"
 set meta2=-metadata "Quality Muncher Info"=
 set meta3=Complexity %complexity%, option %customizationquestion%
 set meta4=Input had a width of %width% and a height of %height%. The final bitrates were %badvideobitrate% for video and %badaudiobitrate%000 for audio. Final scale was %desiredwidtheventest% for width and %desiredheight% for height.
 set meta5=fps %framerate%, video bitrate %videobr%, audio bitrate %audiobr%, scaleq %scaleq%, details %details%
 set meta6=start %starttime%, duration %time%, speed %speedq%, color %colorq%, interpolated %interpq%, stretched %stretchres%, distorted audio %bassboosted%, added audio %lowqualmusicquestion%, added text %addedtextq%.
+:: I HAVE NO CLUE WHAT META 7 EVEN DOES BUT IF I REMOVE IT, AND THE USER PICKS ADVANCED, THE SCRIPT CRASHES??????? IDK WHY
 set meta7=
+if NOT %complexity% == s goto advancedmeta
 set metadata=%meta1% %meta2%"%meta3%. %meta4%"
 if %customizationquestion% == c set metadata=%meta1% %meta2%"%meta3%, %meta5%. %meta4%"
 goto encodingmsg
@@ -278,7 +286,7 @@ if %customizationquestion% == c set metadata=%meta1% %meta2%"%meta3%, %meta5%, %
 :: encoding msg
 :encodingmsg
 if %log% == true echo %metadata% > "%~dpn1 (%endingmsg%) log.txt"
-echo\ & echo Encoding... & echo\ & color 06
+echo [38;2;254;165;0mEncoding...[0m & echo\
 :: determining which encoding option to use
 if %complexity% == s (
      set time=32727
@@ -323,7 +331,7 @@ if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
 if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
 if exist "%temp%\badvideobitrate.txt" (del "%temp%\badvideobitrate.txt")
-echo\ & echo Done! & echo\ & color 0A
+echo\ & echo [92mDone![0m & echo\
 if %stayopen% == false goto ending
 if 1%2 == 1 goto :exiting
 if not check%2 == check goto ending
@@ -469,16 +477,16 @@ if %errorlevel% == 1 goto classic
 :: new method
 set /p distortionseverity=How distorted should the audio be, [93m1-10[0m: 
 set /a distsev=%distortionseverity%*10
-set /a bb1=(%distsev%*10)
-set /a bb2=(%distsev%*10)+(%distsev%*25)
-set /a bb3=(%distsev%*10)+2*(%distsev%*25)
+set /a bb1=0
+set /a bb2=(%distsev%*25)
+set /a bb3=2*(%distsev%*25)
 set audiofilters=-af "firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%|%bb2%|%bb3%,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %speedq% == 1 (
      set audiofilters=-af "atempo=%speedq%"
      if %bassboosted% == y set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%|%bb2%|%bb3%,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
 )
-echo\ & goto advancedmeta
+echo\ & goto encoding
 
 :: old method
 :classic
@@ -532,17 +540,25 @@ cls & goto verystart
 :noinput
 echo [91mERROR: no input file![0m & echo Drag this .bat into the SendTo folder - press [90;7mWindows + R[0m and type in [90;7mshell:sendto[0m & echo After that, right click on your video, drag over to Send To and click on [90;7mQuality Muncher.bat[0m. & echo\
 echo Press [W] to open the website, [D] to join the discord server, or [C] to close.
-choice /n /c WDC
+echo You can also press [F] to input a file manually.
+choice /n /c WDCF
 echo\ & set confirmselec=y
 if %errorlevel% == 1 goto website
 if %errorlevel% == 2 goto discord
-exit
+if %errorlevel% == 4 goto manualfile
+goto closingbar
 
 :exiting
-pause & exit
+pause & goto closingbar
+
+:manualfile
+set me=%~f0
+set /p file=Please drag your input here: 
+cls & call "%me%" %file%
+exit
 
 :updatecheck
-set "download=https://github.com/Thqrn/qualitymuncher/blob/main/Quality%%20Muncher.bat"
+set "download=https://github.com/Thqrn/qualitymuncher/blob/main/Quality%%20Muncher.bat"\
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 goto nointernet
 set internet=true
@@ -557,12 +573,46 @@ echo\ & set isupdate=false
 if %errorlevel% == 2 cls && goto verystart
 echo Automatic updating will only work properly if Quality Muncher is in send-to. Proceed?
 choice
-if %errorlevel% == 2 exit
-echo\ & echo [7mWhen prompted, make sure you press o and then press enter.[0m & echo\
-powershell "iex(iwr -useb is.gd/qlmunch)" && cls && "C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\SendTo\Quality Muncher.bat" %1
+if %errorlevel% == 2 goto closingbar
+echo\ & echo [7mWhen prompted, make sure you press [O] and then press enter.[0m & echo\
+powershell "iex(iwr -useb install.qualitymuncher.lgbt)" & cls & "C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\SendTo\Quality Muncher.bat" %1
 
 :nointernet
+cls
 set internet=false & echo [91mUpdate check failed, skipping.[0m & echo\
 goto verystart
 
+:random
+set details=n
+set min=1
+set max=15
+echo\
+echo [91mR[0m[93ma[0m[92mn[0m[96md[0m[94mo[0m[95mm[0m %qs%
+set /a framerate=%random% %% 30
+set /a videobr=%random% * %max% / 32768 + %min%
+set /a scaleq=%random% * %max% / 32768 + %min%
+set /a audiobr=%random% * %max% / 32768 + %min%
+set endingmsg=Random Quality
+goto setendingmsg
+
+:loadingbar
+mode con: cols=%cols% lines=%lines%
+set /a cols=%cols%+5
+if not %cols% gtr 124 goto loadingbar
+:loadingy
+mode con: cols=%cols% lines=%lines%
+set /a lines=%lines%+1
+if not %lines% gtr 35 goto loadingy
+powershell -command "&{(get-host).ui.rawui.buffersize=@{width=%cols%;height=9901};}"
+goto init
+
+:closingbar
+if %animate% == false exit
+mode con: cols=%cols% lines=%lines%
+set /a cols=%cols%-5
+set /a lines=%lines%-1
+if not %cols% == 14 goto closingbar
+exit
+
 :ending
+if %animate% == true goto closingbar
