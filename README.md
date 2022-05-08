@@ -12,14 +12,15 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - adding text to video
  - multiqueue when used with the multiqueue script
  - custom start and duration times
- - consistent updates and new features
- - 4 presets and custom options
+ - active development
+ - presets and custom options
  - automatic update checking
- - setting custom output fps, audio bitrate, video bitrate, and scale
- - minimal bugs or issues
+ - setting custom output framerate, audio bitrate, video bitrate, scale, and more
+ - mostly bug-free
  - two different methods for audio distortion (earrape)
  - stretched resolution output
  - custom saturation, contrast, and brightness values
+ - frame resampling / motion blur
  - and more!
 
 # How to Install

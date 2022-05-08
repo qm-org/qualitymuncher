@@ -10,34 +10,39 @@
      set showtitle=true
 	 :: enables metadata for debugging purposes
 	 set meta=true
-	 :: enables saving a log, VERY useful for debugging (if enabled, also enabled metadata)
+	 :: saves a log after rendering, useful for debugging (if enabled, also enables metadata)
 	 set log=false
 	 :: cool animations
 	 set animate=true
+	 :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
+	 set encodingspeed=ultrafast
+	 :: always asks for resample, no matter what (unless you're using multiqueue)
+	 set alwaysaskresample=false
 :: END OF OPTIONS
 
 :: if you mess with stuff after this things might break
-if not check%2 == check set animate=false
+if not check%2 == check set animate=false&set alwaysaskresample=false
 set cols=14
 set lines=8
+set done=false
 if %animate% == true goto loadingbar
 :init
 :: sets the title of the window, some variables, and sends some fun ascii art
-set version=1.3.15
+set version=1.3.16
 set isupdate=false
-title Quality Muncher v%version%
+if check%2 == check title Quality Muncher v%version%
 if %log% == true set meta=true
-if not check%2 == check goto verystart
+if not check%2 == check set showtitle=false&goto verystart
 :: checks for updates
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 if %autoupdatecheck% == true goto updatecheck
 
-:: sets the title of the window and sends some ascii word art
 :verystart
 set stretchres=n
 set colorq=n
 set addedtextq=n
 set interpq=n
+set resample=n
 set "qs=Quality Selected!"
 if %showtitle% == false goto skiptitle
 echo [38;2;39;55;210m       :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
@@ -131,6 +136,8 @@ set details=n
 :: endingmsg is added to the end of the video for the output name (if you don't understand, just run the script and look at the name of the output)
 if "%customizationquestion%" == "c" echo\ & echo Custom %qs%
 :customquestioncheckpoint
+if %customizationquestion% == 6 set customizationquestion=r&goto random
+if %customizationquestion% == r goto random
 if "%customizationquestion%" == "c" (
 	 echo\
      set /p framerate=What fps do you want it to be rendered at: 
@@ -180,6 +187,7 @@ if %customizationquestion% == 4 (
      set endingmsg=Unbearable Quality
 )
 :: checks if the variables are all whole numbers, if they aren't it'll ask again for their values
+if not %customizationquestion% == c goto setendingmsg
 set errormsg=[91mOne or more of your inputs for custom quality was invalid! Please use only numbers![0m
 if not "%framerate%"=="%framerate: =%" goto errorcustom
 if not "%videobr%"=="%videobr: =%" goto errorcustom
@@ -213,6 +221,8 @@ if NOT %complexity% == s goto advancedtwo
 :continuetwo
 set yeahlowqual=n
 :filters
+goto resamplequestion
+:afterresample
 echo\
 :: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
 set /A desiredheight=%height%/%scaleq%
@@ -237,30 +247,20 @@ if NOT %complexity% == s (
 set /A badvideobitrate=(%desiredheight%/2*%desiredwidtheventest%*%framerate%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: defines filters
-:: filters not working bc interpolating, need fix (filters work but interp doesnt)
-set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
-if %interpq% == y (
-     set filters=-vf %textfilter%%speedfilter%scale=-2:%desiredheight%:flags=neighbor,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
-)
+set "fpsfilter=fps=%framerate%,"
+if %interpq% == y set "fpsfilter=minterpolate=fps=%framerate%,"
+if %resample% == y set "fpsfilter=tmix=frames=%tmixframes%:weights=1,fps=%framerate%,"
+set filters=-vf %textfilter%%fpsfilter%%speedfilter%scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
 if %stretchres% == y (
-     set filters=-vf %textfilter%%speedfilter%fps=%framerate%,scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,format=yuv420p%videofilters%"
-	 if %interpq% == y (
-         set filters=-vf %textfilter%%speedfilter%scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
-     )
+     set filters=-vf %textfilter%%fpsfilter%%speedfilter%scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,format=yuv420p%videofilters%"
 )
 if %colorq% == y (
-     set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
-	 if %interpq% == y (
-         set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=-2:%desiredheight%:flags=neighbor,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
-     )
+     set filters=-vf %textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
      if %stretchres% == y (
-          set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,fps=%framerate%,scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,format=yuv420p%videofilters%"
-		 if %interpq% == y (
-             set filters=-vf %textfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,minterpolate=fps=%framerate%,format=yuv420p%videofilters%"
-         )
+          set filters=-vf %textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,scale=%desiredwidtheventest%:%desiredheight%:flags=neighbor,setsar=1:1,format=yuv420p%videofilters%"
      )
 )
-if %complexity% == s set filters=-vf "fps=%framerate%,scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
+if %complexity% == s set filters=-vf "%fpsfilter%scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
 :: bass boosting
 set bassboosted=n
 set audiofilters= 
@@ -271,12 +271,12 @@ if %meta% == false goto encodingmsg
 set meta1=-metadata comment="Made with Quality Muncher v%version% - https://github.com/Thqrn/qualitymuncher"
 set meta2=-metadata "Quality Muncher Info"=
 set meta3=Complexity %complexity%, option %customizationquestion%
-set meta4=Input had a width of %width% and a height of %height%. The final bitrates were %badvideobitrate% for video and %badaudiobitrate%000 for audio. Final scale was %desiredwidtheventest% for width and %desiredheight% for height.
+set meta4=Input had a width of %width% and a height of %height%. The final bitrates were %badvideobitrate% for video and %badaudiobitrate%000 for audio. Final scale was %desiredwidtheventest% for width and %desiredheight% for height and resample was set to %resample%.
 set meta5=fps %framerate%, video bitrate %videobr%, audio bitrate %audiobr%, scaleq %scaleq%, details %details%
 set meta6=start %starttime%, duration %time%, speed %speedq%, color %colorq%, interpolated %interpq%, stretched %stretchres%, distorted audio %bassboosted%, added audio %lowqualmusicquestion%, added text %addedtextq%.
 :: I HAVE NO CLUE WHAT META 7 EVEN DOES BUT IF I REMOVE IT, AND THE USER PICKS ADVANCED, THE SCRIPT CRASHES??????? IDK WHY
 set meta7=
-if NOT %complexity% == s goto advancedmeta
+if not %complexity% == s goto advancedmeta
 set metadata=%meta1% %meta2%"%meta3%. %meta4%"
 if %customizationquestion% == c set metadata=%meta1% %meta2%"%meta3%, %meta5%. %meta4%"
 goto encodingmsg
@@ -300,7 +300,7 @@ goto optiontwo
 ffmpeg -hide_banner -loglevel error -stats ^
 -ss %starttime% -t %time% -i %1 ^
 %filters% ^
--c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
+-c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%).mp4"
@@ -310,7 +310,7 @@ goto end
 ffmpeg -hide_banner -loglevel warning -stats ^
 -ss %starttime% -t %time% -i %1 -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% ^
--c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
+-c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 %audiofilters% ^
@@ -320,10 +320,9 @@ goto end
 ffmpeg -hide_banner -loglevel error -stats ^
 -i %1 ^
 %filters% ^
--c:v libx264 %metadata% -preset ultrafast -b:v %badvideobitrate% ^
+-c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%).mp4"
-goto end
 :end
 if exist "%temp%\height.txt" (del "%temp%\height.txt")
 if exist "%temp%\width.txt" (del "%temp%\width.txt")
@@ -332,6 +331,7 @@ if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
 if exist "%temp%\badvideobitrate.txt" (del "%temp%\badvideobitrate.txt")
 echo\ & echo [92mDone![0m & echo\
+set done=true
 if %stayopen% == false goto ending
 if 1%2 == 1 goto :exiting
 if not check%2 == check goto ending
@@ -463,6 +463,18 @@ if %lowqualmusicquestion% == y (
 )
 goto continuetwo
 
+:resamplequestion
+if %alwaysaskresample% == true goto bypassnoresample
+if "%complexity%" == "s" goto afterresample
+if not %fpsvalue% gtr %framerate% goto afterresample
+:bypassnoresample
+echo\
+choice /c YN /m "Do you want to resample frames? This will look like motion blur, but will take longer to render."
+if %errorlevel% == 1 set resample=y
+echo %resample%
+if %resample% == n goto afterresample
+set /A tmixframes=%fpsvalue%/%framerate%
+goto afterresample
 
 :advancedthree
 choice /c YN /m "Do you want to distort the audio (earrape)?"
@@ -470,6 +482,7 @@ if %errorlevel% == 1 set bassboosted=y
 if %bassboosted% == n (
      set audiofilters= 
 	 if NOT %speedq% == 1 set audiofilters=-af "atempo=%speedq%"
+	 echo\
 	 goto encoding
 )
 choice /c 12 /m "Which distortion method should be used?"
@@ -549,6 +562,7 @@ if %errorlevel% == 4 goto manualfile
 goto closingbar
 
 :exiting
+if %done% == true ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 pause & goto closingbar
 
 :manualfile
