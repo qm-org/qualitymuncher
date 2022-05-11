@@ -18,17 +18,26 @@
 	 set encodingspeed=ultrafast
 	 :: always asks for resample, no matter what (unless you're using multiqueue)
 	 set alwaysaskresample=false
+	 :: default video container, uses .mp4 as default (don't forget the dot!)
+	 set container=.mp4
+	 :: default container for audio
+	 set audiocontainer=.mp3
 :: END OF OPTIONS
 
+:: batch breaking for no reason counter: 10
+
 :: if you mess with stuff after this things might break
+set inpcontain=%~x1
 if not check%2 == check set animate=false&set alwaysaskresample=false
 set cols=14
 set lines=8
 set done=false
+set hasvideo=true
+set bassboosted=n
 if %animate% == true goto loadingbar
 :init
-:: sets the title of the window, some variables, and sends some fun ascii art
-set version=1.3.16
+:: sets the title of the window, some variables, and sends an ascii thing
+set version=1.3.17
 set isupdate=false
 if check%2 == check title Quality Muncher v%version%
 if %log% == true set meta=true
@@ -84,19 +93,27 @@ set confirmselec=n
 :: checks if someone used the script correctly
 echo Quality Muncher is still in development. This is version %version%. & echo Please DM me at Frost#5872 for any questions or support, or join the discord server. & echo\
 if %1check == check goto noinput
+:: has input, now checks for video streams
+set inputvideo=%1
+ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
+set /p vstream=<%temp%\vstream.txt
+if 1%vstream% == 1 goto novideostream
+:: this line has to be filled or else batch shits itself and dies (yes this is serious, i dont even know why)
 :: intro, questions and defining variables
 :: asks advanced or simple version
 set complexity=s
 if not check%2 == check goto skipped
 
 :modeselect
-echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, or [C] to close.
-choice /n /c SAWDC
+echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, [P] to make a suggestion, or
+echo [C] to close.
+choice /n /c SAWDCP
 echo\
 if %errorlevel% == 2 goto advancedfour
-if %errorlevel% == 3 goto website
+if %errorlevel% == 3 echo [96mSending to website![0m & start "" https://qualitymuncher.lgbt/ & cls & goto verystart
 if %errorlevel% == 4 goto discord
 if %errorlevel% == 5 goto closingbar
+if %errorlevel% == 6 goto suggestion
 echo Simple mode selected!
 set complexity=s
 echo\
@@ -134,7 +151,7 @@ set scaleq=a
 set details=n
 :: Sets the quality based on customizationquestion
 :: endingmsg is added to the end of the video for the output name (if you don't understand, just run the script and look at the name of the output)
-if "%customizationquestion%" == "c" echo\ & echo Custom %qs%
+if "%customizationquestion%" == "c" echo\&echo Custom %qs%
 :customquestioncheckpoint
 if %customizationquestion% == 6 set customizationquestion=r&goto random
 if %customizationquestion% == r goto random
@@ -201,8 +218,8 @@ if NOT %testforfps% == %framerate% goto errorcustom
 if NOT %testforvideobr% == %videobr% goto errorcustom
 if NOT %testforaudiobr% == %audiobr% goto errorcustom
 if NOT %testforscaleq% == %scaleq% goto errorcustom
+:: grabs info from video to be used later
 :setendingmsg
-set inputvideo=%1
 ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
 set /p fpsvalue=<%temp%\fps.txt
 set /a fpsvalue=%fpsvalue%
@@ -216,15 +233,15 @@ if not %complexity% == s goto advancedone
 :continueone
 :: Sets the audio and video bitrate based on audiobr and videobr, adjusting based on framerate and resolution
 set /A badaudiobitrate=80/%audiobr%
-:: grabs info from video to be used later
 if NOT %complexity% == s goto advancedtwo
 :continuetwo
 set yeahlowqual=n
 :filters
+:: user picks yes or no resampling/tmix
 goto resamplequestion
 :afterresample
 echo\
-:: Finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
+:: finds if the height of the video divided by scaleq is an even number, if not it changes it to an even number
 set /A desiredheight=%height%/%scaleq%
 set /A desiredheighteventest=(%desiredheight%/2)*2
 if %desiredheighteventest% == NOT %desiredheight% (
@@ -236,6 +253,7 @@ if %complexity% == s set stretchres=n
 if %stretchres% == y (
      set desiredwidtheventest=%desiredwidtheventest%*2								   
 )
+:: asks if the user wants to interpolate if framerate input is less than output
 set interpq=n
 if NOT %complexity% == s (
      if %framerate% gtr %fpsvalue% (
@@ -244,6 +262,7 @@ if NOT %complexity% == s (
 	     echo\
      )
 )
+:: bitrate formula
 set /A badvideobitrate=(%desiredheight%/2*%desiredwidtheventest%*%framerate%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: defines filters
@@ -262,7 +281,6 @@ if %colorq% == y (
 )
 if %complexity% == s set filters=-vf "%fpsfilter%scale=-2:%desiredheight%:flags=neighbor,format=yuv420p%videofilters%"
 :: bass boosting
-set bassboosted=n
 set audiofilters= 
 if NOT %complexity% == s goto advancedthree
 :encoding
@@ -303,7 +321,7 @@ ffmpeg -hide_banner -loglevel error -stats ^
 -c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
--vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%).mp4"
+-vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%)%container%"
 goto end
 :: option two, there is music
 :optiontwo
@@ -314,7 +332,7 @@ ffmpeg -hide_banner -loglevel warning -stats ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 %audiofilters% ^
--vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%).mp4"
+-vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%)%container%"
 goto end
 :optionthree
 ffmpeg -hide_banner -loglevel error -stats ^
@@ -322,7 +340,7 @@ ffmpeg -hide_banner -loglevel error -stats ^
 %filters% ^
 -c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%).mp4"
+-vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (%endingmsg%)%container%"
 :end
 if exist "%temp%\height.txt" (del "%temp%\height.txt")
 if exist "%temp%\width.txt" (del "%temp%\width.txt")
@@ -330,6 +348,7 @@ if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
 if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
 if exist "%temp%\badvideobitrate.txt" (del "%temp%\badvideobitrate.txt")
+if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
 echo\ & echo [92mDone![0m & echo\
 set done=true
 if %stayopen% == false goto ending
@@ -362,6 +381,7 @@ if %speedq% == default (
 )
 set speedfilter="setpts=(1/%speedq%)*PTS,"
 set speedfilter=%speedfilter:"=%
+if %hasvideo% == false goto nextaudiostep1
 :addtext
 echo\
 :: add text
@@ -478,16 +498,21 @@ goto afterresample
 
 :advancedthree
 choice /c YN /m "Do you want to distort the audio (earrape)?"
-if %errorlevel% == 1 set bassboosted=y
+if %errorlevel% == 1 set bassboosted=y&goto skipno
 if %bassboosted% == n (
      set audiofilters= 
 	 if NOT %speedq% == 1 set audiofilters=-af "atempo=%speedq%"
 	 echo\
+	 if %hasvideo% == false goto nextaudiostep2
 	 goto encoding
 )
-choice /c 12 /m "Which distortion method should be used?"
+:skipno
+choice /n /c 12 /m "Which distortion method should be used, old [1] or new [2]?"
 if %errorlevel% == 1 goto classic
+if %errorlevel% == 2 goto newmethod
+:: batch will shit itself and die if there isnt a line here
 :: new method
+:newmethod
 set /p distortionseverity=How distorted should the audio be, [93m1-10[0m: 
 set /a distsev=%distortionseverity%*10
 set /a bb1=0
@@ -499,6 +524,7 @@ if NOT %speedq% == 1 (
      set audiofilters=-af "atempo=%speedq%"
      if %bassboosted% == y set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%|%bb2%|%bb3%,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
 )
+if %hasvideo% == false goto nextaudiostep2
 echo\ & goto encoding
 
 :: old method
@@ -511,6 +537,8 @@ if NOT %speedq% == 1 (
      set audiofilters=-af "atempo=%speedq%"
      if %bassboosted% == y set audiofilters=-af "atempo=%speedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 )
+if %hasvideo% == false goto nextaudiostep2
+:: does batch also do it here
 goto encoding
 
 
@@ -527,42 +555,51 @@ set time=32727
 set /p time=[93mIn seconds[0m, how long after the start time do you want it to be: 
 if "%time%" == " " set time=32727
 echo\
+if %hasvideo% == false goto backtoaudio
 goto continuefour
 
-:: currently unused
-:middletext
-set textposx=(w-text_w)/2 & set textposy=(h-text_h)/2 & goto afterpos
-
-:bottomtext
-set textposx=(w-text_w)/2 & set textposy=(h-1.5*text_h) & goto afterpos
-
-:errorcustom
-echo\ & echo %errormsg% & goto customquestioncheckpoint
-
-:toptext
-set textposx=(w-text_w)/2 & set textposy=(0.5*text_h) & goto afterpos
-
 :discord
-echo [96mSending to Discord![0m & start "" https://discord.com/invite/9tRZ6C7tYz & echo\
-cls & goto verystart
+echo [96mSending to Discord![0m & start "" https://discord.com/invite/9tRZ6C7tYz & cls & goto verystart
 
 :website
-echo [96mSending to website![0m & start "" https://qualitymuncher.lgbt/ & echo\
-cls & goto verystart
+echo [96mSending to website![0m & start "" https://qualitymuncher.lgbt/ & cls & goto verystart
+
+:: suggestions
+:suggestion
+ping /n 1 discord.com  | find "Reply" > nul
+if %errorlevel% == 1 echo [91mSorry, either discord is down or you're not connected to the internet. Try again later.[0m&echo\&pause&cls&goto verystart
+set /p "mainsuggestion=What's your suggestion? "
+set /p "suggestionbody=If needed, please elaborate further here: "
+set /p "author=What is your name on discord? [93mThis is optional[0m: "
+echo\
+echo %author%'s suggestion:
+echo %mainsuggestion%
+echo %suggestionbody%
+echo\
+choice /m "Are you sure you would like to submit this suggestion?"
+if %errorlevel% == 1 goto continuesuggest
+if %errorlevel% == 2 echo [91mOkay, your suggestion has been cancelled.[0m&echo\&pause&cls&goto verystart
+:continuesuggest
+:: please do not spam this webhook it would make me very sad
+curl -s -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/973701372128157776/A-TFFPzP-hfWR-W2TuOllG_GUEX4SXN7RRqu-xLdSJgcgoQF6_x-GkwrMxDahw5g_aFE
+echo [92mYour suggestion has been successfully sent to the developers![0m &echo\&pause&cls&goto verystart
 
 :noinput
 echo [91mERROR: no input file![0m & echo Drag this .bat into the SendTo folder - press [90;7mWindows + R[0m and type in [90;7mshell:sendto[0m & echo After that, right click on your video, drag over to Send To and click on [90;7mQuality Muncher.bat[0m. & echo\
-echo Press [W] to open the website, [D] to join the discord server, or [C] to close.
+echo Press [W] to open the website, [D] to join the discord server, [P] to make a suggestion, or [C] to close.
 echo You can also press [F] to input a file manually.
-choice /n /c WDCF
+choice /n /c WDCFP
 echo\ & set confirmselec=y
 if %errorlevel% == 1 goto website
 if %errorlevel% == 2 goto discord
 if %errorlevel% == 4 goto manualfile
+if %errorlevel% == 5 goto suggestion
 goto closingbar
 
 :exiting
+where /q ffplay || goto aftersound
 if %done% == true ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
+:aftersound
 pause & goto closingbar
 
 :manualfile
@@ -589,7 +626,7 @@ echo Automatic updating will only work properly if Quality Muncher is in send-to
 choice
 if %errorlevel% == 2 goto closingbar
 echo\ & echo [7mWhen prompted, make sure you press [O] and then press enter.[0m & echo\
-powershell "iex(iwr -useb install.qualitymuncher.lgbt)" & cls & "C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\SendTo\Quality Muncher.bat" %1
+powershell -noprofile "iex(iwr -useb install.qualitymuncher.lgbt)" & cls & "C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\SendTo\Quality Muncher.bat" %1
 
 :nointernet
 cls
@@ -617,16 +654,44 @@ if not %cols% gtr 124 goto loadingbar
 mode con: cols=%cols% lines=%lines%
 set /a lines=%lines%+1
 if not %lines% gtr 35 goto loadingy
-powershell -command "&{(get-host).ui.rawui.buffersize=@{width=%cols%;height=9901};}"
+powershell -noprofile -command "&{(get-host).ui.rawui.buffersize=@{width=%cols%;height=9901};}"
 goto init
 
 :closingbar
 if %animate% == false exit
+:closingloop
 mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%-5
 set /a lines=%lines%-1
-if not %cols% == 14 goto closingbar
+if not %cols% == 14 goto closingloop
 exit
+
+:novideostream
+set audioencoder=aac
+if %audiocontainer% == .mp3 set audioencoder=libmp3lame
+set hasvideo=false
+echo [91mInput has no video, skipping video related questions...[0m
+echo\
+set /p audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: 
+set /A badaudiobitrate=80/%audiobr%
+goto startquestion
+:backtoaudio
+choice /m "Adjust audio speed? "
+set speedq=1
+if %errorlevel% == 1 goto advancedone
+:nextaudiostep1
+echo\
+goto advancedthree
+:nextaudiostep2
+echo\ & echo [38;2;254;165;0mEncoding...[0m & echo\
+ffmpeg -hide_banner -loglevel error -stats ^
+-ss %starttime% -t %time% -i %1 ^
+-vn %metadata% -preset %encodingspeed% ^
+-c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
+%audiofilters% ^
+-vsync vfr -movflags +use_metadata_tags+faststart "%~dpn1 (Quality Munched)%audiocontainer%"
+goto end
+
 
 :ending
 if %animate% == true goto closingbar
