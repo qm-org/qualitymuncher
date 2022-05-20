@@ -13,10 +13,6 @@ p {
   font-family:quicksand;
   font-size: 24px;
 }
-.divtext {
-  font-family:quicksand;
-  font-size: 24px;
-}
 .textbox {
   color: black;
   padding: 12px 32px;
@@ -26,7 +22,7 @@ p {
   font-size: 24px;
   margin: 4px 8px;
   font-family:quicksand;
-  min-width: 600px;
+  max-width: 900px;
 }
 
 .textboxwide {
@@ -41,7 +37,7 @@ p {
 }
 
 .header {
-  font-size: max(48px, 6vw);
+  font-size: max(70px, 6vw);
   min-width: 300px;
 }
 .button {
@@ -58,7 +54,8 @@ p {
   cursor: pointer;
   font-family:quicksand;
   border-radius: 32px;
-  min-width: 600px;
+  width: 100%
+  max-width: 900px;
 }
 
 .buttondiscord {
@@ -143,7 +140,11 @@ p {
   display: block;
   margin-left: auto;
   margin-right: auto;
-  width: 40%;
+  width: 90%;
+  max-width: 700px;
+}
+.image {
+  max-width: 768px;
 }
 .active {
   background-color: #58a6ff;
@@ -172,39 +173,15 @@ li a {
   display: block;
   color: white;
   text-align: center;
-  padding: min(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
+  padding: max(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
   text-decoration: none;
-  font-size: max(12px, 1vw);
+  font-size: max(16px, 1vw);
 }
 li a:hover {
   background-color: #111;
   transition-duration: 0.4s;
 }
-.img-comp-container {
-  position: relative;
-  height: 768px; /*should be the same height as the images*/
-}
 
-.img-comp-img {
-  position: absolute;
-  width: auto;
-  height: auto;
-  overflow: hidden;
-}
-
-.img-comp-img img {
-  display: block;
-  vertical-align: middle;
-}
-
-.img-comp-slider {
-  position: absolute;
-  z-index: 9;
-  border-left: 4px solid black;
-  cursor: ew-resize;
-  opacity: 1;
-  height: 432px;
-}
 @keyframes moveup {
   0%   {left:0px; top:300px; opacity: 0; position: relative;}
   100% {left:0px; top:0px; opacity: 1; position: relative;}
@@ -252,6 +229,27 @@ span.highlight {
 }
 .gone {
   display: none;
+}
+
+.activator:hover + .gone {
+  display: block;
+}
+
+.previewimage {
+	height: auto;
+}
+
+.smallertext {
+    font-size: max(16px, 1vw);
+}
+
+.secret:after{
+    content:'Website made by Frost#5872';
+	font-style: italic;
+}
+.secret:hover:after{
+    content:'Check out the source code by clicking the GitHub link on the home bar!';
+	font-style: italic;
 }
 </style>
 <head>
