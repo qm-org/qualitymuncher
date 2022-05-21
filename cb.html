@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta property="og:title" content=cheatbreaker 2 unofficial site!>
+<meta property="og:site_name" content=cheatbreaker 2 unofficial site!>
+<meta property="og:url" content=https://qualitymuncher.lgbt/cb.html>
+<meta property="og:description" content=i love cheatbreaker two but this page is sadly not official!>
+</head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
+.noscrollbar::-webkit-scrollbar {
+  display: none;
+}
+.noscrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+p {
+  font-family:quicksand;
+  font-size: 24px;
+}
+.textbox {
+  color: black;
+  padding: 12px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 24px;
+  margin: 4px 8px;
+  font-family:quicksand;
+  max-width: 900px;
+}
+
+.textboxwide {
+  color: black;
+  padding: 12px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 8px;
+  font-family:quicksand;
+}
+
+.header {
+  font-size: max(70px, 6vw);
+  min-width: 300px;
+  font-family:quicksand;
+}
+.button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 24px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  font-family:quicksand;
+  border-radius: 32px;
+  width: 100%
+  max-width: 900px;
+}
+
+.buttondiscord {
+  background-color: white; 
+  color: #404eed; 
+  border: 2px solid #404eed;
+}
+
+.buttondiscord:hover {
+  background-color: #404eed;
+  color: white;
+}
+
+.button2 {
+  background-color: white; 
+  color: black; 
+  border: 2px solid #008CBA;
+}
+
+.button2:hover {
+  background-color: #008CBA;
+  color: white;
+}
+
+.button3 {
+  background-color: white; 
+  color: black; 
+  border: 2px solid #f44336;
+}
+
+.button3:hover {
+  background-color: #f44336;
+  color: white;
+}
+
+.button4 {
+  background-color: white;
+  color: black;
+  border: 2px solid #e7e7e7;
+}
+
+.button4:hover {background-color: #e7e7e7;}
+
+.button5 {
+  background-color: lightgrey;
+  color: black;
+  border: 2px solid #555555;
+}
+
+.button5:hover {
+  background-color: #555555;
+  color: white;
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+.button5:active {
+  background-color: #303030;
+  color: white;
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  border: 2px solid #303030;
+}
+.buttontextoverlay {
+  background-color: lightgrey;
+  color: black;
+  border: 2px solid #555555;
+}
+
+.buttontextoverlay:hover {
+  background-color: #555555;
+  color: white;
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+.buttontextoverlay:active {
+  background-color: #303030;
+  color: white;
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  border: 2px solid #303030;
+}
+.centertext {
+  text-align: center;
+}
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+  max-width: 700px;
+}
+.image {
+  max-width: 768px;
+}
+.active {
+  background-color: #58a6ff;
+}
+li {
+  float: left;
+}
+a {
+  display: block;
+  padding: 8px;
+  background-color: #333;
+  font-family:quicksand;
+}
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  left: 0px;
+}
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: max(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
+  text-decoration: none;
+  font-size: max(16px, 1vw);
+}
+li a:hover {
+  background-color: #111;
+  transition-duration: 0.4s;
+}
+
+@keyframes moveup {
+  0%   {left:0px; top:300px; opacity: 0; position: relative;}
+  100% {left:0px; top:0px; opacity: 1; position: relative;}
+}
+.moveup {
+  animation-name: moveup;
+  animation-duration: 1s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+}
+@keyframes fadein {
+  0%   {opacity: 0; position: relative;}
+  100% {opacity: 1; position: relative;}
+}
+.fadein {
+  animation-name: fadein;
+  animation-duration: 1.3s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 1;
+}
+@keyframes fadeout {
+  0%   {opacity: 1; position: relative;}
+  100% {opacity: 0; position: relative;}
+}
+.fadeout {
+  animation-name: fadeout;
+  animation-duration: 1s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 1;
+}
+@keyframes movedown {
+  0%   {left:0px; top:0px; opacity: 1; position: relative;}
+  100% {left:0px; top:300px; opacity: 0; position: relative;}
+}
+.movedown {
+  animation-name: movedown;
+  animation-duration: 1s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+}
+span.highlight {
+    color: white;
+	background: #404040;
+	font-family: "courier new";
+}
+.gone {
+  display: none;
+}
+
+.activator:hover + .gone {
+  display: block;
+}
+
+.previewimage {
+	height: auto;
+}
+
+.smallertext {
+    font-size: max(16px, 1vw);
+}
+
+.secret:after{
+    content:'this page is unofficial and made by Frost#5872';
+	font-style: italic;
+}
+.secret:hover:after{
+    content:'I LOVE CHEATBREAKER TWO';
+	font-style: italic;
+}
+</style>
+<head>
+  <title>CHEATBREAKER TWO REAL</title>
+  <ul>
+    <li><a href="https://discord.gg/DBCr3EJDhZ">Discord</a></li>
+  </ul>
+</head>
+<body style="background-color:lightgrey;" class="noscrollbar">
+<button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
+<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>I LOVE CHEATBREAKER TWO</strong></div>
+<p class="centertext fadein" style="animation-duration: 2.5s;"><b>cheatbreaker 2 insert heart emoji</b></p>
+<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">
+cheatbreaker two is adding shields and tridents in 1.8.9 update confirmed!<br/><br/><br/>
+</p>
+<div class="textboxwide center moveup secret" style="animation-duration: 1.9s;">
+</div>
+</body>
+</html>
