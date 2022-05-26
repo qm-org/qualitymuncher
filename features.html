@@ -13,13 +13,15 @@ p {
   font-family:quicksand;
   font-size: 24px;
   text-align: center;
+  color: white;
 }
 .divtext {
   font-family:quicksand;
   font-size: 24px;
+  color: white;
 }
 .textbox {
-  color: black;
+  color: white;
   padding: 12px 32px;
   text-align: center;
   text-decoration: none;
@@ -31,7 +33,7 @@ p {
 }
 
 .textboxwide {
-  color: black;
+  color: white;
   padding: 12px 32px;
   text-align: center;
   text-decoration: none;
@@ -105,38 +107,40 @@ p {
 .button4:hover {background-color: #e7e7e7;}
 
 .button5 {
-  background-color: lightgrey;
-  color: black;
-  border: 2px solid #555555;
+  background-color: rgb(33, 33, 33);
+  color: rgb(255, 255, 255);
+  border: 2px solid #ffffff;
+  box-shadow: 0px 5px 20px 0px rgb(83, 83, 83), inset 0 0 10px rgb(255, 255, 255);
 }
 
 .button5:hover {
-  background-color: #555555;
+  background-color: #393939;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  box-shadow: 0px 10px 30px 0px rgb(83, 83, 83), inset 0 0 20px rgb(255, 255, 255);
 }
 .button5:active {
-  background-color: #303030;
+  background-color: #515151;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-  border: 2px solid #303030;
+  box-shadow: 0px 5px 10px 0px rgb(83, 83, 83), inset 0 0 50px rgb(255, 255, 255);
+  border: 2px solid #ffffff;
 }
 .buttontextoverlay {
-  background-color: lightgrey;
-  color: black;
-  border: 2px solid #555555;
+  background-color: rgb(33, 33, 33);
+  color: rgb(255, 255, 255);
+  border: 2px solid #ffffff;
+  box-shadow: 0px 5px 20px 0px rgb(83, 83, 83), inset 0 0 10px rgb(255, 255, 255);
 }
 
 .buttontextoverlay:hover {
-  background-color: #555555;
+  background-color: #393939;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  box-shadow: 0px 10px 30px 0px rgb(83, 83, 83), inset 0 0 20px rgb(255, 255, 255);
 }
 .buttontextoverlay:active {
-  background-color: #303030;
+  background-color: #515151;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-  border: 2px solid #303030;
+  box-shadow: 0px 5px 10px 0px rgb(83, 83, 83), inset 0 0 50px rgb(255, 255, 255);
+  border: 2px solid #ffffff;
 }
 .centertext {
   text-align: center;
@@ -152,7 +156,7 @@ p {
   max-width: 768px;
 }
 .active {
-  background-color: #58a6ff;
+  background-color: #14252b;
 }
 li {
   float: left;
@@ -160,7 +164,7 @@ li {
 a {
   display: block;
   padding: 8px;
-  background-color: #333;
+  background-color: rgb(23, 23, 23);
   font-family:quicksand;
 }
 ul {
@@ -168,7 +172,7 @@ ul {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #333;
+  background-color: rgb(23, 23, 23);
   position: fixed;
   top: 0;
   width: 100%;
@@ -178,17 +182,19 @@ li a {
   display: block;
   color: white;
   text-align: center;
-  padding: max(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
+  padding: max(14px, (5px + 0.5vw)) min(16px, (5px + 0.8vw));
   text-decoration: none;
   font-size: max(16px, 1vw);
+  transition-duration: 0.2s;
 }
 li a:hover {
-  background-color: #111;
+  background-color: rgba(37, 37, 37);
   transition-duration: 0.4s;
 }
 
 @keyframes moveup {
-  0%   {left:0px; top:300px; opacity: 0; position: relative;}
+  0%   {left:0px; top:500px; opacity: 0; position: relative;}
+  70% {left:0px; top:20px; opacity: 0.5; position: relative;}
   100% {left:0px; top:0px; opacity: 1; position: relative;}
 }
 .moveup {
@@ -198,7 +204,8 @@ li a:hover {
   animation-iteration-count: 1;
 }
 @keyframes moveup2 {
-  0%   {left:0px; top:600px; opacity: 0; position: relative;}
+  0%   {left:0px; top:300px; opacity: 0; position: relative;}
+  90% {left:0px; top:30px; opacity: 0.5; position: relative;}
   100% {left:0px; top:0px; opacity: 1; position: relative;}
 }
 .moveup2 {
@@ -278,60 +285,60 @@ span.highlight {
     <li><a href="about.html">About</a></li>
   </ul>
 </head>
-<body style="background-color:lightgrey;" class="noscrollbar">
-<button class="button button5 center" style="animation-duration: 1.5s; font-size= 5px;"> </button>
+<body style="background-color:rgb(0, 0, 0);" class="noscrollbar">
+<div style="font-size: 8px;"><br/><br/><br/><br/><br/></div>
 <div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" ><strong>Features</strong></div>
 <p style="word-break: keep-all; animation-duration: 2s;" class="center textbox fadein">
 Quality Muncher has many features, including:<br></p>
-<p style="word-break: keep-all; animation-duration: 1.1s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 0.5s;" class="center textbox2 moveup2">
 Trimming video
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.2s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 0.6s;" class="center textbox2 moveup2">
 Modifying video bitrate
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.3s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 0.7s;" class="center textbox2 moveup2">
 Modifying audio bitrate
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.4s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 0.8s;" class="center textbox2 moveup2">
 Modifying scale
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.5s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 0.9s;" class="center textbox2 moveup2">
 Modifying framerate
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.6s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox2 moveup2">
 4 different presets to chose from, as well as custom options
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.7s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.1s;" class="center textbox2 moveup2">
 Adding text
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.8s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.2s;" class="center textbox2 moveup2">
 Modifying video saturation, brightness, and contrast
 <br></p>
-<p style="word-break: keep-all; animation-duration: 1.9s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.3s;" class="center textbox2 moveup2">
 Swapping the audio with another file
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.4s;" class="center textbox2 moveup2">
 Audio distortion
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.1s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.5s;" class="center textbox2 moveup2">
 Stretching video
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.2s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.6s;" class="center textbox2 moveup2">
 Automatic update checking
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.3s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.7s;" class="center textbox2 moveup2">
 Custom speed
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.4s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.8s;" class="center textbox2 moveup2">
 Fast encoding
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.5s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 1.9s;" class="center textbox2 moveup2">
 Low file size
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.6s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 2s;" class="center textbox2 moveup2">
 Active development
 <br></p>
-<p style="word-break: keep-all; animation-duration: 2.7s;" class="center textbox2 moveup2">
+<p style="word-break: keep-all; animation-duration: 2.1s;" class="center textbox2 moveup2">
 And more!
 <br></p>
 </body>

@@ -39,13 +39,16 @@
 p {
   font-family:quicksand;
   font-size: 24px;
+  text-align: center;
+  color: white;
 }
 .divtext {
   font-family:quicksand;
   font-size: 24px;
+  color: white;
 }
 .textbox {
-  color: black;
+  color: white;
   padding: 12px 32px;
   text-align: center;
   text-decoration: none;
@@ -57,7 +60,7 @@ p {
 }
 
 .textboxwide {
-  color: black;
+  color: white;
   padding: 12px 32px;
   text-align: center;
   text-decoration: none;
@@ -131,38 +134,40 @@ p {
 .button4:hover {background-color: #e7e7e7;}
 
 .button5 {
-  background-color: lightgrey;
-  color: black;
-  border: 2px solid #555555;
+  background-color: rgb(33, 33, 33);
+  color: rgb(255, 255, 255);
+  border: 2px solid #ffffff;
+  box-shadow: 0px 5px 20px 0px rgb(83, 83, 83), inset 0 0 10px rgb(255, 255, 255);
 }
 
 .button5:hover {
-  background-color: #555555;
+  background-color: #393939;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  box-shadow: 0px 10px 30px 0px rgb(83, 83, 83), inset 0 0 20px rgb(255, 255, 255);
 }
 .button5:active {
-  background-color: #303030;
+  background-color: #515151;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-  border: 2px solid #303030;
+  box-shadow: 0px 5px 10px 0px rgb(83, 83, 83), inset 0 0 50px rgb(255, 255, 255);
+  border: 2px solid #ffffff;
 }
 .buttontextoverlay {
-  background-color: lightgrey;
-  color: black;
-  border: 2px solid #555555;
+  background-color: rgb(33, 33, 33);
+  color: rgb(255, 255, 255);
+  border: 2px solid #ffffff;
+  box-shadow: 0px 5px 20px 0px rgb(83, 83, 83), inset 0 0 10px rgb(255, 255, 255);
 }
 
 .buttontextoverlay:hover {
-  background-color: #555555;
+  background-color: #393939;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  box-shadow: 0px 10px 30px 0px rgb(83, 83, 83), inset 0 0 20px rgb(255, 255, 255);
 }
 .buttontextoverlay:active {
-  background-color: #303030;
+  background-color: #515151;
   color: white;
-  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-  border: 2px solid #303030;
+  box-shadow: 0px 5px 10px 0px rgb(83, 83, 83), inset 0 0 50px rgb(255, 255, 255);
+  border: 2px solid #ffffff;
 }
 .centertext {
   text-align: center;
@@ -178,7 +183,7 @@ p {
   max-width: 768px;
 }
 .active {
-  background-color: #58a6ff;
+  background-color: #14252b;
 }
 li {
   float: left;
@@ -186,7 +191,7 @@ li {
 a {
   display: block;
   padding: 8px;
-  background-color: #333;
+  background-color: rgb(23, 23, 23);
   font-family:quicksand;
 }
 ul {
@@ -194,7 +199,7 @@ ul {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #333;
+  background-color: rgb(23, 23, 23);
   position: fixed;
   top: 0;
   width: 100%;
@@ -204,17 +209,19 @@ li a {
   display: block;
   color: white;
   text-align: center;
-  padding: max(14px, (5px + 0.8vw)) min(16px, (5px + 0.8vw));
+  padding: max(14px, (5px + 0.5vw)) min(16px, (5px + 0.8vw));
   text-decoration: none;
   font-size: max(16px, 1vw);
+  transition-duration: 0.2s;
 }
 li a:hover {
-  background-color: #111;
+  background-color: rgba(37, 37, 37);
   transition-duration: 0.4s;
 }
 
 @keyframes moveup {
-  0%   {left:0px; top:300px; opacity: 0; position: relative;}
+  0%   {left:0px; top:500px; opacity: 0; position: relative;}
+  70% {left:0px; top:20px; opacity: 0.5; position: relative;}
   100% {left:0px; top:0px; opacity: 1; position: relative;}
 }
 .moveup {
@@ -303,18 +310,18 @@ span.highlight {
         document.execCommand("Copy")
     }
 </script>
-<body class="noscrollbar" style="background-color:lightgrey;">
+<body class="noscrollbar" style="background-color:rgb(0, 0, 0);">
 <div style="font-size: 8px;"><br/><br/><br/><br/><br/></div>
-<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px black; animation-duration: 2s;" id="p1"><strong>Quality Muncher</strong></div>
-<p class="centertext fadein" style="animation-duration: 2.5s;"><b>Next Level Compression</b></p>
-<p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher is a script for creating extremely customizable low-quality videos. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
-<p id="boldStuff" class="centertext center textbox" style="animation-duration: 1.0s; font-size: 18px;"><strong></strong></p>
-<input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1.25s;" type='button' onclick="copyEvent('copy')" value='Automated Installer'/>
+<div class="header centertext fadein divtext" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 1.9s;" id="p1"><strong>Quality Muncher</strong></div>
+<p class="centertext fadein" style="text-shadow: 3px 3px 15px rgb(153, 153, 153); animation-duration: 2s;"><b>Next Level Compression</b></p>
+<p style="word-break: keep-all; animation-duration: 0.8s;" class="center textbox moveup">Quality Muncher is a script for creating extremely customizable low-quality videos. Once installed, using it is as easy as right clicking a video, hovering over send to and clicking Quality Muncher.</p>
+<p id="boldStuff" class="centertext center textbox" style="animation-duration: 0.9s; font-size: 18px;"><strong></strong></p>
+<input id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1s;" type='button' onclick="copyEvent('copy')" value='Automated Installer'/>
 <p></p>
-<button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" type='button' style="animation-duration: 1.5s;">Manual Download</button>
-<p class="centertext moveup center textbox smallertext" style="animation-duration: 1.6s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
-<img class="center previewimage moveup secret image" src="qualitymuncher.gif" style="animation-duration: 1.7s;">
-<div class="textboxwide center moveup secret" style="animation-duration: 1.9s;">
+<button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')" type='button' style="animation-duration: 1.15s;">Manual Download</button>
+<p class="centertext moveup center textbox smallertext" style="animation-duration: 1.3s;"><i>Click <u><span style="cursor: pointer;" onclick="window.open('faq.html')">here</span></u> if you're having trouble installing Quality Muncher manually.</i></p>
+<img class="center previewimage moveup secret image" src="qualitymuncher.gif" style="animation-duration: 1.5s;">
+<div class="textboxwide center moveup secret" style="animation-duration: 1.7s;">
 </div>
 </body>
 </html>
