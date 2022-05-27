@@ -4,6 +4,7 @@ This is a batch script designed to create very customizable low-quality videos. 
 Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
 # Features
+ - compatible with images, videos, gifs, and audios
  - replacing audio
  - chosing playback speed
  - embeds nicely in discord
@@ -14,13 +15,14 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - custom start and duration times
  - active development
  - presets and custom options
+ - video frying
  - automatic update checking
  - setting custom output framerate, audio bitrate, video bitrate, scale, and more
  - mostly bug-free
  - two different methods for audio distortion (earrape)
  - stretched resolution output
  - custom saturation, contrast, and brightness values
- - frame resampling / motion blur
+ - frame blending/resampling (aka motion blur)
  - and more!
 
 # How to Install
