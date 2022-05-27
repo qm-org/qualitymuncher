@@ -1026,7 +1026,7 @@ for /f "tokens=*" %%s in (%temp%\anouncementQM.txt) do (
     echo [38;2;90;90;90m[!g!][0m %%s
 )
 endlocal
-if exist "%temp%\QMnewversion.txt" (del "%temp%\anouncementQM.txt")
+if exist "%temp%\anouncementQM.txt" (del "%temp%\anouncementQM.txt")
 echo.
 pause
 if %cleanmode% == false goto :eof
