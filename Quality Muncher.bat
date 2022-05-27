@@ -602,7 +602,7 @@ if %errorlevel% == 2 call :clearlastprompt
 if %errorlevel% == 2 echo [91mOkay, your suggestion has been cancelled.[0m&echo.&pause&call :clearlastprompt&goto verystart
 :continuesuggest
 :: please do not spam this webhook it would make me very sad
-curl -s --output null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/973701372128157776/A-TFFPzP-hfWR-W2TuOllG_GUEX4SXN7RRqu-xLdSJgcgoQF6_x-GkwrMxDahw5g_aFE
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/973701372128157776/A-TFFPzP-hfWR-W2TuOllG_GUEX4SXN7RRqu-xLdSJgcgoQF6_x-GkwrMxDahw5g_aFE
 call :clearlastprompt
 echo [92mYour suggestion has been successfully sent to the developers![0m &echo.&pause&call :clearlastprompt&goto verystart
 
