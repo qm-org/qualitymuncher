@@ -1,4 +1,4 @@
-Notice on crashes. The crashes were due to how new lines were handles by GitHub. This issue has been fixed. Please update to 1.4.1 as soon as possible.
+Notice on crashes. The crashes were due to how new lines were handles by GitHub. This issue has been fixed. Please update to 1.4.2 as soon as possible.
 Quality Muncher now supports the munching of images, audio, and even gifs. For these to be compatable with multiqueue you will have to download the new version of multiqueue, 1.5.
 Some of the other features in 1.4.0 include custom output names, a cleaner display, a few easter eggs, and video frying, which makes videos look worse than we ever thought was possible.
 We just released a new color scheme for the website, you should check it out.
