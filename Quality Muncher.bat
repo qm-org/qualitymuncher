@@ -33,7 +33,7 @@
 :: sets a ton of variables that are used later
 set imagecontainer=.jpg
 set isimage=false
-set version=1.4.0
+set version=1.4.2
 set isupdate=false
 if check%2 == check title Quality Muncher v%version%
 set inpcontain=%~x1
