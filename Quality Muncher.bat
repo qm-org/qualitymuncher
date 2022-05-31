@@ -1,7 +1,6 @@
 :: if you have any questions about this script, feel free to DM me on Discord, Frost#5872, or ask in the discord server
 @echo off
 
-
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE
 :: you can see a list of the defaults at the start of the version on the GitHub page or by downloading the file again
      :: automatic update checks
