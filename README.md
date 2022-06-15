@@ -36,20 +36,66 @@ This version of Quality Muncher is used via the command line, `qm -h` should get
 Text inside following characters **is not literal**: `<` `>` `(` `)`
 `...` means the argument takes multiple values of the same format
 
-| Name                        | Explanation                                                         | Format                   | Default value | Possible values                                     | Example               | Required |
-| --------------------------- | ------------------------------------------------------------------- | ------------------------ | ------------- | --------------------------------------------------- | --------------------- | -------- |
-| `--help` / `-h`             | Show this message and exit                                          |                          |               |                                                     | `-h`                  |          |
-| `--verbose` /        `-v`   | Increase output verbosity                                           |                          |               |                                                     | `-v`                  |          |
-| `--curdir` /         `-dir` | Open the folder in which Quality Muncher was installed              |                          |               |                                                     | `-dir`                |          |
-| `--input` /         `-i`    | Specify input video path / filename                                 | `<PATH>`                 |               |                                                     | `-i cutedog.mp4`      | True     |
-| `--output` /        `-o`    | Specify output path / filename                                      | `<PATH>`                 |               |                                                     | `-o munched.mp4`      |          |
-| `--preset` /        `-p`    | Specify quality preset                                              | `<preset>`               | 1             | 1-7                                                 | `-p 5`                |          |
-| `--contrast` /      `-c`    | Modify video contrast                                               | `<amount>`               | 1.0           | 0-2                                                 | `-c 1.1`              |          |
-| `--saturation` /    `-s`    | Modify video saturation                                             | `<amount>`               | 1.0           | 0-2                                                 | `-s 1.2`              |          |
-| `--brightness` /    `-b`    | Modify video brightness                                             | `<amount>`               | 1.0           | 0-2                                                 | `-b 1.3`              |          |
-| `--speed` /         `-spd`  | Modify video speed                                                  | `<multiplier>`           | 1.0           |                                                     | `-spd 1.5`            |          |
-| `--stretch` /       `-str`  | Stretch video resolution, `w` stretches width, `h` stretches height | `<multip:(w/h)>`         |               |                                                     | `-str 2:w`            |          |
-| `--audio-distort` / `-ad`   | Distort audio                                                       | `<method:strength>, ...` |               | methods: `earrape`, `echo`, `delay`; strength: 1-10 | `-ad echo:5,delay:10` |          |
+
+##### Optional arguments
+`--help` / `-h`
+: Show this message and exit
+
+`--verbose` / `-v`
+: Increase output verbosity
+
+`--curdir` / `-dir`
+: Open the folder in which Quality Muncher was installed
+
+##### Input / output options
+
+`--input` / `-i` `<PATH>`
+: Specify input video path / filename
+  - required
+
+`--output` / `-o` `<PATH>`
+: Specify output path / filename
+
+##### Video options
+
+`--preset` / `-p` `<int>`
+: Specify quality preset
+  - default: `1`
+  - min-max: `1-10`
+
+`--contrast` / `-c` `<float>`
+: Modify video contrast
+  - default: `1.0`
+  - min-max: `0-2`
+
+`--saturation` / `-s` `<float>`
+: Modify video saturation
+  - default: `1.0`
+  - min-max: `0-2`
+
+`--brightness` / `-b` `<float>`
+: Modify video brightness
+  - default: `1.0`
+  - min-max: `0-2`
+
+`--speed` / `-spd` `<float>`
+: Modify video speed
+  - default: `1.0`
+  - min-max: `0-2`
+
+`--stretch` / `-str` `<multiplier:(w/h)>`
+: Stretch video resolution
+  - multiplier can be a float
+  - `w` stretches width, `h` stretches height
+
+##### Audio options
+
+`--audio-distort` / `-ad` `<method:strength>, ...`
+: Distort audio
+  - methods: `earrape`, `echo`, `delay`
+  - strength: `1-10` (float)
+
+
 
 ### Examples
 The most basic usage, it will use the default preset and output to the same folder as the input
