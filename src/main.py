@@ -125,7 +125,8 @@ def main():
         sp.run(f'explorer {sys.path[0]}'); sys.exit(0)
 
     if not args['input']:
-        parser.print_help(); pause()
+        parser.print_help()
+        pause(); sys.exit(0)
 
     if not path.exists(args['input']):
         printp(FileNotFoundError(f'Path does not exist: {args["input"]}'),
