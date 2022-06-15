@@ -9,20 +9,20 @@ Please note that it's still in development, so please message me (Frost#5872) if
  - chosing playback speed
  - embeds nicely in discord
  - low file size
+ - text-to-speech
  - interpolation
  - adding text to video
- - multiqueue when used with the multiqueue script
- - custom start and duration times
+ - trimming
  - active development
  - presets and custom options
- - video frying
+ - piping outputs
+ - frying
  - automatic update checking
  - setting custom output framerate, audio bitrate, video bitrate, scale, and more
- - mostly bug-free
- - two different methods for audio distortion (earrape)
- - stretched resolution output
- - custom saturation, contrast, and brightness values
- - frame blending/resampling (aka motion blur)
+ - audio distortion (earrape)
+ - stretched resolution
+ - custom color options
+ - frame blending / resampling (aka motion blur)
  - and more!
 
 # How to Install
