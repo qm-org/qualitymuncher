@@ -838,7 +838,7 @@ if %errorlevel% == 2 copy %0 "%~dpn0 (OLD).bat"&echo Okay, this file has been sa
 if %errorlevel% == 3 call :titledisplay&goto verystart
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
-curl -s "https://download.qualitymuncher.lgbt" --output %0 & cls & %0 %1
+curl -s "https://qualitymuncher.lgbt/Quality%%20Muncher.bat" --output %0 & cls & %0 %1
 exit
 
 :: runs if there isn't internet (comes from update check)
