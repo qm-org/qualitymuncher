@@ -44,7 +44,7 @@ set inpath=%inpath:~0,-1%
 if not "%cd%" == "%inpath%" cd /d %inpath%
 :dircheck
 set isimage=false
-set version=1.4.3
+set version=1.4.4
 set isupdate=false
 :: if less than 2 parameters (not multiqueue), set the title
 if check%2 == check title Quality Muncher v%version%
@@ -403,7 +403,7 @@ if not check%2 == check goto ending
 
 :: audio distortion questions
 :audiodistortion
-set audiospeedq=%speedq%
+set "audiospeedq=%speedq%"
 if %nonoglobalspeed% == true set audiospeedq=1
 choice /c YN /m "Do you want to distort the audio (earrape)?"
 if %errorlevel% == 1 set bassboosted=y&goto skipno
@@ -429,10 +429,10 @@ set /a distsev=%distortionseverity%*10
 set /a bb1=0
 set /a bb2=(%distsev%*25)
 set /a bb3=2*(%distsev%*25)
-set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%|%bb2%|%bb3%,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
+set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %audiospeedq% == 1 (
-     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%|%bb2%|%bb3%,channelmap=1|0,aecho=0.8:0.3:%distsev%*2:0.9"
+     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
 )
 call :clearlastprompt
 if %hasvideo% == false goto nextaudiostep2
