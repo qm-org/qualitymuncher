@@ -6,15 +6,14 @@
 :: https://github.com/qm-org/qualitymuncher
 
 @echo off
-:: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE
-:: you can see a list of the defaults at the start of the version on the GitHub page or by downloading the file again
+:: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
      :: automatic update checks, highly recommended to keep this enabled
      set autoupdatecheck=true
      :: saves a log after rendering, useful for debugging
      set log=false
      :: stay open after the file is done rendering
      set stayopen=true
-     :: always asks for resample, no matter what (unless you're using multiqueue)
+     :: always asks for resample, even in simple mode (unless you're using multiqueue)
      set alwaysaskresample=false
      :: shows title
      set showtitle=true
@@ -26,7 +25,7 @@
      set animatespeed=5
      :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
      set encodingspeed=ultrafast
-     :: speed at which the ffmpeg stats update, lower is faster
+     :: speed at which the ffmpeg stats update. lower is faster, but anything below 0.01 may cause slower render times
      set updatespeed=0.05
      :: the video container, uses .mp4 as default (don't forget the dot!)
      set container=.mp4
@@ -37,7 +36,8 @@
 :: END OF OPTIONS
 
 :: warning: if you mess with stuff after this things might break
-:: sets a ton of variables that are used later
+:: sets the code page, checks the directory, sets the version, and title
+chcp 437 > nul
 if check%1 == check goto dircheck
 set inpath=%~dp1
 set inpath=%inpath:~0,-1%
@@ -49,7 +49,7 @@ set isupdate=false
 :: if less than 2 parameters (not multiqueue), set the title
 if check%2 == check title Quality Muncher v%version%
 set inpcontain=%~x1
-:: set animate and always ask resample to false if more than 1 parameter (multiqueue)
+:: sets animate to false for multiqueue
 if not check%2 == check set animate=false&set alwaysaskresample=false&set showtitle=false
 :: variables to be used later
 set cols=15
@@ -67,6 +67,7 @@ set addedtextq=n
 set interpq=n
 set resample=n
 set stutter=n
+set tcltrue=false
 set "qs=Quality Selected!"
 if %1p == qmloop goto colorstart
 if %animate% == true call :loadingbar
@@ -76,7 +77,6 @@ call :titledisplay
 :: checks for updates
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 if %autoupdatecheck% == true goto updatecheck
-:: sets more variables to be used later
 :verystart
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg
@@ -152,7 +152,7 @@ if %2 == c (
 )
 :skipcustommultiqueue
 if %customizationquestion% == 6 set customizationquestion=r&goto random
-:: defines a few variables that will be replaced later, this is important for checking if they're valid as it prevents missing operand (undefined variable) errors
+:: defines a few variables that will be replaced later; used to check for valid user inputs
 set framerate=a
 set videobr=a
 set audiobr=a
@@ -162,8 +162,10 @@ set details=n
 :: endingmsg is added to the end of the video for the output name
 if "%customizationquestion%" == "c" echo Custom %qs%
 :customquestioncheckpoint
+:: random quality
 if %customizationquestion% == 6 set customizationquestion=r&goto random
 if %customizationquestion% == r goto random
+:: custom quality
 if "%customizationquestion%" == "c" (
      set /p "framerate=What fps do you want it to be rendered at: "
      set /p "videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: "
@@ -175,6 +177,7 @@ if "%customizationquestion%" == "c" (
 if "%customizationquestion%" == "c" (
      if %errorlevel% == 1 set details=y
 )
+:: decent quality
 if %customizationquestion% == 1 (
      echo.
      echo [96mDecent %qs%[0m
@@ -184,6 +187,7 @@ if %customizationquestion% == 1 (
      set audiobr=3
      set endingmsg=Decent Quality
 )
+:: bad quality
 if %customizationquestion% == 2 (
      echo.
      echo [96mBad %qs%[0m
@@ -193,6 +197,7 @@ if %customizationquestion% == 2 (
      set audiobr=5
      set endingmsg=Bad Quality
 )
+:: terrible quality
 if %customizationquestion% == 3 (
      echo.
      echo [96mTerrible %qs%[0m
@@ -202,6 +207,7 @@ if %customizationquestion% == 3 (
      set audiobr=8
      set endingmsg=Terrible Quality
 )
+:: unbearable quality
 if %customizationquestion% == 4 (
      echo.
      echo [96mUnbearable %qs%[0m
@@ -211,7 +217,7 @@ if %customizationquestion% == 4 (
      set audiobr=9
      set endingmsg=Unbearable Quality
 )
-:: if custom quality is selected, checks if the variables are all whole numbers, if they aren't it'll ask again for their values
+:: if custom quality is selected, check if the variables are all whole numbers, if they aren't it'll ask again for their values
 if not %customizationquestion% == c goto setendingmsg
 set errormsg=[91mOne or more of your inputs for custom quality was invalid! Please use only numbers![0m
 if not "%framerate%"=="%framerate: =%" goto errorcustom
@@ -243,8 +249,7 @@ set /p height=<%temp%\height.txt
 set /p width=<%temp%\width.txt
 if exist "%temp%\height.txt" (del "%temp%\height.txt")
 if exist "%temp%\width.txt" (del "%temp%\width.txt")
-:: finds the output height and makes sure it's an even number (divisable by two)
-:: this works because batch doesn't support floats (decimals)
+:: sets the output height and makes sure it's an even number since x264 doesn't support odd widths or heights
 set /a desiredheight=%height%/%scaleq%
 set /a desiredheight=(%desiredheight%/2)*2
 set /a desiredwidth=%width%/%scaleq%
@@ -266,60 +271,64 @@ if %stretchres% == n goto filters
 set /a "widthmod=(%desiredwidth%*%widthratio%) %% %heightratio%"
 set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
 set /a desiredwidth=(%desiredwidth%/2)*2
-:: setting font size again to account for stretch
+:: setting font size again to account for stretch (skip if no added text)
 if %addedtextq% == n goto filters
 set /a fontsize=(%desiredwidth%/%strlength%)*2
 set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
+:: makes sure font size isn't too big with a repeat until
 :fontcheck
 set /a triplefontsize=%fontsize%*3
 if %triplefontsize% gtr %desiredheight% set /a fontsize=%fontsize%-5&goto fontcheck
+:: does the same thing but for text two
 :fontcheck2
 set /a triplefontsizebottom=%fontsizebottom%*3
 if %triplefontsizebottom% gtr %desiredheight% set /a fontsizebottom=%fontsizebottom%-5&goto fontcheck2
 set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h),"
 :filters
-:: asks about resampling - if simple mode is on/input fps is under output fps, will come back without asking (unless always ask resample is one)
-goto resamplequestion
-:afterresamplequestion
+:: asks about resampling - if simple mode is on/input fps is under output fps, it will come back without asking (unless always ask resample is true)
+call :resamplequestion
 call :clearlastprompt
 :: if framerate input is less than output, asks if the user wants to interpolate (advanced mode only)
 set interpq=n
 if NOT %complexity% == s (
      if %framerate% gtr %fpsvalue% (
-          choice /c YN /m "The framerate of your input exceeds the framerate of the output. Interpolate to fix this?"
+          choice /m "The framerate of your input exceeds the framerate of the output. Interpolate to fix this?"
           if %errorlevel% == 1 set interpq=y
           call :newline&call :clearlastprompt
      )
 )
-:: setting bitrate
+:: bitrate
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%framerate%/%videobr%)
-:: minimum bitrate in libx264 is 1000, so set it to 1000 if it's under
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: audio distortion questions (advanced mode only)
+:: audio filters are set here too
 set "audiofilters="
-if NOT %complexity% == s goto audiodistortion
+if NOT %complexity% == s call :audiodistortion
 :encoding
 :: if simple mode, skip video frying
 if %complexity% == s goto encoding2
 set videoinp=%1
-goto videofrying
+call :videofrying
 :encoding2
 call :newline
 :: text to speech questions (advanced mode only)
 if NOT %complexity% == s call :voicesynth
-:: stutter questions (advanced mode only)
+:: frame stutter questions (advanced mode only)
 if NOT %complexity% == s call :stutter
+:: extra filters that are too small to get their own options
+set "tcl1= "&set "tcl2= "&set "tcl3= "&set "tcl4= "&set "tcl5= "&set "tcl6= "&set "tcl7= "
+if NOT %complexity% == s call :filterlist
 :: video filters
 :: sets filters for fps
 set "fpsfilter=fps=%framerate%,"
 if %interpq% == y set "fpsfilter=minterpolate=fps=%framerate%,"
 if %resample% == y set "fpsfilter=tmix=frames=%tmixframes%:weights=1,fps=%framerate%,"
-:: actual filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%format=yuv410p%stutterfilter%"
+:: actual video filters
+set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%"
 if %colorq% == y (
-     set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,format=yuv410p%stutterfilter%"
+     set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,format=yuv410p%stutterfilter%%filtercl%"
 )
-:: if simple mode, only use this filter
+:: if simple mode, use this
 if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredheight%:flags=neighbor,format=yuv410p"
 :: sets logs (for debugging only, disabled by default)
 :: uses a variety of variables to save space since there are different values stored for different options (simple, advanced, etc)
@@ -339,20 +348,18 @@ goto setfilename
 :: metadata used for advanced options
 set metadata=%lo1% %lo2%"%lo3%, %lo6% %lo4%"
 if %customizationquestion% == c set metadata=%lo1% %lo2%"%lo3%, %lo5%, %lo6% %lo4%"
-:: sets the file name
 :setfilename
 set "filename=%~n1 (%endingmsg%)"
-:: asks if the user wants a custom output name
-if not %complexity% == s goto outputquestion
-:outputcont
-:: if the output already exists, add a (1), and if that exists, make it (2), etc
+:: asks if the user wants a custom output name (advanced only)
+if not %complexity% == s call :outputquestion
+:: if the file already exists, append a (1), and if that exists, append a (2) instead, etc
 if exist "%filename%%container%" goto renamefile
-:: prints log (for debugging only, disabled by default)
+:: prints log to a file
 if %log% == true echo %metadata% > "%~dpn1 (%endingmsg%) log.txt"
 call :clearlastprompt
 echo [38;2;254;165;0mEncoding...[0m & echo.
 if %complexity% == s goto optionthree
-:: if the user selected to fry the video, encode all of the needed parts (probably will switch to using pipe at some point, but this works for now)
+:: if the user selected to fry the video, encode all of the needed parts
 if %frying% == true goto encodefried
 :encodenormal
 if %yeahlowqual% == n goto optionone
@@ -388,16 +395,17 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
 set outputvar="%cd%\%filename%%container%"
 :end
-:: if text to speech, encode the voice and merge
+:: if text to speech, encode the voice and merge outputs
 if %hasvideo% == false goto skipvoice
 if "%tts%"=="y" call :encodevoice
 :skipvoice
 echo. & echo [92mDone![0m
 set done=true
+:: delete temp files and show ending (unless stayopen is false)
 if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
 if %stayopen% == false goto ending
 if 1%2 == 1 goto exiting
-if not check%2 == check goto ending
+goto ending
 
 :: advanced parts - most of the following code isn't read when using simple mode
 
@@ -414,8 +422,7 @@ if %bassboosted% == n (
      if NOT %audiospeedq% == 1 set "audiofilters=-af atempo=%audiospeedq%"
      echo.
      call :clearlastprompt
-     if %hasvideo% == false goto nextaudiostep2
-     goto encoding
+     goto :eof
 )
 :skipno
 :: sends the user to the method they choose
@@ -435,8 +442,7 @@ if NOT %audiospeedq% == 1 (
      set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
 )
 call :clearlastprompt
-if %hasvideo% == false goto nextaudiostep2
-call :newline & goto encoding
+call :newline & goto :eof
 :: old method - just boosts frequencies
 :classic
 set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
@@ -447,8 +453,7 @@ if NOT %audiospeedq% == 1 (
      set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 )
 call :clearlastprompt
-if %hasvideo% == false goto nextaudiostep2
-goto encoding
+goto :eof
 
 
 :: speed settings/questions
@@ -481,36 +486,72 @@ choice /n
 if %errorlevel% == 2 set noglobalspeed=true
 call :clearlastprompt
 :addtext
-call :newline
 :: asks if they want to add text
 choice /c YN /m "Do you want to add text to the video?"
-if %errorlevel% == 1 set addedtextq=y
-if %addedtextq% == n set "textfilter="
-if %addedtextq% == n goto afterspeedandtextquestions
+if %errorlevel% == 1 (set addedtextq=y) else call :clearlastprompt&goto afterspeedandtextquestions
+:: first text size
+set tsize=1
+choice /c BMSV /m "What size should text one be? Big, medium, small, or very small?"
+set tsize=%errorlevel%
+if %tsize% == 4 set tsize=6
 :: top text
 set "toptext= "
-set /p toptext=Top text: 
+set /p "toptext=Text one: "
 :: lots of stuff here, but basically uses the length of the text and the size of the video to figure out the font size to use so nothing clips
 set toptextnospace=%toptext: =_%
 echo "%toptextnospace%" > %temp%\toptext.txt
 for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
 if %strlength% LSS 16 set strlength=16
 set /a fontsize=(%desiredwidth%/%strlength%)*2
+set fontsize=(%fontsize%)/%tsize%
+call :screenlocation "text one"
+set "textonepos=%textpos%"
+:: second text size
+set tsize2=1
+choice /c BMSV /m "What size should text two be? Big, medium, small, or very small?"
+set tsize2=%errorlevel%
+if %tsize2% == 4 set tsize2=6
 :: bottom text - same stuff as top text but with different variable names
 set "bottomtext= "
-set /p bottomtext=Bottom text: 
+set /p "bottomtext=Text two: "
 set bottomtextnospace=%bottomtext: =_%
 echo "%bottomtextnospace%" > %temp%\bottomtext.txt
 for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
 if %strlengthb% LSS 16 set strlengthb=16
 set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
+set fontsizebottom=(%fontsizebottom%)/%tsize2%
+call :screenlocation "text two"
+set "texttwopos=%textpos%"
 :: setting text filter
 if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
-set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:x=(w-text_w)/2:y=(0.25*text_h),drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:x=(w-text_w)/2:y=(h-1.25*text_h),"
+set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
 call :clearlastprompt
 goto afterspeedandtextquestions
 
+:: prompts the user of where to place an item
+:screenlocation
+set item=%1
+set item=%item:"=%
+echo   ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+echo   ³ [1]        [2]        [3] ³
+echo   ³                           ³
+echo   ³ [4]        [5]        [6] ³
+echo   ³                           ³
+echo   ³ [7]        [8]        [9] ³
+echo   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+choice /n /c 123456789 /m "Where should %item% be placed?"
+if %errorlevel% == 1 set "textpos=x=(0.25*text_h):y=(0.25*text_h)"
+if %errorlevel% == 2 set "textpos=x=(w-text_w)/2:y=(0.25*text_h)"
+if %errorlevel% == 3 set "textpos=x=w-tw-(0.25*th):y=(0.25*text_h)"
+if %errorlevel% == 4 set "textpos=x=(0.25*text_h):y=(h-text_h)/2"
+if %errorlevel% == 5 set "textpos=x=(w-text_w)/2:y=(h-text_h)/2"
+if %errorlevel% == 6 set "textpos=x=w-tw-(0.25*th):y=(h-text_h)/2"
+if %errorlevel% == 7 set "textpos=x=(0.25*text_h):y=(h-1.25*text_h)"
+if %errorlevel% == 8 set "textpos=x=(w-text_w)/2:y=(h-1.25*text_h)"
+if %errorlevel% == 9 set "textpos=x=w-tw-(0.25*th):y=(h-1.25*text_h)"
+call :titledisplay
+goto :eof
 
 :colorandstretchquestions
 call :newline
@@ -568,20 +609,20 @@ goto aftercolorandstretchquestions
 :: always stays if alwaysaskresample is true in options, even if using simple mode
 :resamplequestion
 if %alwaysaskresample% == true goto bypassnoresample
-if "%complexity%" == "s" goto afterresamplequestion
-if not %fpsvalue% gtr %framerate% goto afterresamplequestion
+if "%complexity%" == "s" goto :eof
+if not %fpsvalue% gtr %framerate% goto :eof
 :bypassnoresample
 call :newline
 choice /c YN /m "Do you want to resample frames? This will look like motion blur, but will take longer to render."
 call :newline
 call :clearlastprompt
 if %errorlevel% == 1 set resample=y
-if %resample% == n goto afterresamplequestion
+if %resample% == n goto :eof
 :: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
 set tmixframes=(%fpsvalue%/%framerate%)
 set /a tmixcheck=%tmixframes%
 if %tmixcheck% gtr 128 set tmixframes=128
-goto afterresamplequestion
+goto :eof
 
 :: the start of advanced mode, despite the name being "advanced four"
 :durationquestions
@@ -616,10 +657,87 @@ goto :eof
 :encodevoice
 set "af2="
 if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
+:: makes sure that the file doesn't already exist
+:ttexist
+set /a "q+=1"
+if exist "%cd%\%filename% %ttsuffix%%container%" set "ttsuffix=tts (%q%)"&goto ttexist
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% %ttsuffix%%container%"
 if exist "%filename%%container%" (del "%filename%%container%")
-set outputvar="%cd%\%filename% tts%container%"
+set outputvar="%cd%\%filename% %ttsuffix%%container%"
+goto :eof
+
+:: miscillaneous filters that are too small to be their own options
+:: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
+:filterlist
+if "%tcltrue%" == "false" (choice /m "Do you want some extra effects?") else echo Do you want to add some extra effects?
+if "%tcltrue%" == "false" (if %errorlevel% == 2 call :clearlastprompt&goto :eof)
+echo [92mGreen[0m items are selected, [90mgray[0m items are unselected
+echo  [38;2;254;165;0m  [D] Done - finish your selection and move to the next prompt[90m
+echo  %tcl1% [1] Erosion - makes the edges of objects appear darker[90m
+echo  %tcl2% [2] Lagfun - makes darker pixels update slower[90m
+echo  %tcl3% [3] Negate - inverts colors[90m
+echo  %tcl4% [4] Interlace - combines frames together using interlacing[90m
+echo  %tcl5% [5] Edgedetect - inverts colors[90m
+echo  %tcl6% [6] Shufflepixels - Reorder pixels in video frames[90m
+echo  %tcl7% [7] Guided - apply guided filter for edge-preserving smoothing, dehazing, etc[0m
+choice /c 1234567D /n /m "Select one or more options: "
+if %errorlevel% == 1 call :toggletcl1
+if %errorlevel% == 2 call :toggletcl2
+if %errorlevel% == 3 call :toggletcl3
+if %errorlevel% == 4 call :toggletcl4
+if %errorlevel% == 5 call :toggletcl5
+if %errorlevel% == 6 call :toggletcl6
+if %errorlevel% == 7 call :toggletcl7
+if %errorlevel% == 8 call :titledisplay&goto :eof
+echo [12A
+goto :filterlist
+
+:: what all of the toglectl(x) functions do is:
+:: - confirm that an option has been made (setting tcltrue to true)
+:: - if the option was previously set to disabled, enable it and add the filter to the filters, highlight the selection, then exit the function
+:: - if the option was previously set to enabled, disable it and remove the filter from the filters, remove the highlight, and exit the function
+
+:toggletcl1
+set tcltrue=true
+if "%tcl1%2" == "[92m2" set "tcl1= "&set "filtercl=%filtercl:,erosion=%"&goto :eof
+set "filtercl=%filtercl%,erosion"&set "tcl1=[92m"
+goto :eof
+
+:toggletcl2
+set tcltrue=true
+if "%tcl2%2" == "[92m2" set "tcl2= "&set "filtercl=%filtercl:,lagfun=%"&goto :eof
+set "filtercl=%filtercl%,lagfun"&set "tcl2=[92m"
+goto :eof
+
+:toggletcl3
+set tcltrue=true
+if "%tcl3%2" == "[92m2" set "tcl3= "&set "filtercl=%filtercl:,negate=%"&goto :eof
+set "filtercl=%filtercl%,negate"&set "tcl3=[92m"
+goto :eof
+
+:toggletcl4
+set tcltrue=true
+if "%tcl4%2" == "[92m2" set "tcl4= "&set "filtercl=%filtercl:,interlace=%"&goto :eof
+set "filtercl=%filtercl%,interlace"&set "tcl4=[92m"
+goto :eof
+
+:toggletcl5
+set tcltrue=true
+if "%tcl5%2" == "[92m2" set "tcl5= "&set "filtercl=%filtercl:,edgedetect=%"&goto :eof
+set "filtercl=%filtercl%,edgedetect"&set "tcl5=[92m"
+goto :eof
+
+:toggletcl6
+set tcltrue=true
+if "%tcl6%2" == "[92m2" set "tcl6= "&set "filtercl=%filtercl:,shufflepixels=%"&goto :eof
+set "filtercl=%filtercl%,shufflepixels"&set "tcl6=[92m"
+goto :eof
+
+:toggletcl7
+set tcltrue=true
+if "%tcl7%2" == "[92m2" set "tcl7= "&set "filtercl=%filtercl:,guided=%"&goto :eof
+set "filtercl=%filtercl%,guided"&set "tcl7=[92m"
 goto :eof
 
 :: if discord is selected from the menu, it sends the user to discord, clears the console, and goes back to start
@@ -659,6 +777,7 @@ call :clearlastprompt
 echo [92mYour suggestion has been successfully sent to the developers![0m &echo.&pause&call :clearlastprompt&goto verystart
 
 :bugreport
+set wbh2=lxyrX4Y5TxLkQXfq
 set /p "mainsuggestion=What is the bug? "
 set /p "suggestionbody=How do you reproduce the bug: "
 set "author=NO INPUT FOR AUTHOR"
@@ -675,7 +794,7 @@ if %errorlevel% == 2 call :clearlastprompt
 if %errorlevel% == 2 echo [91mOkay, your suggestion has been cancelled.[0m&echo.&pause&call :clearlastprompt&goto verystart
 :continuebug
 :: please do not spam this webhook it would make me very sad
-curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New bug report!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/973701372128157776/A-TFFPzP-hfWR-W2Tu%wbhs%JgcgoQF6_x-GkwrMxDahw5g_aFE
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New bug report!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/988214286629359656/0bSrcdJdOLGuR-w89lPasi16qVr_cj%wbh2%ndzi0K1CK4MoHYnoTmtcoS
 call :clearlastprompt
 echo [92mYour bug report has been successfully sent to the developers![0m &echo.&pause&call :clearlastprompt&goto verystart
 
@@ -747,7 +866,7 @@ if %errorlevel% == 9 goto updatecheck
 if %errorlevel% == 10 call :announcement&goto verystart
 goto closingbar
 
-:: where most things direct to when the program is done - plays a nice sound if possible, pauses, then exits
+:: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for input
 :exiting
 echo.
 where /q ffplay || goto aftersound
@@ -900,14 +1019,13 @@ echo [48;2;156;78;151m%atz%[0m
 pause > nul
 cls&goto verystart
 
-:: ran if random preset is selected
+:: random quality
 :random
 set details=n
 set min=1
 set max=15
 echo.
 echo [91mR[0m[93ma[0m[92mn[0m[96md[0m[94mo[0m[95mm[0m %qs%
-:: %% means modulo/mod, which gives the remainder of that number divided by the next number (random/30 in this case)
 set /a framerate=%random% %% 30
 set /a videobr=%random% * %max% / 32768 + %min%
 set /a scaleq=%random% * %max% / 32768 + %min%
@@ -915,7 +1033,8 @@ set /a audiobr=%random% * %max% / 32768 + %min%
 set endingmsg=Random Quality
 goto setendingmsg
 
-:: runs at start of script, just a fun animation (disabled if animations are off)
+:: runs at start of script, just a fun animation (disabled if animations are set to false)
+:: make terminal wider until it reaches 120
 :loadingbar
 mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%+%animatespeed%
@@ -923,16 +1042,17 @@ if not %cols% geq 120 goto loadingbar
 set /a animatespeed2=%animatespeed%/5
 if %animatespeed2% lss 1 set animatespeed2=1
 if not %cols% == 120 set cols=120
+:: makes the console taller until it reaches 30
 :loadingy
 mode con: cols=%cols% lines=%lines%
 set /a lines=%lines%+%animatespeed2%
 if not %lines% geq 30 goto loadingy
 if not %lines% == 30 mode con: cols=%cols% lines=30
-:: runs powershell to set the buffer size to allow users to scroll back up when wanted
+:: runs powershell to set the buffer size to enable scrolling
 powershell -noprofile -command "&{(get-host).ui.rawui.buffersize=@{width=120;height=9901};}"
 goto :eof
 
-:: almost the same as loading bar but runs on exit (disabled if animations are off)
+:: essentially the opposite of loading bar
 :closingbar
 if %animate% == false exit
 :closingloop
@@ -946,10 +1066,10 @@ exit
 :outputquestion
 choice /m "Would you like a custom output name?"
 if %errorlevel% == 2 echo.&call :clearlastprompt
-if %errorlevel% == 2 goto outputcont
+if %errorlevel% == 2 goto :eof
 set /p "filenametemp=Enter your output name [93mwith no extension[0m: "
 set "filename=%filenametemp%"
-echo.&goto outputcont
+echo.&goto :eof
 
 :: audio questions - ran when the user uses an audio file as an input
 :: this shouldn't be too comlicated so i didn't leave many comments, but if you have questions dm me (Frost#5872)
@@ -971,7 +1091,7 @@ if %errorlevel% == 1 goto speedandtextquestions
 if %errorlevel% == 2 call :clearlastprompt
 :nextaudiostep1
 call :newline
-goto audiodistortion
+call :audiodistortion
 :nextaudiostep2
 set "filename=%~n1 (Quality Munched)"
 if exist "%filename%%audiocontainer%" goto renamefile
@@ -988,7 +1108,7 @@ set outputvar="%cd%\%filename%%audiocontainer%
 if "%tts%"=="y" call :encodevoiceNV
 goto end
 
-:: voice synth encoding for no video stream
+:: text-to-speech encoding for no video stream
 :encodevoiceNV
 set "af2="
 if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
@@ -1110,7 +1230,7 @@ goto endgifmoment1
 :videofrying
 choice /m "Do you want to fry the video? (will cause extreme distortion)"
 if %errorlevel% == 2 call :clearlastprompt
-if %errorlevel% == 2 goto encoding2
+if %errorlevel% == 2 goto :eof
 set frying=true
 set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
@@ -1129,7 +1249,7 @@ set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
 if %smallheight% lss 10 set smallheight=10
 if %smallwidth% lss 10 set smallwidth=10
 call :clearlastprompt
-goto encoding2
+goto :eof
 
 :: some extra steps for encoding a fried video, in order:
 :: generate noise map at 1/10 resolution, scale the map to final resolution, scale the input to the final resolution, add the input and noise together with displacement, and shift it back into place with rgbashift
@@ -1266,7 +1386,7 @@ goto startmunch
 :endmunch
 set /a i2=%i1%+1
 echo %loopn%/%loopn%
-:: rename file until it doesn't exist
+:: rename the output name until it doesn't already exist
 set "filename=%~dpn1 (Quality Munched)"
 if not exist "%filename%%imagecontainerbackup%" goto afterrename
 :renamefileimage
@@ -1313,6 +1433,5 @@ echo [38;2;49;191;204m .             .       ..::.                             
 echo.[s
 goto :eof
 
-:: exiting
 :ending
 if %animate% == true goto closingbar
