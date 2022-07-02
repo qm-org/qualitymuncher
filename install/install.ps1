@@ -4,7 +4,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
 $FileName = "Quality Muncher"
 
 # download link
-$Dl = "https://raw.githubusercontent.com/Thqrn/qualitymuncher/main/Quality%20Muncher.bat"
+$Dl = "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20Muncher.bat"
 
 
 # scoop check
