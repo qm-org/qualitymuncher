@@ -1,4 +1,0 @@
-IMPORTANT^! A bug with updating was found in 1.4.3 so please join the discord server and run the script in the Quality Muncher channel to fix it. Sorry for any inconveniences caused by this.
-A new way to munch your images and gifs has been added in 1.4.3^! You can try it out by using a gif or an image with Quality Muncher and selecting the new munching method.
-1.4.3 has been released^! Some new features include adjustable animation speed, text-to-speech, piping outputs, custom stretching, performance enhancements, and some small bugs like manual file input not outputting to the correct path.
-Animations have been changed to disabled by default. You can change this in the scripts options.
