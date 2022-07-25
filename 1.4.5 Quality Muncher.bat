@@ -25,6 +25,8 @@
      set animatespeed=5
      :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
      set encodingspeed=ultrafast
+     :: scaling algorithm - fast_bilinear, bilinear, bicubic, expiramental, neighbor, area, bicublin, gauss, sinc, lanczos, spline
+     set scalingalg=neighbor
      :: speed at which the ffmpeg stats update. lower is faster, but anything below 0.01 may cause slower render times
      set updatespeed=0.05
      :: the video container, uses .mp4 as default (don't forget the dot!)
@@ -57,7 +59,6 @@ set cols=15
 set lines=8
 set yeahlowqual=n
 set done=false
-set noglobalspeed=false
 set hasvideo=true
 set bassboosted=n
 set tts=n
@@ -71,7 +72,11 @@ set stutter=n
 set tcltrue=false
 set internet=undetermined
 set speedq=1
+set audiospeedq=1
 set corrupt=n
+set trimmed=n
+set time=262144
+set starttime=0
 set "qs=Quality Selected!"
 if %1p == qmloop goto colorstart
 if %animate% == true call :loadingbar
@@ -329,12 +334,12 @@ set "fpsfilter=fps=%framerate%,"
 if %interpq% == y set "fpsfilter=minterpolate=fps=%framerate%,"
 if %resample% == y set "fpsfilter=tmix=frames=%tmixframes%:weights=1,fps=%framerate%,"
 :: actual video filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%"
+set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%"
 if %colorq% == y (
-     set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=neighbor,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,format=yuv410p%stutterfilter%%filtercl%"
+     set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,format=yuv410p%stutterfilter%%filtercl%"
 )
 :: if simple mode, use this
-if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredheight%:flags=neighbor,format=yuv410p"
+if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,format=yuv410p"
 set "filename=%~n1 (%endingmsg%)"
 :: asks if the user wants a custom output name (advanced only)
 if not %complexity% == s call :outputquestion
@@ -399,8 +404,6 @@ goto ending
 
 :: audio distortion questions
 :audiodistortion
-set "audiospeedq=%speedq%"
-if %noglobalspeed% == true set audiospeedq=1
 choice /c YN /m "Do you want to distort the audio (earrape)?"
 if %errorlevel% == 1 set bassboosted=y&goto skipno
 :: if no, checks if speed is something other than one, and if it is, set audiofilters so the audio syncs and then goes to encoding
@@ -471,32 +474,16 @@ goto :eof
 
 :: speed settings/questions
 :speedandtextquestions
-set speedvalid=n&set speedq=default
+set speedvalid=n
 call :newline
-set /p "speedq=What should the playback speed of the video be, [93mmust be a positive number between 0.5 and 100[0m, default is 1: "
-if not "%speedq%"=="%speedq: =%" set speedq=default
-if "%speedq%" == "n" set speedq=1
-if %speedvalid% == y goto cont
-set string=%speedq%
-for /f "delims=." %%a in ("%string%") do if NOT "%%a"=="%string%" set speedvalid=y
-if %speedvalid% == y goto cont
-set /a speedqCheck=%speedq%
-if NOT %speedqCheck% == %speedq% (set speedvalid=n) else (set speedvalid=y)
-if %speedvalid% == n set speedq=default
-:cont
-:: speed is default if no value is given or the value given is not a number
-if %speedq% == default (
-     echo [91mNo valid input given, speed has been set to default.[0m
-     set speedvalid=y
-     set speedq=1
-     goto cont
-)
+choice /m "Do you want to modify the speed of the video and/or audio?"
+if %errorlevel% == 2 set speedq=1&call :clearlastprompt&goto addtext
+set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
+set /p "audiospeedq=What should the audio speed be? [93m(leave blank to match the video)[0m: "
+if "%audiospeedq%1" == "1" set audiospeedq=%speedq%
 set speedfilter="setpts=(1/%speedq%)*PTS,"
 set speedfilter=%speedfilter:"=%
 if %hasvideo% == false call :clearlastprompt&goto nextaudiostep1
-echo Should the audio speed stay the same, regardless of the video speed? [93m(Default: N)[0m [Y,N]?
-choice /n
-if %errorlevel% == 1 set noglobalspeed=true
 call :clearlastprompt
 :addtext
 :: asks if they want to add text
@@ -640,16 +627,19 @@ goto :eof
 :: the start of advanced mode
 :durationquestions
 call :clearlastprompt
+:: asks if the user wants to trim
+choice /m "Do you want to trim the video?"
+if %errorlevel% == 1 (set trimmed=y) else (call :newline&call :clearlastprompt&goto :eof)
 :: asks where to start clip
 :startquestion
 set starttime=0
-set /p "starttime=[93mIn seconds[0m, where do you want your clip to start: "
+set /p "starttime=[93mIn seconds[0m, where do you want your video to start: "
 if "%starttime%" == " " set starttime=0
 :: asks length of clip
 :timequestion
-set time=32727
-set /p "time=[93mIn seconds[0m, how long after the start time do you want it to be: "
-if "%time%" == " " set time=32727
+set time=262144
+set /p "time=[93mIn seconds[0m, how long do you want the video to be: "
+if "%time%" == " " set time=262144
 call :clearlastprompt
 if %hasvideo% == false goto backtoaudio
 goto :eof
@@ -659,6 +649,10 @@ goto :eof
 choice /m "Do you want to add text-to-speech?"
 if %errorlevel% == 1 set tts=y
 if %errorlevel% == 2 call :clearlastprompt&goto :eof
+:: verify that the ffmpeg build contains flite
+ffmpeg>nul 2>>"%temp%\ffmpegQM.txt"
+>nul find "libflite" "%temp%\ffmpegQM.txt" || (del "%temp%\ffmpegQM.txt"&echo [91mError! Your installation of FFmpeg does not have libflite ^(the text to speech library^)![0m&set tts=n&pause&call :clearlastprompt&goto :eof)
+del "%temp%\ffmpegQM.txt"
 echo What do you want the text-to-speech to say?
 set /p "ttstext="
 set volume=0
@@ -671,6 +665,7 @@ goto :eof
 set "af2="
 if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
 :: makes sure that the file doesn't already exist
+set "ttsuffix= tts"
 :ttexist
 set /a "q+=1"
 if exist "%cd%\%filename% %ttsuffix%%container%" set "ttsuffix= tts (%q%)"&goto ttexist
@@ -898,7 +893,10 @@ goto closingbar
 call :clearlastprompt
 set pastdir=%cd%
 if not 1%loggingdir% == 1 cd /d %loggingdir%
+del "Quality Muncher Log.txt"
 :: stuff to log
+echo filename: %filename% > "Quality Muncher Log.txt"
+echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
 (
    echo SIMPLE
    echo     version: %version%
@@ -919,8 +917,11 @@ if not 1%loggingdir% == 1 cd /d %loggingdir%
    echo     details: %details%
    echo.
    echo ADVANCED
-   echo     starttime: %starttime%
-   echo     time: %time%
+   echo     trimmed: %trimmed%
+   echo         starttime: %starttime%
+   echo         time: %time%
+   echo     corrupt: %corrupt%
+   echo         corruptsev: %corruptsev%
    echo     speedq: %speedq%
    echo     resample: %resample%
    echo     interpq: %interpq%
@@ -966,7 +967,7 @@ if not 1%loggingdir% == 1 cd /d %loggingdir%
    echo     audiocontainer: %audiocontainer%
    echo     imagecontainer: %imagecontainer%
    echo FFMPEG DETAILS
-)>"Quality Muncher Log.txt"
+)>>"Quality Muncher Log.txt"
 ffmpeg>nul 2>>"Quality Muncher Log.txt"
 call :titledisplay
 choice /m "Log has been made. Upload and send to developers"
@@ -1294,7 +1295,7 @@ set /a pallete=100/%imageq%
 if not "%fryfilter%1" == "1" goto fried
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -vf palettegen=max_colors=%pallete% "%temp%\palletforqm.jpg"
 if %imagecontainer% == .gif goto gifmoment1
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=neighbor,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" "%filename%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" "%filename%%imagecontainer%"
 :endgifmoment1
 if exist "%temp%\palletforqm.jpg" (del "%temp%\palletforqm.jpg")
 if exist "%temp%\%filename%%container%" (del "%temp%\%filename%%container%")
@@ -1315,7 +1316,7 @@ set /a desiredwidth=((%width%/%imagesc%)/2)*2
 set /a smallwidth=((%desiredwidth%/10)/2)*2
 set /a smallheight=((%desiredheight%/10)/2)*2
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=1 -frames:v 1 -vf "noise=allf=t:alls=%level%*2:all_seed=%random%,eq=contrast=%level%*%level%" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=neighbor "%temp%\noisemapscaled.png"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled.png"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -vf palettegen=max_colors=%pallete% -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i pipe: -filter_complex "paletteuse,scale=%desiredwidth%:%desiredheight%" "%temp%\scaledinput%imagecontainer%"
 if %imagecontainer% == .gif goto gifmoment
@@ -1335,7 +1336,7 @@ goto endgifmoment
 
 :: used for not frying gifs
 :gifmoment1
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=neighbor,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f gif "%filename%.gif"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f gif "%filename%.gif"
 set outputvar="%cd%\%filename%.gif"
 goto endgifmoment1
 
@@ -1368,9 +1369,9 @@ goto :eof
 :: generate noise map at 1/10 resolution, scale the map to final resolution, scale the input to the final resolution, add the input and noise together with displacement, and shift it back into place with rgbashift
 :encodefried
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%framerate% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=neighbor "%temp%\noisemapscaled%container%" 
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%framerate%,scale=%desiredwidth%:%desiredheight%:flags=neighbor" -c:a copy "%temp%\scaledinput%container%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%framerate%,scale=%desiredwidth%x%desiredheight%:flags=neighbor,%fryfilter%" -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%" 
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%framerate%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%framerate%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%framerate%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%"
 :: use the output of the 5th ffmpeg call as the input for the final encoding
 set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
@@ -1475,7 +1476,7 @@ set /a heightalt=%height%-2
 set imagecontainerbackup=%imagecontainer%
 set webp=webp&set weblib=libwebp&set mjpegformat=mjpeg
 if %imagecontainer% == .gif set imagecontainer=.mkv&set webp=webm&set weblib=libvpx&set mjpegformat=gif
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=neighbor -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
 set /a loopnreal=%loopn%-1
 :: loop through a few encoders until the loop is over
 :startmunch
@@ -1488,13 +1489,13 @@ del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
 echo %i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=neighbor -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% (goto endmunch)
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
 echo %i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=neighbor -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %qv3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %qv3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% (goto endmunch)
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 goto startmunch
@@ -1510,9 +1511,9 @@ if exist "%filename% (%f%)%imagecontainerbackup%" goto renamefileimage
 set "filename=%filename% (%f%)"
 :afterrename
 :: if not a gif, run the next line and skip the 2 after, else run the 2 after the next line
-if not %imagecontainerbackup% == .gif ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=neighbor -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %qv% -f mjpeg "%filename%%imagecontainerbackup%"&goto notgif
+if not %imagecontainerbackup% == .gif ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %qv% -f mjpeg "%filename%%imagecontainerbackup%"&goto notgif
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -crf %qv% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -vf "scale=%width%x%height%:flags=neighbor" -f gif "%filename%%imagecontainerbackup%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -vf "scale=%width%x%height%:flags=%scalingalg%" -f gif "%filename%%imagecontainerbackup%"
 :notgif
 rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"

@@ -4,8 +4,12 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
- - generating and sending error logs
- - corrupting output video
+ - generating and uploading error logs
+ - corruption
+ - optional trimmer
+ - fully seperate/unique speed/audio speed
+ - flite not installed warning (text to speech)
+ - optional other scaling algorithms
 
 # Bugs
 
