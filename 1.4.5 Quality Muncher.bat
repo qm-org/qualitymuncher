@@ -54,7 +54,6 @@ set inpcontain=%~x1
 :: sets animate to false for multiqueue
 if not check%2 == check set animate=false&set alwaysaskresample=false&set showtitle=false
 :: variables to be used later
-set realtime=%time%
 set cols=15
 set lines=8
 set yeahlowqual=n
@@ -75,7 +74,7 @@ set speedq=1
 set audiospeedq=1
 set corrupt=n
 set trimmed=n
-set time=262144
+set vidtime=262144
 set starttime=0
 set "qs=Quality Selected!"
 if %1p == qmloop goto colorstart
@@ -183,6 +182,7 @@ if "%customizationquestion%" == "c" (
      set endingmsg=Custom Quality
 )
 if "%customizationquestion%" == "c" (
+     :: errorlevel comes from the choice command a few lines up
      if %errorlevel% == 1 set details=y
 )
 :: decent quality
@@ -242,7 +242,11 @@ if not %testforaudiobr% == %audiobr% goto errorcustom
 if not %testforscaleq% == %scaleq% goto errorcustom
 :: grabs info from video to be used later (duration, dimensions, and framerate)
 :setendingmsg
-if %complexity% == a (call :durationquestions) else call :clearlastprompt
+if %complexity% == a (
+     call :durationquestions
+) else (
+     call :clearlastprompt
+)
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
 set /p duration=<%temp%\fileduration.txt
 set /a "duration=%duration%" > nul 2> nul
@@ -357,7 +361,7 @@ goto optiontwo
 :: option one, no extra music
 :optionone
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %time% -i %videoinp% ^
+-ss %starttime% -t %vidtime% -i %videoinp% ^
 %filters% %audiofilters% ^
 -c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
@@ -367,7 +371,7 @@ goto end
 :: option two, there is music
 :optiontwo
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %time% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% ^
+-ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% ^
 %filters% %audiofilters% ^
 -c:v libx264 %metadata% -preset %encodingspeed% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
@@ -451,7 +455,13 @@ goto :eof
 echo Do you want to corrupt the video? [Y,N]?
 echo [91mWarning! While the output will still be playable, some other options might behave strangely or break completely![0m
 choice /n
-if %errorlevel% == 1 (set corrupt=y) else call :newline&call :clearlastprompt&goto :eof
+if %errorlevel% == 1 (
+     set corrupt=y
+) else (
+     call :newline
+     call :clearlastprompt
+     goto :eof
+)
 set /p "corruptsev=[93mOn a scale from 1 to 10[0m, how much should the video be corrupted? "
 call :newline
 call :clearlastprompt
@@ -474,12 +484,13 @@ goto :eof
 
 :: speed settings/questions
 :speedandtextquestions
-set speedvalid=n
 call :newline
 choice /m "Do you want to modify the speed of the video and/or audio?"
 if %errorlevel% == 2 set speedq=1&call :clearlastprompt&goto addtext
-set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
-set /p "audiospeedq=What should the audio speed be? [93m(leave blank to match the video)[0m: "
+if not %hasvideo% == false set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
+set "audiopromptfill=(leave blank to match the video)"
+if %hasvideo% == false set "audiopromptfill=(must be a positive number between 0.5 and 100)"
+set /p "audiospeedq=What should the audio speed be? [93m%audiopromptfill%[0m: "
 if "%audiospeedq%1" == "1" set audiospeedq=%speedq%
 set speedfilter="setpts=(1/%speedq%)*PTS,"
 set speedfilter=%speedfilter:"=%
@@ -488,7 +499,12 @@ call :clearlastprompt
 :addtext
 :: asks if they want to add text
 choice /c YN /m "Do you want to add text to the video?"
-if %errorlevel% == 1 (set addedtextq=y) else call :clearlastprompt&goto afterspeedandtextquestions
+if %errorlevel% == 1 (
+     set addedtextq=y
+) else (
+     call :clearlastprompt
+     goto afterspeedandtextquestions
+)
 :: first text size
 set tsize=1
 choice /c BMSV /m "What size should text one be? Big, medium, small, or very small?"
@@ -582,7 +598,12 @@ call :clearlastprompt
 set widthratio=1
 set heightratio=1
 choice /c YN /m "Do you want to stretch the video?"
-if %errorlevel% == 1 (set stretchres=y) else (call :clearlastprompt&goto lowqualmusicq)
+if %errorlevel% == 1 (
+     set stretchres=y
+) else (
+     call :clearlastprompt
+     goto lowqualmusicq
+)
 echo [93mUse only whole numbers.[0m
 set /p "widthratio=How stretched should be width be? [93mDefault is 1 (no stretch)[0m: "
 set /p "heightratio=How stretched should be height be? [93mDefault is 1 (no stretch)[0m: "
@@ -593,7 +614,12 @@ call :clearlastprompt
 set musicstarttime=0 & set musicstartest=0 & set lowqualmusicquestion=n & set filefound=y
 call :newline
 choice /c YN /m "Do you want to add music?"
-if %errorlevel% == 1 (set lowqualmusicquestion=y) else (call :clearlastprompt&goto aftercolorandstretchquestions)
+if %errorlevel% == 1 (
+     set lowqualmusicquestion=y
+) else (
+     call :clearlastprompt
+     goto aftercolorandstretchquestions
+)
 :addingthemusic
 :: asks for a specific file to get music from
 set yeahlowqual=y
@@ -629,7 +655,13 @@ goto :eof
 call :clearlastprompt
 :: asks if the user wants to trim
 choice /m "Do you want to trim the video?"
-if %errorlevel% == 1 (set trimmed=y) else (call :newline&call :clearlastprompt&goto :eof)
+if %errorlevel% == 1 (
+     set trimmed=y
+) else (
+     call :newline
+     call :clearlastprompt
+     goto :eof
+)
 :: asks where to start clip
 :startquestion
 set starttime=0
@@ -637,11 +669,10 @@ set /p "starttime=[93mIn seconds[0m, where do you want your video to start: "
 if "%starttime%" == " " set starttime=0
 :: asks length of clip
 :timequestion
-set time=262144
+set vidtime=262144
 set /p "time=[93mIn seconds[0m, how long do you want the video to be: "
-if "%time%" == " " set time=262144
+if "%vidtime%" == " " set vidtime=262144
 call :clearlastprompt
-if %hasvideo% == false goto backtoaudio
 goto :eof
 
 :: text to speech
@@ -679,7 +710,11 @@ goto :eof
 :: miscillaneous filters that are too small to be their own options
 :: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
 :filterlist
-if "%tcltrue%" == "false" (choice /m "Do you want some extra effects?") else echo Do you want to add some extra effects?
+if "%tcltrue%" == "false" (
+     choice /m "Do you want some extra effects?"
+) else (
+     echo Do you want to add some extra effects?
+)
 if "%tcltrue%" == "false" (if %errorlevel% == 2 call :clearlastprompt&goto :eof)
 echo [92mGreen[0m items are selected, [90mgray[0m items are unselected
 echo  [38;2;254;165;0m  [D] Done - finish your selection and move to the next prompt[90m
@@ -898,6 +933,8 @@ del "Quality Muncher Log.txt"
 echo filename: %filename% > "Quality Muncher Log.txt"
 echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
 (
+   echo LOG CREATION TIME: %time% ON %date%
+   echo.
    echo SIMPLE
    echo     version: %version%
    echo     complexity: %complexity%
@@ -919,7 +956,7 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
    echo ADVANCED
    echo     trimmed: %trimmed%
    echo         starttime: %starttime%
-   echo         time: %time%
+   echo         vidtime {aka video length}: %vidtime%
    echo     corrupt: %corrupt%
    echo         corruptsev: %corruptsev%
    echo     speedq: %speedq%
@@ -986,7 +1023,7 @@ if exist curlurl.txt (del curlurl.txt)
 :: send to the webhook
 :: please don't abuse this webhook it would make me very sad
 set wbh2=lxyrX4Y5TxLkQXfq
-curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"username\": \"Quality Logs\",\"content\": \"New log recieved!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%detaillog%\", \"description\": \"%curlurl%\", \"author\": {\"name\": \"%author% at %realtime% on %date:~4,10%\"}}]}" https://discord.com/api/webhooks/988214286629359656/0bSrcdJdOLGuR-w89lPasi16qVr_cj%wbh2%ndzi0K1CK4MoHYnoTmtcoS
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"username\": \"Quality Logs\",\"content\": \"New log recieved!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%detaillog%\", \"description\": \"%curlurl%\", \"author\": {\"name\": \"%author% at %time% on %date:~4,10%\"}}]}" https://discord.com/api/webhooks/988214286629359656/0bSrcdJdOLGuR-w89lPasi16qVr_cj%wbh2%ndzi0K1CK4MoHYnoTmtcoS
 if not 1%loggingdir% == 1 cd /d %pastdir%
 call :titledisplay
 echo [92mYour log has been successfully sent to the developers![0m &echo.&pause
@@ -1056,8 +1093,12 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/version.txt
 set /p newversion=<%temp%\QMnewversion.txt
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 :: if the new version is the same as the current one, go to the start
-if "%version%" == "%newversion%" (set isupdate=false) else (set isupdate=true)
-if not %isupdate% == true goto verystart
+if "%version%" == "%newversion%" (
+     set isupdate=false
+     goto verystart
+) else (
+     set isupdate=true
+)
 :: tells the user a new update is out and asks if they want to update
 echo [96mThere is a new version (%newversion%) of Quality Muncher available! & echo Press [U] to update or [S] to skip. & echo [90mTo hide this message in the future, set the variable "autoupdatecheck" in the script options to false.[0m
 choice /c US /n
@@ -1105,12 +1146,11 @@ echo  / ==ooooooooooooooo==.o.  ooo= //   ,`\--{)B     ,"
 echo /_==__==========__==_ooo__ooo=_/'   /___________,"
 echo.
 pause
-cls&call :titledisplay&goto verystart
-cls
+call :titledisplay
 goto verystart
 
 :: scrapped version, will never run unless cls fails or goto verystart fails
-:: pretty much just here if i ever want to use this later
+:: it's just here if i ever want to use this later
 cls
 set "atz= "
 :atzloop
@@ -1196,13 +1236,9 @@ echo [38;2;254;165;0mInput is an audio file.[0m
 echo.
 set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
 set /a badaudiobitrate=80/%audiobr%
-call :clearlastprompt
-goto startquestion
+call :durationquestions
 :backtoaudio
-choice /m "Adjust audio speed?"
-set speedq=1
-if %errorlevel% == 1 goto speedandtextquestions
-if %errorlevel% == 2 call :clearlastprompt
+goto speedandtextquestions
 :nextaudiostep1
 call :newline
 call :audiodistortion
@@ -1213,7 +1249,7 @@ if exist "%filename%%audiocontainer%" goto renamefile
 call :voicesynth
 echo [38;2;254;165;0mEncoding...[0m & echo.
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %time% -i %1 ^
+-ss %starttime% -t %vidtime% -i %1 ^
 -vn %metadata% -preset %encodingspeed% ^
 -c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
@@ -1348,7 +1384,11 @@ if %errorlevel% == 2 goto :eof
 set frying=true
 set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
-if %errorlevel% == 2 (set levelcolor=10) else (set levelcolor=%level%)
+if %errorlevel% == 2 (
+     set levelcolor=10
+) else (
+     set levelcolor=%level%
+)
 :: sets the amount to shift the video back by, fixing some unwanted effects of displacement)
 set /a shiftv=%desiredheight%/4
 set /a shifth=%desiredwidth%/24
