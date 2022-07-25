@@ -71,6 +71,7 @@ set stutter=n
 set tcltrue=false
 set internet=undetermined
 set speedq=1
+set corrupt=n
 set "qs=Quality Selected!"
 if %1p == qmloop goto colorstart
 if %animate% == true call :loadingbar
@@ -258,6 +259,8 @@ set /a desiredwidth=%width%/%scaleq%
 set /a desiredwidth=(%desiredwidth%/2)*2
 :: makes the endingmsg more detailed if it's been selected (only available in the custom preset)
 if /I %details% == y set "endingmsg=Custom Quality - %framerate% fps, %videobr% video bitrate input, %audiobr% audio bitrate input, %scaleq% scale"
+:: corruption question
+if not %complexity% == s call :corruption
 :: speed and on-screen text questions (advanced mode only)
 if not %complexity% == s goto speedandtextquestions
 :afterspeedandtextquestions
@@ -381,6 +384,9 @@ set outputvar="%cd%\%filename%%container%"
 if %hasvideo% == false goto skipvoice
 if "%tts%"=="y" call :encodevoice
 :skipvoice
+if %hasvideo% == false goto skipcorruption
+if "%corrupt%"=="y" call :corruptoutput
+:skipskipcorruption
 echo. & echo [92mDone![0m
 set done=true
 :: delete temp files and show ending (unless stayopen is false)
@@ -432,11 +438,36 @@ set /a distsev=%distortionseverity%*10
 set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %audiospeedq% == 1 (
-     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 )
 call :clearlastprompt
 goto :eof
 
+:: corruption questions
+:corruption
+echo Do you want to corrupt the video? [Y,N]?
+echo [91mWarning! While the output will still be playable, some other options might behave strangely or break completely![0m
+choice /n
+if %errorlevel% == 1 (set corrupt=y) else call :newline&call :clearlastprompt&goto :eof
+set /p "corruptsev=[93mOn a scale from 1 to 10[0m, how much should the video be corrupted? "
+call :newline
+call :clearlastprompt
+goto :eof
+
+:: corrupts the output
+:corruptoutput
+:: makes sure that the file doesn't already exist
+set "cuffix= corrupted"
+if not exist "%filename%%cuffix%%container%" goto startcorruptencode
+:cexist
+set /a "u+=1"
+if exist "%filename%%cuffix%%container%" set "cuffix= corrupted (%u%)"&goto cexist
+:startcorruptencode
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i %outputvar% -c copy -bsf noise=((%desiredwidth%*%desiredheight%)/2073600*1000000/(%corruptsev%*10)) "%filename%%cuffix%%container%"
+if exist %outputvar% (del %outputvar%)
+set outputvar="%cd%\%filename%%cuffix%%container%"
+set "filename=%filename%%cuffix%"
+goto :eof
 
 :: speed settings/questions
 :speedandtextquestions
@@ -606,7 +637,7 @@ set /a tmixcheck=%tmixframes%
 if %tmixcheck% gtr 128 set tmixframes=128
 goto :eof
 
-:: the start of advanced mode, despite the name being "advanced four"
+:: the start of advanced mode
 :durationquestions
 call :clearlastprompt
 :: asks where to start clip
@@ -642,11 +673,12 @@ if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
 :: makes sure that the file doesn't already exist
 :ttexist
 set /a "q+=1"
-if exist "%cd%\%filename% %ttsuffix%%container%" set "ttsuffix=tts (%q%)"&goto ttexist
+if exist "%cd%\%filename% %ttsuffix%%container%" set "ttsuffix= tts (%q%)"&goto ttexist
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% %ttsuffix%%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%"
 if exist "%filename%%container%" (del "%filename%%container%")
-set outputvar="%cd%\%filename% %ttsuffix%%container%"
+set outputvar="%cd%\%filename%%ttsuffix%%container%"
+set "filename=%filename%%ttsuffix%"
 goto :eof
 
 :: miscillaneous filters that are too small to be their own options
@@ -1085,7 +1117,7 @@ set "atz=%atz%%atz%"
 set /a "v+=1"
 if %v% lss 7 goto atzloop
 set v=0
-set atz=%atz:~0,126%
+set atz=%atz:~0,120%
 echo [48;2;255;99;84m%atz%
 echo [48;2;253;134;79m%atz%
 echo [48;2;251;169;72m%atz%
