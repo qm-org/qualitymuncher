@@ -3,6 +3,8 @@
 This is a batch script designed to create very customizable low-quality videos. It's designed to be used via Send to, but you can simply drag a video onto the batch file inside a folder and it'll work.\
 Please note that it's still in development, so please message me (Frost#5872) if you have any bugs, issues, questions, or suggestions, or join my discord server: https://discord.gg/9tRZ6C7tYz
 
+If you're interested in expiramental features, feel free to check out the unstable branch.
+
 # Features
  - compatible with images, videos, gifs, and audios
  - replacing audio
