@@ -6,54 +6,62 @@
 :: https://github.com/qm-org/qualitymuncher
 
 @echo off
+
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
-     :: automatic update checks, highly recommended to keep this enabled
-     set autoupdatecheck=true
-     :: directory for logs, if none set it uses the input's directory ***add quotes if there is a space***
-     set loggingdir=
-     :: stay open after the file is done rendering
-     set stayopen=true
-     :: always asks for resample, even in simple mode (unless you're using multiqueue)
-     set alwaysaskresample=false
-     :: shows title
-     set showtitle=true
-     :: clear screen after each option is selected
-     set cleanmode=true
-     :: cool animations (slows startup speed by a few seconds)
-     set animate=false
-     :: animation speed (default is 5)
-     set animatespeed=5
-     :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
-     set encodingspeed=ultrafast
-     :: scaling algorithm - fast_bilinear, bilinear, bicubic, expiramental, neighbor, area, bicublin, gauss, sinc, lanczos, spline
-     set scalingalg=neighbor
-     :: speed at which the ffmpeg stats update. lower is faster, but anything below 0.01 may cause slower render times
-     set updatespeed=0.05
-     :: the video container, uses .mp4 as default (don't forget the dot!)
-     set container=.mp4
-     :: the container for audio, uses .mp3 as default
-     set audiocontainer=.mp3
-     :: the image container, uses .jpg as default
-     set imagecontainer=.jpg
+    :: automatic update checks, highly recommended to keep this enabled
+    set autoupdatecheck=true
+    :: directory for logs, if none set it uses the input's directory ***add quotes if there is a space***
+    set loggingdir=
+    :: stay open after the file is done rendering
+    set stayopen=true
+    :: always asks for resample, even in simple mode (unless you're using multiqueue)
+    set alwaysaskresample=false
+    :: shows title
+    set showtitle=true
+    :: clear screen after each option is selected
+    set cleanmode=true
+    :: cool animations (slows startup speed by a few seconds)
+    set animate=false
+    :: animation speed (default is 5)
+    set animatespeed=5
+    :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
+    set encodingspeed=ultrafast
+    :: scaling algorithm - fast_bilinear, bilinear, bicubic, expiramental, neighbor, area, bicublin, gauss, sinc, lanczos, spline
+    set scalingalg=neighbor
+    :: speed at which the ffmpeg stats update. lower is faster, but anything below 0.01 may cause slower render times
+    set updatespeed=0.05
+    :: the video container, uses .mp4 as default (don't forget the dot!)
+    set container=.mp4
+    :: the container for audio, uses .mp3 as default
+    set audiocontainer=.mp3
+    :: the image container, uses .jpg as default
+    set imagecontainer=.jpg
 :: END OF OPTIONS
 
-:: warning: if you mess with stuff after this things might break
-:: sets the code page, checks the directory, sets the version, and title
+:: ###############    WARNING: modifying any lines past here might result in the program breaking!    ###############
+
+:: code page, version, and title
 chcp 437 > nul
-if check%1 == check goto dircheck
-set inpath=%~dp1
-set inpath=%inpath:~0,-1%
-if not "%cd%" == "%inpath%" cd /d %inpath%
-:dircheck
-set isimage=false
 set version=1.4.5
-set isupdate=false
+if check%2 == check title Quality Muncher v%version%
+:: checks the current directory and fixes it if needed
+if check%1 == check goto donewithdircheck
+    set inpath=%~dp1
+    set inpath=%inpath:~0,-1%
+    if not "%cd%" == "%inpath%" cd /d %inpath%
+:donewithdircheck
 :: if less than 2 parameters (not multiqueue), set the title
 if check%2 == check title Quality Muncher v%version%
 set inpcontain=%~x1
-:: sets animate to false for multiqueue
-if not check%2 == check set animate=false&set alwaysaskresample=false&set showtitle=false
+:: disables some features when using multiqueue
+if not check%2 == check (
+    set animate=false
+    set alwaysaskresample=false
+    set showtitle=false
+)
 :: variables to be used later
+set isimage=false
+set isupdate=false
 set cols=15
 set lines=8
 set yeahlowqual=n
@@ -77,27 +85,29 @@ set trimmed=n
 set vidtime=262144
 set starttime=0
 set "qs=Quality Selected!"
+:: plays an animation is the first parameter is qmloo
 if %1p == qmloop goto colorstart
 if %animate% == true call :loadingbar
 :: don't display title in multiqueue
 if not check%2 == check goto verystart
 call :titledisplay
-:: checks for updates
-if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
+:: clears old update checks and checks for updates
+if exist "%temp%\QMnewversion.txt" del "%temp%\QMnewversion.txt"
 if %autoupdatecheck% == true goto updatecheck
 :verystart
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg
 if %errorlevel% == 1 (
-     echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
-     echo Please install it as it's needed for this program to work.
-     choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
-     if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
-     goto closingbar
+    echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
+    echo Please install it as it's needed for this program to work.
+    choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
+    if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
+    goto closingbar
 )
 :: checks for inputs, if no input tell them and send to a secondary main menu
 if %1check == check goto noinput
-:: checks if the input has a video stream (i.e. if the input is an audio file) and if there isn't a video stream, ask audio questions instead
+:: checks if the input has a video stream (i.e. if the input is an audio file)
+:: and if there isn't a video stream, ask audio questions instead
 set inputvideo=%1
 ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
 set /p vstream=<%temp%\vstream.txt
@@ -114,7 +124,7 @@ if "%~x1" == ".gif" set imagecontainer=.gif&goto imagemunch
 :: intro, questions and defining variables
 :: asks advanced or simple version
 set complexity=s
-if not check%2 == check goto skipped
+if not check%2 == check goto skipmenu
 :: main menu options
 :modeselect
 echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, [P] to make a
@@ -122,8 +132,14 @@ echo suggestion or bug report, [U] to check for updates, [N] to view announcemen
 choice /n /c SAWDCPGJMUN
 call :newline
 call :clearlastprompt
-:: determines where to send the user - if advanced, asks for the start time and duration
-if %errorlevel% == 2 set complexity=a& echo [96mAdvanced mode selected![0m&goto afterall
+if %errorlevel% == 1 (
+    set complexity=s
+    echo [96mSimple mode selected![0m
+)
+if %errorlevel% == 2 (
+    set complexity=a
+    echo [96mAdvanced mode selected![0m
+)
 if %errorlevel% == 3 goto website
 if %errorlevel% == 4 goto discord
 if %errorlevel% == 5 goto closingbar
@@ -133,29 +149,25 @@ if %errorlevel% == 8 goto thing2
 if %errorlevel% == 9 goto thing3
 if %errorlevel% == 10 goto updatecheck
 if %errorlevel% == 11 call :announcement&goto verystart
-:: only sends this if simple is selected
-echo [96mSimple mode selected![0m
-set complexity=s
-:afterall
 echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
 choice /n /c 1234CR
 call :clearlastprompt
 set customizationquestion=%errorlevel%
 if %customizationquestion% == 5 set customizationquestion=c
 if %customizationquestion% == 6 set customizationquestion=r&goto random
-:skipped
+:skipmenu
 if 1%2 == 1 goto skipcustommultiqueue
 set customizationquestion=%2
 if not %2 == c goto skipcustommultiqueue
 if %2 == c (
-     echo Custom %qs%
-     set framerate=%3
-     set videobr=%4
-     set audiobr=%5
-     set scaleq=%6
-     if %7 == 1 set details=y
-     set endingmsg=Custom Quality
-     goto setendingmsg
+    echo Custom %qs%
+    set framerate=%3
+    set videobr=%4
+    set audiobr=%5
+    set scaleq=%6
+    if %7 == 1 set details=y
+    set endingmsg=Custom Quality
+    goto aftercustomerrorcheck
 )
 :skipcustommultiqueue
 if %customizationquestion% == 6 set customizationquestion=r&goto random
@@ -174,78 +186,78 @@ if %customizationquestion% == 6 set customizationquestion=r&goto random
 if %customizationquestion% == r goto random
 :: custom quality
 if "%customizationquestion%" == "c" (
-     set /p "framerate=What fps do you want it to be rendered at: "
-     set /p "videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: "
-     set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
-     set /p "scaleq=[93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot: "
-     choice /m "Do you want a detailed file name for the output?"
-     set endingmsg=Custom Quality
+    set /p "framerate=What fps do you want it to be rendered at: "
+    set /p "videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: "
+    set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
+    set /p "scaleq=[93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot: "
+    choice /m "Do you want a detailed file name for the output?"
+    set endingmsg=Custom Quality
 )
 if "%customizationquestion%" == "c" (
-     :: errorlevel comes from the choice command a few lines up
-     if %errorlevel% == 1 set details=y
+    :: errorlevel comes from the choice command a few lines up
+    if %errorlevel% == 1 set details=y
 )
 :: decent quality
 if %customizationquestion% == 1 (
-     echo.
-     echo [96mDecent %qs%[0m
-     set framerate=24
-     set videobr=3
-     set scaleq=2
-     set audiobr=3
-     set endingmsg=Decent Quality
+    echo.
+    echo [96mDecent %qs%[0m
+    set framerate=24
+    set videobr=3
+    set scaleq=2
+    set audiobr=3
+    set endingmsg=Decent Quality
 )
 :: bad quality
 if %customizationquestion% == 2 (
-     echo.
-     echo [96mBad %qs%[0m
-     set framerate=12
-     set videobr=5
-     set scaleq=4
-     set audiobr=5
-     set endingmsg=Bad Quality
+    echo.
+    echo [96mBad %qs%[0m
+    set framerate=12
+    set videobr=5
+    set scaleq=4
+    set audiobr=5
+    set endingmsg=Bad Quality
 )
 :: terrible quality
 if %customizationquestion% == 3 (
-     echo.
-     echo [96mTerrible %qs%[0m
-     set framerate=6
-     set videobr=8
-     set scaleq=8
-     set audiobr=8
-     set endingmsg=Terrible Quality
+    echo.
+    echo [96mTerrible %qs%[0m
+    set framerate=6
+    set videobr=8
+    set scaleq=8
+    set audiobr=8
+    set endingmsg=Terrible Quality
 )
 :: unbearable quality
 if %customizationquestion% == 4 (
-     echo.
-     echo [96mUnbearable %qs%[0m
-     set framerate=1
-     set videobr=16
-     set scaleq=12
-     set audiobr=9
-     set endingmsg=Unbearable Quality
+    echo.
+    echo [96mUnbearable %qs%[0m
+    set framerate=1
+    set videobr=16
+    set scaleq=12
+    set audiobr=9
+    set endingmsg=Unbearable Quality
 )
-:: if custom quality is selected, check if the variables are all whole numbers, if they aren't it'll ask again for their values
-if not %customizationquestion% == c goto setendingmsg
+:: if custom quality is selected, check if the variables are all whole numbers
+:: if they aren't it'll ask again for their values
 set errormsg=[91mOne or more of your inputs for custom quality was invalid! Please use only numbers![0m
-if not "%framerate%"=="%framerate: =%" goto errorcustom
-if not "%videobr%"=="%videobr: =%" goto errorcustom
-if not "%audiobr%"=="%audiobr: =%" goto errorcustom
-if not "%scaleq%"=="%scaleq: =%" goto errorcustom
 set /a testforfps=%framerate%
 set /a testforvideobr=%videobr%
 set /a testforaudiobr=%audiobr%
 set /a testforscaleq=%scaleq%
-if not %testforfps% == %framerate% goto errorcustom
-if not %testforvideobr% == %videobr% goto errorcustom
-if not %testforaudiobr% == %audiobr% goto errorcustom
-if not %testforscaleq% == %scaleq% goto errorcustom
-:: grabs info from video to be used later (duration, dimensions, and framerate)
-:setendingmsg
+if %customizationquestion% == c(
+    if not "%framerate%"=="%framerate: =%" goto errorcustom
+    if not "%videobr%"=="%videobr: =%" goto errorcustom
+    if not "%audiobr%"=="%audiobr: =%" goto errorcustom
+    if not "%scaleq%"=="%scaleq: =%" goto errorcustom
+    if not %testforfps% == %framerate% goto errorcustom
+    if not %testforvideobr% == %videobr% goto errorcustom
+    if not %testforaudiobr% == %audiobr% goto errorcustom
+    if not %testforscaleq% == %scaleq% goto errorcustom
+)
 if %complexity% == a (
-     call :durationquestions
+    call :durationquestions
 ) else (
-     call :clearlastprompt
+    call :clearlastprompt
 )
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
 set /p duration=<%temp%\fileduration.txt
@@ -267,8 +279,14 @@ set /a desiredheight=(%desiredheight%/2)*2
 set /a desiredwidth=%width%/%scaleq%
 set /a desiredwidth=(%desiredwidth%/2)*2
 :: makes the endingmsg more detailed if it's been selected (only available in the custom preset)
-if /I %details% == y set "endingmsg=Custom Quality - %framerate% fps, %videobr% video bitrate input, %audiobr% audio bitrate input, %scaleq% scale"
-:: corruption question
+if /I %details% == y (
+    set "endingmsg=Custom Quality - ^
+        %framerate% fps, ^
+        %videobr% video bitrate input, ^
+        %audiobr% audio bitrate input, ^
+        %scaleq% scale"
+)
+:: corruption questions
 if not %complexity% == s call :corruption
 :: speed and on-screen text questions (advanced mode only)
 if not %complexity% == s goto speedandtextquestions
@@ -289,7 +307,7 @@ set /a desiredwidth=(%desiredwidth%/2)*2
 if %addedtextq% == n goto filters
 set /a fontsize=(%desiredwidth%/%strlength%)*2
 set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
-:: makes sure font size isn't too big with a repeat until
+:: makes sure font size isn't too big
 :fontcheck
 set /a triplefontsize=%fontsize%*3
 if %triplefontsize% gtr %desiredheight% set /a fontsize=%fontsize%-5&goto fontcheck
@@ -305,11 +323,11 @@ call :clearlastprompt
 :: if framerate input is less than output, asks if the user wants to interpolate (advanced mode only)
 set interpq=n
 if NOT %complexity% == s (
-     if %framerate% gtr %fpsvalue% (
-          choice /m "The framerate of your input exceeds the framerate of the output. Interpolate to fix this?"
-          if %errorlevel% == 1 set interpq=y
-          call :newline&call :clearlastprompt
-     )
+    if %framerate% gtr %fpsvalue% (
+        choice /m "The framerate of your input exceeds the framerate of the output. Interpolate to fix this?"
+        if %errorlevel% == 1 set interpq=y
+        call :newline&call :clearlastprompt
+    )
 )
 :: bitrate
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%framerate%/%videobr%)
@@ -330,7 +348,15 @@ if NOT %complexity% == s call :voicesynth
 :: frame stutter questions (advanced mode only)
 if NOT %complexity% == s call :stutter
 :: extra filters that are too small to get their own options
-set "tcl1= "&set "tcl2= "&set "tcl3= "&set "tcl4= "&set "tcl5= "&set "tcl6= "&set "tcl7= "
+(
+    set "tcl1= "
+    set "tcl2= "
+    set "tcl3= "
+    set "tcl4= "
+    set "tcl5= "
+    set "tcl6= "
+    set "tcl7= "
+)
 if NOT %complexity% == s call :filterlist
 :: video filters
 :: sets filters for fps
@@ -338,9 +364,27 @@ set "fpsfilter=fps=%framerate%,"
 if %interpq% == y set "fpsfilter=minterpolate=fps=%framerate%,"
 if %resample% == y set "fpsfilter=tmix=frames=%tmixframes%:weights=1,fps=%framerate%,"
 :: actual video filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%"
+set filters=-filter_complex "^
+    scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,^
+    setsar=1:1,^
+    %textfilter%^
+    %fpsfilter%^
+    %speedfilter%^
+    format=yuv410p^
+    %stutterfilter%^
+    %filtercl%^
+"
 if %colorq% == y (
-     set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,format=yuv410p%stutterfilter%%filtercl%"
+    set filters=-filter_complex "^
+    scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,^
+    setsar=1:1,^
+    %textfilter%^
+    %fpsfilter%^
+    %speedfilter%^
+    eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,^
+    format=yuv410p^
+    %stutterfilter%^
+    %filtercl%^"
 )
 :: if simple mode, use this
 if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,format=yuv410p"
@@ -413,11 +457,11 @@ if %errorlevel% == 1 set bassboosted=y&goto skipno
 :: if no, checks if speed is something other than one, and if it is, set audiofilters so the audio syncs and then goes to encoding
 :: the "hasvideo" variable is false if you're using an audio file
 if %bassboosted% == n (
-     set "audiofilters="
-     if NOT %audiospeedq% == 1 set "audiofilters=-af atempo=%audiospeedq%"
-     echo.
-     call :clearlastprompt
-     goto :eof
+    set "audiofilters="
+    if NOT %audiospeedq% == 1 set "audiofilters=-af atempo=%audiospeedq%"
+    echo.
+    call :clearlastprompt
+    goto :eof
 )
 :skipno
 :: sends the user to the method they choose
@@ -434,7 +478,7 @@ set /a bb3=2*(%distsev%*25)
 set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %audiospeedq% == 1 (
-     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
 )
 call :clearlastprompt
 call :newline & goto :eof
@@ -445,7 +489,7 @@ set /a distsev=%distortionseverity%*10
 set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 :: checks if speed is not the default and if it isnt it changes the audio speed to match
 if NOT %audiospeedq% == 1 (
-     set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
 )
 call :clearlastprompt
 goto :eof
@@ -456,11 +500,11 @@ echo Do you want to corrupt the video? [Y,N]?
 echo [91mWarning! While the output will still be playable, some other options might behave strangely or break completely![0m
 choice /n
 if %errorlevel% == 1 (
-     set corrupt=y
+    set corrupt=y
 ) else (
-     call :newline
-     call :clearlastprompt
-     goto :eof
+    call :newline
+    call :clearlastprompt
+    goto :eof
 )
 set /p "corruptsev=[93mOn a scale from 1 to 10[0m, how much should the video be corrupted? "
 call :newline
@@ -500,10 +544,10 @@ call :clearlastprompt
 :: asks if they want to add text
 choice /c YN /m "Do you want to add text to the video?"
 if %errorlevel% == 1 (
-     set addedtextq=y
+    set addedtextq=y
 ) else (
-     call :clearlastprompt
-     goto afterspeedandtextquestions
+    call :clearlastprompt
+    goto afterspeedandtextquestions
 )
 :: first text size
 set tsize=1
@@ -578,18 +622,18 @@ choice /c YN /m "Do you want to customize saturation, contrast, and brightness?"
 if %errorlevel% == 1 set colorq=y
 :: prompts for specific values
 if %colorq% == y (
-     set /p "contrastvalue=Select a contrast value [93mbetween -1000.0 and 1000.0[0m, default is 1: "
-     set /p "saturationvalue=Select a saturation value [93mbetween 0.0 and 3.0[0m, default is 1: "
-     set /p "brightnessvalue=Select a brightness value [93mbetween -1.0 and 1.0[0m, default is 0: "
+    set /p "contrastvalue=Select a contrast value [93mbetween -1000.0 and 1000.0[0m, default is 1: "
+    set /p "saturationvalue=Select a saturation value [93mbetween 0.0 and 3.0[0m, default is 1: "
+    set /p "brightnessvalue=Select a brightness value [93mbetween -1.0 and 1.0[0m, default is 0: "
 )
 :: tests if the values contain invalid characters
 if %colorq% == y (
-     if not "%contrastvalue%"=="%contrastvalue: =%" set contrastvalue=1
-     if not "%saturationvalue%"=="%saturationvalue: =%" set set saturationvalue=1
-     if not "%brightnessvalue%"=="%brightnessvalue: =%" set brightnessvalue=0
-     for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (if not "%%k"=="" set contrastvalue=1)
-     for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (if not "%%m"=="" set saturationvalue=1)
-     for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (if not "%%o"=="" set brightnessvalue=0)
+    if not "%contrastvalue%"=="%contrastvalue: =%" set contrastvalue=1
+    if not "%saturationvalue%"=="%saturationvalue: =%" set set saturationvalue=1
+    if not "%brightnessvalue%"=="%brightnessvalue: =%" set brightnessvalue=0
+    for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (if not "%%k"=="" set contrastvalue=1)
+    for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (if not "%%m"=="" set saturationvalue=1)
+    for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (if not "%%o"=="" set brightnessvalue=0)
 )
 :stretch
 call :newline
@@ -599,10 +643,10 @@ set widthratio=1
 set heightratio=1
 choice /c YN /m "Do you want to stretch the video?"
 if %errorlevel% == 1 (
-     set stretchres=y
+    set stretchres=y
 ) else (
-     call :clearlastprompt
-     goto lowqualmusicq
+    call :clearlastprompt
+    goto lowqualmusicq
 )
 echo [93mUse only whole numbers.[0m
 set /p "widthratio=How stretched should be width be? [93mDefault is 1 (no stretch)[0m: "
@@ -615,10 +659,10 @@ set musicstarttime=0 & set musicstartest=0 & set lowqualmusicquestion=n & set fi
 call :newline
 choice /c YN /m "Do you want to add music?"
 if %errorlevel% == 1 (
-     set lowqualmusicquestion=y
+    set lowqualmusicquestion=y
 ) else (
-     call :clearlastprompt
-     goto aftercolorandstretchquestions
+    call :clearlastprompt
+    goto aftercolorandstretchquestions
 )
 :addingthemusic
 :: asks for a specific file to get music from
@@ -656,11 +700,11 @@ call :clearlastprompt
 :: asks if the user wants to trim
 choice /m "Do you want to trim the video?"
 if %errorlevel% == 1 (
-     set trimmed=y
+    set trimmed=y
 ) else (
-     call :newline
-     call :clearlastprompt
-     goto :eof
+    call :newline
+    call :clearlastprompt
+    goto :eof
 )
 :: asks where to start clip
 :startquestion
@@ -711,9 +755,9 @@ goto :eof
 :: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
 :filterlist
 if "%tcltrue%" == "false" (
-     choice /m "Do you want some extra effects?"
+    choice /m "Do you want some extra effects?"
 ) else (
-     echo Do you want to add some extra effects?
+    echo Do you want to add some extra effects?
 )
 if "%tcltrue%" == "false" (if %errorlevel% == 2 call :clearlastprompt&goto :eof)
 echo [92mGreen[0m items are selected, [90mgray[0m items are unselected
@@ -726,14 +770,8 @@ echo  %tcl5% [5] Edgedetect - inverts colors[90m
 echo  %tcl6% [6] Shufflepixels - Reorder pixels in video frames[90m
 echo  %tcl7% [7] Guided - apply guided filter for edge-preserving smoothing, dehazing, etc[0m
 choice /c 1234567D /n /m "Select one or more options: "
-if %errorlevel% == 1 call :toggletcl1
-if %errorlevel% == 2 call :toggletcl2
-if %errorlevel% == 3 call :toggletcl3
-if %errorlevel% == 4 call :toggletcl4
-if %errorlevel% == 5 call :toggletcl5
-if %errorlevel% == 6 call :toggletcl6
-if %errorlevel% == 7 call :toggletcl7
 if %errorlevel% == 8 call :titledisplay&goto :eof
+call :toggletcl%errorlevel%
 echo [12A
 goto :filterlist
 
@@ -743,63 +781,111 @@ goto :filterlist
 :: - if the option was previously set to enabled, disable it and remove the filter from the filters, remove the highlight, and exit the function
 
 :toggletcl1
-set tcltrue=true
-if "%tcl1%2" == "[92m2" set "tcl1= "&set "filtercl=%filtercl:,erosion=%"&goto :eof
-set "filtercl=%filtercl%,erosion"&set "tcl1=[92m"
+    set tcltrue=true
+    if "%tcl1%2" == "[92m2" (
+        set "tcl1= "
+        set "filtercl=%filtercl:,erosion=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,erosion"
+    set "tcl1=[92m"
 goto :eof
 
 :toggletcl2
-set tcltrue=true
-if "%tcl2%2" == "[92m2" set "tcl2= "&set "filtercl=%filtercl:,lagfun=%"&goto :eof
-set "filtercl=%filtercl%,lagfun"&set "tcl2=[92m"
+    set tcltrue=true
+    if "%tcl2%2" == "[92m2" (
+        set "tcl2= "
+        set "filtercl=%filtercl:,lagfun=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,lagfun"
+    set "tcl2=[92m"
 goto :eof
 
 :toggletcl3
-set tcltrue=true
-if "%tcl3%2" == "[92m2" set "tcl3= "&set "filtercl=%filtercl:,negate=%"&goto :eof
-set "filtercl=%filtercl%,negate"&set "tcl3=[92m"
+    set tcltrue=true
+    if "%tcl3%2" == "[92m2" (
+        set "tcl3= "
+        set "filtercl=%filtercl:,negate=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,negate"
+    set "tcl3=[92m"
 goto :eof
 
 :toggletcl4
-set tcltrue=true
-if "%tcl4%2" == "[92m2" set "tcl4= "&set "filtercl=%filtercl:,interlace=%"&goto :eof
-set "filtercl=%filtercl%,interlace"&set "tcl4=[92m"
+    set tcltrue=true
+    if "%tcl4%2" == "[92m2" (
+        set "tcl4= "
+        set "filtercl=%filtercl:,interlace=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,interlace"
+    set "tcl4=[92m"
 goto :eof
 
 :toggletcl5
-set tcltrue=true
-if "%tcl5%2" == "[92m2" set "tcl5= "&set "filtercl=%filtercl:,edgedetect=%"&goto :eof
-set "filtercl=%filtercl%,edgedetect"&set "tcl5=[92m"
+    set tcltrue=true
+    if "%tcl5%2" == "[92m2" (
+        set "tcl5= "
+        set "filtercl=%filtercl:,edgedetect=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,edgedetect"
+    set "tcl5=[92m"
 goto :eof
 
 :toggletcl6
-set tcltrue=true
-if "%tcl6%2" == "[92m2" set "tcl6= "&set "filtercl=%filtercl:,shufflepixels=%"&goto :eof
-set "filtercl=%filtercl%,shufflepixels"&set "tcl6=[92m"
+    set tcltrue=true
+    if "%tcl6%2" == "[92m2" (
+        set "tcl6= "
+        set "filtercl=%filtercl:,shufflepixels=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,shufflepixels"
+    set "tcl6=[92m"
 goto :eof
 
 :toggletcl7
-set tcltrue=true
-if "%tcl7%2" == "[92m2" set "tcl7= "&set "filtercl=%filtercl:,guided=%"&goto :eof
-set "filtercl=%filtercl%,guided"&set "tcl7=[92m"
+    set tcltrue=true
+    if "%tcl7%2" == "[92m2" (
+        set "tcl7= "
+        set "filtercl=%filtercl:,guided=%"
+        goto :eof
+    )
+    set "filtercl=%filtercl%,guided"
+    set "tcl7=[92m"
 goto :eof
 
 :: if discord is selected from the menu, it sends the user to discord, clears the console, and goes back to start
 :discord
-echo [96mSending to Discord![0m & start "" https://discord.com/invite/9tRZ6C7tYz & call :clearlastprompt&goto verystart
+echo [96mSending to Discord![0m
+start "" https://discord.com/invite/9tRZ6C7tYz
+call :clearlastprompt
+goto verystart
 
 :: if the website is selected from the menu, it sends the user to the website, clears the console, and goes back to start
 :website
-echo [96mSending to website![0m & start "" https://qualitymuncher.lgbt/ & call :clearlastprompt&goto verystart
+echo [96mSending to website![0m
+start "" https://qualitymuncher.lgbt/
+call :clearlastprompt
+goto verystart
 
 :: suggestions
 :suggestion
 set wbhs=OllG_GUEX4SXN7RRqu-xLdS
-:: checks for a connection to discord
+:: checks for a connection to discord since you need that to send a message to a webhook
 call :clearlastprompt
 ping /n 1 discord.com  | find "Reply" > nul
-if %errorlevel% == 1 set internet=false&echo [91mSorry, either discord is down or you're not connected to the internet. Please try again later.[0m&echo.&pause&call :clearlastprompt&goto verystart
-:: asks information about the suggestion
+if %errorlevel% == 1 (
+    set internet=false
+    echo [91mSorry, either discord is down or you're not connected to the internet. Please try again later.[0m
+    echo.
+    pause
+    call :clearlastprompt
+    goto verystart
+)
+:: asks information about the suggestion for details
 choice /c SB /m "Would you like to make a suggestion or report a bug?"
 if %errorlevel% == 2 goto bugreport
 set /p "mainsuggestion=What's your suggestion? "
@@ -813,13 +899,25 @@ echo %mainsuggestion%
 echo %suggestionbody%
 echo.
 choice /m "Are you sure you would like to submit this suggestion?"
-if %errorlevel% == 2 call :clearlastprompt&echo [91mOkay, your suggestion has been cancelled.[0m&echo.&pause&call :clearlastprompt&goto verystart
+if %errorlevel% == 2 (
+    call :clearlastprompt
+    echo [91mOkay, your suggestion has been cancelled.[0m
+    echo.
+    pause
+    call :clearlastprompt
+    goto verystart
+)
 :continuesuggest
 :: please do not abuse this webhook it would make me very sad
 curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/973701372128157776/A-TFFPzP-hfWR-W2Tu%wbhs%JgcgoQF6_x-GkwrMxDahw5g_aFE
 call :clearlastprompt
-echo [92mYour suggestion has been successfully sent to the developers![0m &echo.&pause&call :clearlastprompt&goto verystart
+echo [92mYour suggestion has been successfully sent to the developers![0m
+echo.
+pause
+call :clearlastprompt
+goto verystart
 
+:: lets users report bugs
 :bugreport
 set wbh2=lxyrX4Y5TxLkQXfq
 set /p "mainsuggestion=What is the bug? "
@@ -842,7 +940,7 @@ curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:applicati
 call :clearlastprompt
 echo [92mYour bug report has been successfully sent to the developers![0m &echo.&pause&call :clearlastprompt&goto verystart
 
-:: go to the main menu and press m to see what this does :)
+:: color stuff
 :thing3
 start "" %0 qmloo
 call :clearlastprompt&goto verystart
@@ -891,7 +989,10 @@ if not %G% LEQ 0 set /a "G=%G%-%speedr%"
 if %G% LEQ 0 set /a "R=%R%+%speedr%"
 goto bluc
 
-:: runs if the user runs the script without using a parameter (i.e. they don't use send to / drag and drop)
+:: atzur told me to write comments that "explain why things are there instead of what they do", so here we go
+:: why do users not provide an input to a file which demands an input?
+:: perhaps it is to access the main menu
+:: that's why there's a main menu here instead of a message telling them to fuck off
 :noinput
 echo [91mERROR: no input file![0m
 echo Press [W] to open the website, [D] to join the discord server, [P] to make a suggestion or bug report, or [C] to close.
@@ -923,7 +1024,7 @@ if %errorlevel% == 2 %outputvar%
 if %errorlevel% == 3 explorer /select, %outputvar%
 goto closingbar
 
-:: makes a log
+:: makes a log for when a user might encounter an error
 :makelog
 call :clearlastprompt
 set pastdir=%cd%
@@ -1007,9 +1108,9 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
 )>>"Quality Muncher Log.txt"
 ffmpeg>nul 2>>"Quality Muncher Log.txt"
 call :titledisplay
-choice /m "Log has been made. Upload and send to developers"
+choice /m "Log has been made. Upload and send to developers?"
 if %errorlevel% == 2 goto :eof
-choice /m "Do you want to provide more details about the log? For example, what might've caused it or what the error was"
+choice /m "Do you want to provide more details about the log? For example, what might've caused it or what the error was."
 if %errorlevel% == 1 set /p "detaillog=Please provide more details: "
 if %errorlevel% == 2 set detaillog=No details provided.
 set /p "author=What is your name on discord? [93mThis is optional but very helpful[0m: "
@@ -1028,6 +1129,8 @@ if not 1%loggingdir% == 1 cd /d %pastdir%
 call :titledisplay
 echo [92mYour log has been successfully sent to the developers![0m &echo.&pause
 goto :eof
+
+:: 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
 
 :: pipe the output
 :piped
@@ -1094,10 +1197,10 @@ set /p newversion=<%temp%\QMnewversion.txt
 if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 :: if the new version is the same as the current one, go to the start
 if "%version%" == "%newversion%" (
-     set isupdate=false
-     goto verystart
+    set isupdate=false
+    goto verystart
 ) else (
-     set isupdate=true
+    set isupdate=true
 )
 :: tells the user a new update is out and asks if they want to update
 echo [96mThere is a new version (%newversion%) of Quality Muncher available! & echo Press [U] to update or [S] to skip. & echo [90mTo hide this message in the future, set the variable "autoupdatecheck" in the script options to false.[0m
@@ -1185,7 +1288,7 @@ set /a videobr=%random% * %max% / 32768 + %min%
 set /a scaleq=%random% * %max% / 32768 + %min%
 set /a audiobr=%random% * %max% / 32768 + %min%
 set endingmsg=Random Quality
-goto setendingmsg
+goto aftercustomerrorcheck
 
 :: runs at start of script, just a fun animation (disabled if animations are set to false)
 :: make terminal wider until it reaches 120
@@ -1302,7 +1405,7 @@ echo.
 choice /c ON /m "Old or new image munching method?"
 call :clearlastprompt
 if %errorlevel% == 2 goto newmunch
-if not check%3 == check set imageq=%3&set imagesc=%4&goto skippedque
+if not check%3 == check set imageq=%3&set imagesc=%4&goto skipmenuque
 set /p "imageq=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
 call :clearlastprompt
 set /p "imagesc=[93mOn a scale from 1 to 10[0m, how much should the image be shrunk by? "
@@ -1385,9 +1488,9 @@ set frying=true
 set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
 if %errorlevel% == 2 (
-     set levelcolor=10
+    set levelcolor=10
 ) else (
-     set levelcolor=%level%
+    set levelcolor=%level%
 )
 :: sets the amount to shift the video back by, fixing some unwanted effects of displacement)
 set /a shiftv=%desiredheight%/4
