@@ -1401,6 +1401,7 @@ if not 1%loggingdir% == 1 cd /d %loggingdir%
 :: delete old log
 del "Quality Muncher Log.txt"
 :: stuff to log (anything and everything possible for batch to get that might be responsible for issues)
+:: filename and outputvar are seperate from the rest because filesnames can have weird characters that might cause the entire log to fail if it's not seperated
 echo filename: %filename% > "Quality Muncher Log.txt"
 echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
 (
@@ -1627,7 +1628,7 @@ echo Are you sure you want to update? This will overwrite the current file!
 echo [92m[Y] Yes, update and overwrite.[0m [93m[C] Yes, BUT save a copy of the current file.[0m [91m[N] No, take me back.[0m
 choice /c YCN /n
 if %errorlevel% == 2 (
-    copy %0 "%~dpn0 (OLD).bat"
+    copy %0 "%~dpn0 (OLD).bat" || (echo [91mError copying the file! Updating has been aborted.[0m&echo Press any key to go to the menu&pause>nul&call :titledisplay&goto afterstartup)
     echo Okay, this file has been saved as a copy in the same directory. Press any key to continue updating.
     pause>nul
 )
@@ -1637,7 +1638,7 @@ if %errorlevel% == 3 (
 )
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
-curl -s "https://qualitymuncher.lgbt/Quality%%20Muncher.bat" --output %0
+curl -s "https://qualitymuncher.lgbt/Quality%%20Muncher.bat" --output %0 || (echo [91mecho Downloading the update failed! Please try again later.[0m&echo Press any key to go to the menu&pause>nul&call :titledisplay&goto afterstartup)
 cls
 :: runs the (updated) script
 %0 %1
@@ -1796,7 +1797,7 @@ if "%tts%"=="y" call :encodevoiceNV
 goto end
 
 :: text-to-speech encoding for no video stream
-:: seperate from the video one 
+:: seperate from the video one since it has some options that aren't the same
 :encodevoiceNV
 set "af2="
 if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
@@ -1977,7 +1978,7 @@ ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 goto failure
 set internet=true
 :: grabs the announcements from github
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (echo [91mecho Downloading the announcements failed! Please try again later.[0m&echo Press any key to go to the menu&pause>nul&call :titledisplay&goto :eof)
 set /p announce=<%temp%\anouncementQM.txt
 echo [38;2;255;190;0mAnnouncements:[0m
 setlocal enabledelayedexpansion
