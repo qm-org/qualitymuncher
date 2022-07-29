@@ -1333,10 +1333,10 @@ goto :eof
 ::      - red is greater than 0: subtract speedr from red
 ::      - red is less than or equal to 0: add speedr to blue
 :gre
-    if %G% LEQ 0 (
+    if %R% LEQ 0 (
         set /a "B=%B%+%speedr%"
     ) else (
-        set /a "R=%R%+%speedr%"
+        set /a "R=%R%-%speedr%"
     )
 goto :eof
 
