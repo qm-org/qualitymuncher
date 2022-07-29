@@ -10,7 +10,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - fully seperate/unique speed/audio speed
  - flite not installed warning (text to speech)
  - options for other scaling algorithms
- - infinite or forever increasing duration spoofing (EXTREMELY expiramental and needs much more testing)
+ - super long, super long negative, or forever increasing video duration (EXTREMELY expiramental and needs much more testing)
 
 # Bugs
 

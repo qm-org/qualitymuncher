@@ -585,18 +585,25 @@ if %errorlevel% == 1 (
     call :clearlastprompt
     goto :eof
 )
-choice /n /c 12 /m "Do you want the video to have a super long duration [1] or ever-increasing duration [2]?" 
+echo Do you want the video to have a super long duration [1], a super long negative duration [2], or an ever-increasing
+choice /n /c 123 /m "duration [3]?" 
 if %errorlevel% == 1 set durationtype=superlong
-if %errorlevel% == 2 set durationtype=increasing
+if %errorlevel% == 2 set durationtype=superlongnegative
+if %errorlevel% == 3 set durationtype=increasing
 call :clearlastprompt
 goto :eof
 
 :outputdurationspoof
+:: text to speech doesn't have duration in metadata or something so reencode it
+if %tts% == y ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -c:v libx264 -preset %encodingspeed% -b:v %badvideobitrate% -c:a copy -shortest ^-vsync vfr -movflags +use_metadata_tags+faststart "%filename%2.mp4"
+del %outputvar%
+set outputvar="%cd%\%filename%2.mp4"
 set nextline=false
 :: encode the video to hex
 certutil -encodehex %outputvar% "%temp%\%filename% hexed.txt"
 set theline=no
 :: loop through the file's lines until the line containing duration is found and replacde
+set linenum=0
 for /f "usebackq tokens=*" %%a in ("%temp%\%filename% hexed.txt") do (
     call :findmvhdlineandreplacenext "%%~a"
 )
@@ -611,16 +618,27 @@ goto donewithdurationspoof
 
 :: a loop that finds the line that contains duration information
 :findmvhdlineandreplacenext
-set /a "linenum+=1"
+set /a linenum+=1
 set "linecontent=%~1"
 if %nextline% == true (
-    set theline=%linenum%
+    if %durationtype% == superlongnegative (
+        set /a "theline=%linenum%+1"
+    ) else (
+        set /a "theline=%linenum%"
+    )
+    set /a numofloops+=1
     if %durationtype% == superlong call :thelinesuperlong
+    if %durationtype% == superlongnegative call :superlongnegative
     if %durationtype% == increasing call :thelineincreasing
+    if %numofloops%1 == 11 set nextline=false
 )
 :: exit the for loop if the line is found and replaced
 if %linenum% gtr %theline% goto endloop
-if %nextline% == true goto endloop
+if not %durationtype% == superlongnegative (
+    if %nextline% == true (
+        goto endloop
+    )
+)
 if not "%linecontent%" == "%linecontent:mvhd=%" set nextline=true
 goto :eof
 
@@ -628,6 +646,7 @@ goto :eof
 :thelinesuperlong
 :: saving the old line content
 set "linecontentog=%linecontent%"
+echo first %linecontentog%
 :: replacing the line content with the super long duration
 if "%linecontent:~4,1%" == " " (
     set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
@@ -654,12 +673,86 @@ if "%linecontent:~4,1%" == " " (
 )
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
+echo next %linecontentnew%
 :: calling powershell to replace the line content
 echo Powershell is working, please wait...
 powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
 :: deleting the old file and renaming the new one
 del "%temp%\%filename% hexed.txt"
 ren "%temp%\myFile.txt" "%filename% hexed.txt"
+goto :eof
+
+:: replace the information with super long duration
+:superlongnegative
+:: saving the old line content
+set "linecontentog=%linecontent%"
+:: only use the parts with hex code because the rest had weird characters and caused issues
+set linecontentog=%linecontentog:~0,55%
+:: display it for error checking (remove in public release maybe?)
+echo first %linecontentog%
+:: skip the first part if it's the second line
+if %numofloops% == 2 goto secondlinething
+if "%linecontent:~4,1%" == " " (
+    set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+) else (
+    if "%linecontent:~5,1%" == " " (
+        set "linecontentnew=%linecontent:~0,5% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+    ) else (
+        if "%linecontent:~6,1%" == " " (
+            set "linecontentnew=%linecontent:~0,6% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+        ) else (
+            if "%linecontent:~7,1%" == " " (
+                set "linecontentnew=%linecontent:~0,7% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+            ) else (
+                if "%linecontent:~8,1%" == " " (
+                    set "linecontentnew=%linecontent:~0,8% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+                ) else (
+                    if "%linecontent:~9,1%" == " " (
+                        set "linecontentnew=%linecontent:~0,9% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+                    )
+                )
+            )
+        )
+    )
+)
+:: skip the second part if it's the first line
+goto :endsecondlinething
+:secondlinething
+if "%linecontent:~4,1%" == " " (
+    set "linecontentnew=%linecontent:~0,4% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+) else (
+    if "%linecontent:~5,1%" == " " (
+        set "linecontentnew=%linecontent:~0,5% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+    ) else (
+        if "%linecontent:~6,1%" == " " (
+            set "linecontentnew=%linecontent:~0,6% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+        ) else (
+            if "%linecontent:~7,1%" == " " (
+                set "linecontentnew=%linecontent:~0,7% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+            ) else (
+                if "%linecontent:~8,1%" == " " (
+                    set "linecontentnew=%linecontent:~0,8% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+                ) else (
+                    if "%linecontent:~9,1%" == " " (
+                        set "linecontentnew=%linecontent:~0,9% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+                    )
+                )
+            )
+        )
+    )
+)
+:endsecondlinething
+:: making sure everything works okay-ish (for some reason it kept an extra hex at the start of the line sometimes)
+set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
+set linecontentnew=%linecontentnew:00 FF 67 69 81 00 00 00 01=FF 67 69 81 00 00 00 01%
+echo next %linecontentnew%
+:: calling powershell to replace the line content
+echo Powershell is working, please wait...
+powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
+:: deleting the old file and renaming the new one
+del "%temp%\%filename% hexed.txt"
+ren "%temp%\myFile.txt" "%filename% hexed.txt"
+if %numofloops% == 2 echo [93mWhile this video might crash some video players, it will embed perfectly fine in discord.[0m
 goto :eof
 
 :: replace the information with increasing duration
