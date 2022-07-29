@@ -595,9 +595,11 @@ goto :eof
 
 :outputdurationspoof
 :: text to speech doesn't have duration in metadata or something so reencode it
-if %tts% == y ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -c:v libx264 -preset %encodingspeed% -b:v %badvideobitrate% -c:a copy -shortest ^-vsync vfr -movflags +use_metadata_tags+faststart "%filename%2.mp4"
-del %outputvar%
-set outputvar="%cd%\%filename%2.mp4"
+if %tts% == y (
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -c:v libx264 -preset %encodingspeed% -b:v %badvideobitrate% -c:a copy -shortest ^-vsync vfr -movflags +use_metadata_tags+faststart "%filename%2.mp4"
+    del %outputvar%
+    set outputvar="%cd%\%filename%2.mp4"
+)
 set nextline=false
 :: encode the video to hex
 certutil -encodehex %outputvar% "%temp%\%filename% hexed.txt"
