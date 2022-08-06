@@ -96,6 +96,7 @@ set heightratio=1
 set forceupdate=false
 set spoofduration=false
 set durationtype=superlong
+set bouncy=false
 set "qs=Quality Selected!"
 :: plays an animation is the first parameter is qmloo
 if %1p == qmloop goto colorstart
@@ -319,6 +320,8 @@ if /I %details% == y (
 if not %complexity% == s call :corruption
 :: spoofed duration questions
 if not %complexity% == s call :durationspoof
+:: spoofed duration questions
+if not %complexity% == s call :webmstretch
 :: speed and on-screen text questions (advanced mode only)
 if not %complexity% == s goto speedandtextquestions
 :afterspeedandtextquestions
@@ -463,6 +466,7 @@ set outputvar="%cd%\%filename%%container%"
 if %hasvideo% == false goto skipcorruption
 if "%tts%"=="y" call :encodevoice
 if %spoofduration% == true goto outputdurationspoof
+if %bouncy% == true call :encodebouncy
 :donewithdurationspoof
 if "%corrupt%"=="y" call :corruptoutput
 :skipcorruption
@@ -578,7 +582,7 @@ goto :eof
 echo Do you want to spoof the duration of the video? [Y,N]?
 echo [91mWarning! This is an EXTREMELY expiramental feature and might not work as intended![0m
 if %corrupt% == y echo [91mThis setting does not work with corruption (which you have enabled).[0m
-choice /n 
+choice /n
 if %errorlevel% == 1 (
     set spoofduration=true
 ) else (
@@ -793,6 +797,63 @@ powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%line
 :: deleting the old file and renaming the new one
 del "%temp%\%filename% hexed.txt"
 ren "%temp%\myFile.txt" "%filename% hexed.txt"
+goto :eof
+
+:webmstretch
+choice /m "Do you want to make the video into a bouncing WebM?"
+if %corrupt% == y echo [91mThis setting does not work with corruption (which you have enabled).[0m
+if %spoofduration% == true echo [91mThis setting does not work with duration spoofing (which you have enabled).[0m
+if %errorlevel% == 1 (
+    set "bouncy=true"
+) else (
+    call :clearlastprompt
+    goto :eof
+)
+set /p "incrementbounce=Bouncing speed: "
+set /p "minimumbounce=Minimum scale relative to original from 0.0 to 1.0: "
+choice /c WHB /m "Stretch width, height, or both?"
+call :clearlastprompt
+if %errorlevel% == 1 set bouncetype=width
+if %errorlevel% == 2 set bouncetype=height
+if %errorlevel% == 3 set bouncetype=both
+goto :eof
+
+:: encoding bouncy webm
+:encodebouncy
+:: remencode to webm so the codecs can be copied
+ffmpeg -hide_banner -stats_period 0.05 -loglevel warning -stats -i %outputvar% -c:a libopus -b:a %badaudiobitrate%k -c:v libvpx "%temp%\%filename% webmifed.webm"
+:: get the frame count so we know how many times to loop
+ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -i "%temp%\%filename% webmifed.webm" -of csv=p=0 > "%temp%\framecount.txt"
+set /p framecount=<"%temp%\framecount.txt"
+set /a framecount=%framecount%
+del "%temp%\framecount.txt"
+:: remove old directory just in case
+rmdir "%temp%\qmframes" /s /q >nul 2>nul
+:: make the directory
+mkdir "%temp%\qmframes"
+:: looping through all of the frames
+echo 0/%framecount%
+:loopframes
+set /a "loopcount+=1"
+echo [1A%loopcount%/%framecount%
+set /a "frametograb=%loopcount%-1"
+if %bouncetype% == width (
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%temp%\qmframes\framenum%loopcount%.webm"
+) else (
+    if %bouncetype% == height (
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm"
+    ) else (
+        ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm"
+    )
+)
+echo file '%temp%\qmframes\framenum%loopcount%.webm' >> "%temp%\qmframes\filelist.txt"
+if %loopcount% lss %framecount% goto loopframes
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel warning -stats -f concat -safe 0 -i %temp%\qmframes\filelist.txt -i "%temp%\%filename% webmifed.webm" -map 1:a -map 0:v -c copy "%filename%.webm"
+del "%temp%\%filename% webmifed.webm"
+set container=.webm
+del %outputvar%
+set outputvar="%cd%\%filename%.webm"
+rmdir "%temp%\qmframes" /s /q
 goto :eof
 
 :: speed settings/questions
