@@ -202,14 +202,14 @@ if %2 == c (
     set scaleq=%6
     if %7 == 1 set details=y
     set endingmsg=Custom Quality
-    goto aftercustomerrorcheck
+    goto aftercheck
 )
 :skipcustommultiqueue
 :: random quality
 if %customizationquestion% == 6 (
     set customizationquestion=r
     call :random
-    goto aftercustomerrorcheck
+    goto aftercheck
 )
 :: defines a few variables that will be replaced later; used to check for valid user inputs
 set framerate=a
@@ -291,6 +291,7 @@ if %customizationquestion% == c (
     if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
     if not %testforscaleq% == %scaleq% (echo %errormsg% & goto customquestioncheckpoint)
 )
+:aftercheck
 :: ask if the user wants to trim the video if in advanced mode
 if %complexity% == a call :durationquestions
 :: get the file's duration and save to a variable, which is used in frying
@@ -1118,6 +1119,7 @@ if exist "%cd%\%filename% %ttsuffix%%container%" (
     set "ttsuffix= tts (%q%)"
     goto ttexist
 )
+echo Encoding and merging text-to-speech...
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%"
 if exist "%filename%%container%" (del "%filename%%container%")
@@ -1129,13 +1131,13 @@ goto :eof
 :: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
 :filterlist
 if "%tcltrue%" == "false" (
-    choice /m "Do you want some extra effects?"
+    choice /m "Do you want some extra video effects?"
     if %errorlevel% == 2 (
         call :clearlastprompt
         goto :eof
     )
 ) else (
-    echo Do you want to add some extra effects?
+    echo Do you want to add some extra video effects?
 )
 echo [92mGreen[0m items are selected, [90mgray[0m items are unselected
 echo  [38;2;254;165;0m  [D] Done - finish your selection and move to the next prompt[90m
