@@ -1,1 +1,5 @@
-1.4.4 has been released, which includes updates to adding text and a new menu for extra filters^!
+1.4.5 has been released, with a ton of new features such as
+- corruption
+- spoofing duration
+- variable resolution videos
+- and more^!
