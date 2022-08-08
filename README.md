@@ -26,6 +26,7 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - advanced and simple modes
  - presets and custom options for quality
  - audio and video speed
+ - corruption
  - quick and effecient encoding
  - text-to-speech
  - interpolation
@@ -37,6 +38,8 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - automatic update checking
  - audio distortion (earrape)
  - saturation, contrast, and brightness modification
+ - variable resolution videos
+ - fake video duration (super long, super long negative, and ever-increasing)
  - active development
  - and more!
  
