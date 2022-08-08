@@ -40,7 +40,7 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - active development
  - and more!
  
-## Expiramental Features
+## Experimental Features
 If you're interested in the latest features, check out the [unstable branch](https://github.com/qm-org/qualitymuncher/tree/unstable).
 
 # Examples
