@@ -11,6 +11,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - flite not installed warning (text to speech)
  - options for other scaling algorithms
  - super long, super long negative, or forever increasing video duration (EXTREMELY expiramental and needs much more testing)
+ - WebM with variable resolution
 
 # Bugs
 
