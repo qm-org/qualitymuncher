@@ -331,7 +331,7 @@ set /a badaudiobitrate=80/%audiobr%
 :: speed and on-screen text questions (advanced mode only)
 if not %complexity% == s call :speedquestions
 if not %complexity% == s call :addtext
-if not %complexity% == s call :textmath
+if not %complexity% == s (if %addedtextq% == y call :textmath)
 :: asks color questions, streching, and audio replacement (advanced mode only)
 if not %complexity% == s call :colorquestions
 :: asks color questions, streching, and audio replacement (advanced mode only)
