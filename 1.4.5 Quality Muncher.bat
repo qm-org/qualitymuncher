@@ -329,7 +329,9 @@ if /I %details% == y (
 :: Sets the audiobr (should be noted that audio bitrate is in thousands, unlike video bitrate)
 set /a badaudiobitrate=80/%audiobr%
 :: speed and on-screen text questions (advanced mode only)
-if not %complexity% == s call :speedandtextquestions
+if not %complexity% == s call :speedquestions
+if not %complexity% == s call :addtext
+if not %complexity% == s call :textmath
 :: asks color questions, streching, and audio replacement (advanced mode only)
 if not %complexity% == s call :colorquestions
 :: asks color questions, streching, and audio replacement (advanced mode only)
@@ -828,7 +830,7 @@ goto :eof
 
 :: speed settings/questions
 :: collect the inputs needed to change video and audio speeds (if the user wants to do so)
-:speedandtextquestions
+:speedquestions
 call :newline
 choice /m "Do you want to modify the speed of the video and/or audio?"
 :: if no, skip to text questions and set speed to default
@@ -836,7 +838,7 @@ if %errorlevel% == 2 (
     set speedq=1
     set audiospeedq=1
     call :clearlastprompt
-    goto addtext
+    goto :eof
 )
 :: if there's no video, skip this question
 if not %hasvideo% == false set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
@@ -853,8 +855,8 @@ if "%audiospeedq%1" == "1" set audiospeedq=%speedq%
 :: set the speed filter using the reciprocal
 set "speedfilter=setpts=(1/%speedq%)*PTS,"
 call :clearlastprompt
-:: exit this part if no video
-if %hasvideo% == false goto :eof
+goto :eof
+
 :addtext
 :: asks if they want to add text
 choice /c YN /m "Do you want to add text to the video?"
@@ -880,12 +882,8 @@ echo "%toptextnospace%" > %temp%\toptext.txt
 for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
 :: if below 16 characters, set it to 16 (essentially caps the font size)
 if %strlength% LSS 16 set strlength=16
-:: use width and size of the text, and the user's inputted text size to determine font size
-set /a fontsize=(%desiredwidth%/%strlength%)*2
-set fontsize=(%fontsize%)/%tsize%
 :: ask the user where the font should go on the video
-call :screenlocation "text one"
-set "textonepos=%textpos%"
+call :screenlocation "text one" textonepos
 :: THE NEXT LINES UNTIL setting the text filter IS THE SAME AS THE TOP TEXT, BUT WITH DIFFERENT VARIABLE NAMES
 set tsize2=1
 choice /c BMSV /m "What size should text two be? Big, medium, small, or very small?"
@@ -898,15 +896,21 @@ set bottomtextnospace=%bottomtext: =_%
 echo "%bottomtextnospace%" > %temp%\bottomtext.txt
 for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
 if %strlengthb% LSS 16 set strlengthb=16
-set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
-set fontsizebottom=(%fontsizebottom%)/%tsize2%
-call :screenlocation "text two"
-set "texttwopos=%textpos%"
+call :screenlocation "text two" texttwopos
 :: setting text filter
 if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
 if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
-set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
 call :clearlastprompt
+goto :eof
+
+:textmath
+:: use width and size of the text, and the user's inputted text size to determine font size
+set /a fontsize=(%desiredwidth%/%strlength%)*2
+set fontsize=(%fontsize%)/%tsize%
+set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
+set fontsizebottom=(%fontsizebottom%)/%tsize2%
+:: setting text filter
+set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
 goto :eof
 
 :: prompts the user of where to place an item
@@ -921,15 +925,15 @@ echo   ^|                           ^|
 echo   ^| [7]        [8]        [9] ^|
 echo   ^'---------------------------^'
 choice /n /c 123456789 /m "Where should %item% be placed?"
-if %errorlevel% == 1 set "textpos=x=(0.25*text_h):y=(0.25*text_h)"
-if %errorlevel% == 2 set "textpos=x=(w-text_w)/2:y=(0.25*text_h)"
-if %errorlevel% == 3 set "textpos=x=w-tw-(0.25*th):y=(0.25*text_h)"
-if %errorlevel% == 4 set "textpos=x=(0.25*text_h):y=(h-text_h)/2"
-if %errorlevel% == 5 set "textpos=x=(w-text_w)/2:y=(h-text_h)/2"
-if %errorlevel% == 6 set "textpos=x=w-tw-(0.25*th):y=(h-text_h)/2"
-if %errorlevel% == 7 set "textpos=x=(0.25*text_h):y=(h-1.25*text_h)"
-if %errorlevel% == 8 set "textpos=x=(w-text_w)/2:y=(h-1.25*text_h)"
-if %errorlevel% == 9 set "textpos=x=w-tw-(0.25*th):y=(h-1.25*text_h)"
+if %errorlevel% == 1 set "%2=x=(0.25*text_h):y=(0.25*text_h)"
+if %errorlevel% == 2 set "%2=x=(w-text_w)/2:y=(0.25*text_h)"
+if %errorlevel% == 3 set "%2=x=w-tw-(0.25*th):y=(0.25*text_h)"
+if %errorlevel% == 4 set "%2=x=(0.25*text_h):y=(h-text_h)/2"
+if %errorlevel% == 5 set "%2=x=(w-text_w)/2:y=(h-text_h)/2"
+if %errorlevel% == 6 set "%2=x=w-tw-(0.25*th):y=(h-text_h)/2"
+if %errorlevel% == 7 set "%2=x=(0.25*text_h):y=(h-1.25*text_h)"
+if %errorlevel% == 8 set "%2=x=(w-text_w)/2:y=(h-1.25*text_h)"
+if %errorlevel% == 9 set "%2=x=w-tw-(0.25*th):y=(h-1.25*text_h)"
 call :titledisplay
 goto :eof
 
@@ -1848,7 +1852,7 @@ echo.
 set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
 set /a badaudiobitrate=80/%audiobr%
 call :durationquestions
-call :speedandtextquestions
+call :speedquestions
 call :newline
 call :audiodistortion
 set "filename=%~n1 (Quality Munched)"
