@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
   <title>Quality Muncher</title>
   <link rel="stylesheet" href="template.css" />
@@ -10,7 +11,6 @@
   <meta name="title" content="Quality Muncher">
   <meta name="description"
     content="An open-source program for making extremely customizable low-quality videos, with lots of features.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -29,14 +29,18 @@
   <meta property="twitter:image" content="https://qualitymuncher.lgbt/qualitymuncherbanner.png">
   <link rel="stylesheet" href="template.css" />
 </head>
-<ul>
-  <li><a class="active" href="index.html">Home</a></li>
-  <li><a href="features.html">Features</a></li>
-  <li><a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a></li>
-  <li><a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a></li>
-  <li><a href="faq.html">FAQ</a></li>
-  <li><a href="about.html">About</a></li>
-</ul>
+  <div class="topnav" id="myTopnav">
+	<a class="activepage" href="index.html">Home</a>
+	<a href="features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="faq.html">FAQ</a>
+	<a href="about.html">About</a>
+	<a href="devblogs.html">Blog</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
 <script>
   function copyEvent(id) {
     document.getElementById('boldStuff').innerHTML =
@@ -73,5 +77,14 @@
   <div class="textboxwide center moveup secret" style="animation-duration: 1.7s;">
   </div>
 </body>
-
+<script>
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+</script>
 </html>

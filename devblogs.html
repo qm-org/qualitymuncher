@@ -1,5 +1,24 @@
 <!DOCTYPE html>
 <html>
+<style>
+.box {
+  margin-left: auto;
+  font-family: quicksand;
+  margin-right: auto;
+  text-align: left;
+  display: block;
+  width: 95vw;
+  max-width: 1000px;
+  min-height: 80px;
+  overflow: auto;
+  border: 3px solid white;
+  margin: 0px 0px;
+  padding: 8px 3px;
+}
+.seperator {
+  height: 3vh;
+}
+</style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
@@ -11,22 +30,23 @@
 	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
 	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
 	<a href="faq.html">FAQ</a>
-	<a class="activepage" href="about.html">About</a>
-	<a href="devblogs.html">Blog</a>
+	<a href="about.html">About</a>
+	<a class="activepage" href="devblogs.html">Blog</a>
 	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
       <i class="fa fa-bars"></i>
     </a>
   </div>
 </head>
-
 <body style="background-color:rgb(0, 0, 0);" class="noscrollbar">
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
   <div class="header centertext fadein divtext"
-    style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s;"><strong>About</strong></div>
-  <p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup">Quality Muncher, originally
-    created by Frost/Thqrn, was made to compress, distort, or otherwise modify videos. It's written in batch and
-    development started Mid-January of 2022 after Couleur gave Frost the idea of making a script that creates low
-    quality videos, instead of creating them by hand.</p>
+    style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s;"><strong>Developer Blogs</strong>
+  </div>
+  <div class="seperator"></div>
+  <div class="centertext box moveup center"><span style="cursor: pointer;" onclick="window.location='blogs/firstblog.html'">
+    <p style="font-size: 28px; margin: 0px 0px; font-weight: bold;" class="fadein"><u>This is the Title of a Blog Post</u></p>
+	<p style="font-size: 18px; margin: 7px 0px;" class="fadein">This is a brief summary and description of the blog posted on this site.</p>
+  </span></div>
 </body>
 <script>
 function myFunction() {

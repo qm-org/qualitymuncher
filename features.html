@@ -1,76 +1,172 @@
 <!DOCTYPE html>
 <html>
+<style>
+ul, #myUL {
+  list-style-type: none;
+}
 
+#myUL {
+  margin: 0;
+  padding: 0;
+}
+
+.caret {
+  cursor: pointer;
+  -webkit-user-select: none; /* Safari 3.1+ */
+  -moz-user-select: none; /* Firefox 2+ */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none;
+  font-weight: bold;
+}
+
+.caret::before {
+  content: "\27A4";
+  color: white;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.caret-down::before {
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari */'
+  transform: rotate(90deg);  
+}
+
+.nested {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+.box {
+  margin-left: auto;
+  font-family: quicksand;
+  color: white;
+  font-size: 24px;
+  margin-right: auto;
+  text-align: left;
+  display: block;
+  width: 95vw;
+  max-width: 500px;
+  min-height: 80px;
+  overflow: auto;
+  border: 3px solid white;
+  margin: 0px 0px;
+  padding: 8px 3px;
+}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <head>
   <link rel="stylesheet" href="template.css" />
   <title>Quality Muncher</title>
-  <ul>
-    <li><a href="index.html">Home</a></li>
-    <li><a class="active" href="features.html">Features</a></li>
-    <li><a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a></li>
-    <li><a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a></li>
-    <li><a href="faq.html">FAQ</a></li>
-    <li><a href="about.html">About</a></li>
-  </ul>
+  <div class="topnav" id="myTopnav">
+	<a href="index.html">Home</a>
+	<a class="activepage" href="features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="faq.html">FAQ</a>
+	<a href="about.html">About</a>
+	<a href="devblogs.html">Blog</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
 </head>
 
 <body style="background-color:rgb(0, 0, 0);" class="noscrollbar">
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
   <div class="header centertext fadein divtext"
     style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s;"><strong>Features</strong></div>
-  <p style="word-break: keep-all; animation-duration: 2s;" class="center textbox fadein">
-    Quality Muncher has many features, including:<br></p>
-  <p style="word-break: keep-all; animation-duration: 0.5s;" class="center textbox moveup2">
-    Trimming video
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 0.6s;" class="center textbox moveup2">
-    Modifying video bitrate
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 0.7s;" class="center textbox moveup2">
-    Modifying audio bitrate
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 0.8s;" class="center textbox moveup2">
-    Modifying scale
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 0.9s;" class="center textbox moveup2">
-    Modifying framerate
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1s;" class="center textbox moveup2">
-    4 different presets to chose from, as well as custom options
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.1s;" class="center textbox moveup2">
-    Adding text
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.2s;" class="center textbox moveup2">
-    Modifying video saturation, brightness, and contrast
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.3s;" class="center textbox moveup2">
-    Swapping the audio with another file
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.4s;" class="center textbox moveup2">
-    Audio distortion
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.5s;" class="center textbox moveup2">
-    Stretching video
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.6s;" class="center textbox moveup2">
-    Automatic update checking
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.7s;" class="center textbox moveup2">
-    Custom speed
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.8s;" class="center textbox moveup2">
-    Fast encoding
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 1.9s;" class="center textbox moveup2">
-    Low file size
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 2s;" class="center textbox moveup2">
-    Active development
-    <br></p>
-  <p style="word-break: keep-all; animation-duration: 2.1s;" class="center textbox moveup2">
-    And more!
-    <br></p>
+  <div class="box center">
+  <ul id="myUL">
+    <li><span class="caret">Video</span>
+      <ul class="nested">
+        <li>Bitrate</li>
+        <li>Framerate</li>
+		<li><span class="caret">Trimming</span>
+		  <ul class="nested">
+		    <li>Start Time</li>
+			<li>Duration</li>
+		  </ul>
+		</li>
+		<li>Speed</li>
+		<li><span class="caret">Text</span>
+		  <ul class="nested">
+		    <li>Content</li>
+			<li>Size</li>
+			<li>Position</li>
+		  </ul>
+		</li>
+		<li><span class="caret">Color Correction</span>
+		  <ul class="nested">
+		    <li>Saturation</li>
+			<li>Brightness</li>
+			<li>Contrast</li>
+		  </ul>
+		</li>
+		<li>Stretching</li>
+		<li>Corruption</li>
+		<li><span class="caret">Fake Duration</span>
+		  <ul class="nested">
+		    <li>Super Long</li>
+			<li>Super Long Negative</li>
+			<li>Ever-Increasing</li>
+		  </ul>
+		</li>
+		<li>Variable Resolution</li>
+		<li>Frame Resampling/Blending</li>
+		<li>Frame Interpolation</li>
+		<li>Deep Frying</li>
+		<li>Stutter</li>
+		<li><span class="caret">Miscellaneous Effects</span>
+		  <ul class="nested">
+		    <li>Erosion</li>
+			<li>Lag Fun</li>
+			<li>Negate</li>
+			<li>Interlace</li>
+			<li>Edge Detect</li>
+			<li>Shuffle Pixels</li>
+			<li>Guided</li>
+		  </ul>
+		</li>
+        </ul>
+      </li>
+    <li><span class="caret">Audio</span>
+      <ul class="nested">
+        <li>Bitrate</li>
+        <li>Framerate</li>
+		<li>Trimming</li>
+		<li>Speed</li>
+		<li>Text</li>
+		
+		<li>Framerate</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 </body>
+<script>
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+</script>
+<script>
+var toggler = document.getElementsByClassName("caret");
+var i;
 
+for (i = 0; i < toggler.length; i++) {
+  toggler[i].addEventListener("click", function() {
+    this.parentElement.querySelector(".nested").classList.toggle("active");
+    this.classList.toggle("caret-down");
+  });
+}
+</script>
 </html>

@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <head>
   <link rel="stylesheet" href="template.css" />
   <title>Quality Muncher</title>
-  <ul>
-    <li><a href="index.html">Home</a></li>
-    <li><a href="features.html">Features</a></li>
-    <li><a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a></li>
-    <li><a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a></li>
-    <li><a href="faq.html">FAQ</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a class="active" href="NEW PAGE.html">NEW PAGE</a></li>
-  </ul>
+  <div class="topnav" id="myTopnav">
+	<a href="index.html">Home</a>
+	<a href="features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="faq.html">FAQ</a>
+	<a href="about.html">About</a>
+	<a href="devblogs.html">Blog</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
 </head>
 
 <body style="background-color:rgb(0, 0, 0);" class="noscrollbar">
@@ -24,5 +28,14 @@
     Paragraph Example
   </p>
 </body>
-
+<script>
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+</script>
 </html>

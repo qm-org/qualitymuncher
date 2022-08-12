@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<style>
+.box {
+  margin-left: auto;
+  font-family: quicksand;
+  margin-right: auto;
+  text-align: left;
+  display: block;
+  width: 100vw;
+  max-width: 1000px;
+  min-height: 80px;
+  overflow: auto;
+  border: 3px solid white;
+  margin: 0px 0px;
+  padding: 3px max(3vw, 10px);
+}
+.seperator {
+  height: 3vh;
+}
+pre {
+  background-color: rgb(50, 50, 50);
+  margin: 0px;
+  padding: 0.5em 0.2em;
+}
+</style>
+  <!-- Import element definition -->
+  <script
+    type="module"
+    src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.min.js"
+  ></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <link rel="stylesheet" href="../template.css" />
+  <title>Quality Muncher</title>
+  <div class="topnav" id="myTopnav">
+	<a href="../index.html">Home</a>
+	<a href="../features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="../faq.html">FAQ</a>
+	<a href="../about.html">About</a>
+	<a class="activepage" href="../devblogs.html">Blog</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+</head>
+<body class="noscrollbar">
+  <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
+  <div class="header centertext fadein divtext center textboxwide"
+    style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: max(30px, 4vw); max-width: 1300px; line-height: 1.2;"><strong>
+	Quality Muncher's Impact on Humanity</strong>
+  </div>
+  <div class="seperator"></div>
+  <div class="box moveup center">
+	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: left; color: white;" class="fadein">
+# Check out this Markdown support!
+## Smaller text!
+### Even smaller text!
+#### Even even smaller text!
+```bat
+echo example
+```
+I love Quality Muncher. Loreem Ipsum whatever.
+
+Text after a linebreak.
+	</div>
+  </span></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.4.0/showdown.min.js"></script>
+<script>
+var conv = new showdown.Converter();
+var txt = document.getElementById('content').innerHTML;
+console.log(txt);
+document.getElementById('content').innerHTML = conv.makeHtml(txt);
+</script>
+</body>
+<script>
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+</script>
+</html>
