@@ -319,13 +319,7 @@ set /a desiredheight=(%desiredheight%/2)*2
 set /a desiredwidth=%width%/%scaleq%
 set /a desiredwidth=(%desiredwidth%/2)*2
 :: makes the endingmsg more detailed if it's been selected (only available in the custom preset)
-if /I %details% == y (
-    set "endingmsg=Custom Quality - ^
-        %framerate% fps, ^
-        %videobr% video bitrate input, ^
-        %audiobr% audio bitrate input, ^
-        %scaleq% scale"
-)
+if /I %details% == y set "endingmsg=Custom Quality - %framerate% fps, %videobr% video bitrate, %audiobr% audio bitrate, %scaleq% scale"
 :: Sets the audiobr (should be noted that audio bitrate is in thousands, unlike video bitrate)
 set /a badaudiobitrate=80/%audiobr%
 :: speed and on-screen text questions (advanced mode only)
@@ -1136,12 +1130,14 @@ goto :eof
 :filterlist
 if "%tcltrue%" == "false" (
     choice /m "Do you want some extra video effects?"
+) else (
+    echo Do you want to add some extra video effects?
+)
+if "%tcltrue%" == "false" (
     if %errorlevel% == 2 (
         call :clearlastprompt
         goto :eof
     )
-) else (
-    echo Do you want to add some extra video effects?
 )
 echo [92mGreen[0m items are selected, [90mgray[0m items are unselected
 echo  [38;2;254;165;0m  [D] Done - finish your selection and move to the next prompt[90m

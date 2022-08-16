@@ -28,7 +28,7 @@ ul, #myUL {
 
 .caret-down::before {
   -ms-transform: rotate(90deg); /* IE 9 */
-  -webkit-transform: rotate(90deg); /* Safari */'
+  -webkit-transform: rotate(90deg); /* Safari */
   transform: rotate(90deg);  
 }
 
@@ -49,28 +49,29 @@ ul, #myUL {
   text-align: left;
   display: block;
   width: 95vw;
-  max-width: 500px;
+  max-width: 600px;
   min-height: 80px;
   overflow: auto;
   border: 3px solid white;
-  margin: 0px 0px;
+  margin: 10px 0px;
   padding: 8px 3px;
 }
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <head>
+  <link rel="icon" type="image/x-icon" href="images/icon.png" />
   <link rel="stylesheet" href="template.css" />
   <title>Quality Muncher</title>
   <div class="topnav" id="myTopnav">
-	<a href="index.html">Home</a>
-	<a class="activepage" href="features.html">Features</a>
-	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
-	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
-	<a href="faq.html">FAQ</a>
-	<a href="about.html">About</a>
-	<a href="devblogs.html">Blog</a>
-	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+    <a href="index.html">Home</a>
+    <a class="activepage" href="features.html">Features</a>
+    <a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+    <a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+    <a href="faq.html">FAQ</a>
+    <a href="about.html">About</a>
+    <a href="devblogs.html">Blog</a>
+    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
       <i class="fa fa-bars"></i>
     </a>
   </div>
@@ -80,72 +81,100 @@ ul, #myUL {
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
   <div class="header centertext fadein divtext"
     style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s;"><strong>Features</strong></div>
-  <div class="box center">
+  <div class="box moveup center">
   <ul id="myUL">
     <li><span class="caret">Video</span>
       <ul class="nested">
-        <li>Bitrate</li>
-        <li>Framerate</li>
-		<li><span class="caret">Trimming</span>
-		  <ul class="nested">
-		    <li>Start Time</li>
-			<li>Duration</li>
+        <li>Bitrate Modification</li>
+        <li>Framerate Modification</li>
+        <li>Scaling</li>
+        <li><span class="caret">Advanced</span>
+          <ul class="nested">
+            <li><span class="caret">Trimming</span>
+              <ul class="nested">
+                <li>Start Time</li>
+                <li>Duration</li>
+              </ul>
+            </li>
+            <li>Speed</li>
+            <li><span class="caret">Text</span>
+              <ul class="nested">
+                <li>Content</li>
+                <li>Size</li>
+                <li>Position</li>
+              </ul>
+            </li>
+            <li><span class="caret">Color Correction</span>
+              <ul class="nested">
+                <li>Saturation</li>
+                <li>Brightness</li>
+                <li>Contrast</li>
+              </ul>
+            </li>
+            <li>Stretching</li>
+            <li>Corruption</li>
+            <li><span class="caret">Fake Duration</span>
+              <ul class="nested">
+                <li>Super Long</li>
+                <li>Super Long Negative</li>
+                <li>Ever-Increasing</li>
+              </ul>
+            </li>
+            <li><span class="caret">Variable Resolution</span>
+              <ul class="nested">
+                <li>Speed</li>
+                <li>Minimum Size</li>
+                <li>Axis to Change</li>
+              </ul>
+            </li>
+            <li>Frame Resampling/Blending</li>
+            <li>Frame Interpolation</li>
+            <li>Deep Frying</li>
+            <li>Stutter</li>
+            <li><span class="caret">Miscellaneous Effects</span>
+              <ul class="nested">
+                <li>Erosion</li>
+                <li>Lag Fun</li>
+                <li>Negate</li>
+                <li>Interlace</li>
+                <li>Edge Detect</li>
+                <li>Shuffle Pixels</li>
+                <li>Guided</li>
+              </ul>
+            </li>
 		  </ul>
 		</li>
-		<li>Speed</li>
-		<li><span class="caret">Text</span>
-		  <ul class="nested">
-		    <li>Content</li>
-			<li>Size</li>
-			<li>Position</li>
-		  </ul>
-		</li>
-		<li><span class="caret">Color Correction</span>
-		  <ul class="nested">
-		    <li>Saturation</li>
-			<li>Brightness</li>
-			<li>Contrast</li>
-		  </ul>
-		</li>
-		<li>Stretching</li>
-		<li>Corruption</li>
-		<li><span class="caret">Fake Duration</span>
-		  <ul class="nested">
-		    <li>Super Long</li>
-			<li>Super Long Negative</li>
-			<li>Ever-Increasing</li>
-		  </ul>
-		</li>
-		<li>Variable Resolution</li>
-		<li>Frame Resampling/Blending</li>
-		<li>Frame Interpolation</li>
-		<li>Deep Frying</li>
-		<li>Stutter</li>
-		<li><span class="caret">Miscellaneous Effects</span>
-		  <ul class="nested">
-		    <li>Erosion</li>
-			<li>Lag Fun</li>
-			<li>Negate</li>
-			<li>Interlace</li>
-			<li>Edge Detect</li>
-			<li>Shuffle Pixels</li>
-			<li>Guided</li>
-		  </ul>
-		</li>
-        </ul>
-      </li>
+      </ul>
+    </li>
     <li><span class="caret">Audio</span>
       <ul class="nested">
-        <li>Bitrate</li>
-        <li>Framerate</li>
-		<li>Trimming</li>
-		<li>Speed</li>
-		<li>Text</li>
-		
-		<li>Framerate</li>
-        </ul>
-      </li>
-    </ul>
+        <li>Bitrate Modification</li>
+        <li><span class="caret">Advanced</span>
+          <ul class="nested">
+            <li>Speed</li>
+            <li><span class="caret">Replacing</span>
+              <ul class="nested">
+                <li>Replacement File</li>
+                <li>Start Time</li>
+              </ul>
+            </li>
+            <li><span class="caret">Distortion</span>
+              <ul class="nested">
+                <li>Boost Frequencies</li>
+                <li>Boost with Delay and Echo</li>
+                </ul>
+            </li>
+            <li><span class="caret">Text-to-Speech</span>
+              <ul class="nested">
+                <li>Text</li>
+                <li>Volume</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
   </div>
 </body>
 <script>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<style>
+.box {
+  margin-left: auto;
+  font-family: quicksand;
+  margin-right: auto;
+  text-align: left;
+  display: block;
+  width: 88vw;
+  max-width: 1000px;
+  min-height: 80px;
+  overflow: auto;
+  border: 3px solid white;
+  margin: 0px 0px;
+  padding: 3px max(3vw, 3px);
+}
+.seperator {
+  height: 3vh;
+}
+pre {
+  background-color: rgb(50, 50, 50);
+  margin: 0px;
+  padding: 0.5em 0.2em;
+}
+canvas {
+  background: #232323;
+  position: fixed;
+}
+a:-webkit-any-link {
+  color: -webkit-link;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #5ea6f8;
+}
+</style>
+  <!-- Import element definition -->
+  <script
+    type="module"
+    src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.min.js"
+  ></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <link rel="icon" type="image/x-icon" href="../images/icon.png" />
+  <link rel="stylesheet" href="../template.css" />
+  <title>Quality Muncher</title>
+  <div class="topnav" id="myTopnav">
+	<a href="../index.html">Home</a>
+	<a href="../features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="../faq.html">FAQ</a>
+	<a href="../about.html">About</a>
+	<a class="activepage" href="../devblogs.html">Blog</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+</head>
+<body class="noscrollbar">
+  <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
+  <div class="header centertext fadein divtext center textboxwide" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(60px, 6vw), 110px); max-width: 1300px; line-height: 1.2;">
+    <strong>
+	  News - 16.8.22
+    </strong>
+    <p class="centertext fadein subtitle" style="animation-duration: 2.5s;">Written by Frost</p>
+  </div>
+  <div class="box moveup center">
+	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;" class="fadein">
+# Blogs
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From now on, we'll be using this site to host any large announcements and updates we may have, as well as standard blog posts. If there's anything you want to see us cover, or questions you want answered, you can either contact us directly at qualitymuncher@gmail.com or send us a message in the [Discord server](https://discord.qualitymuncher.lgbt).
+
+# Quality Muncher
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currently, my primary goal for Quality Muncher is to add support for multi-queue, configuration files, better CLI usage, and more. Since this requires rewriting large sections of code, this will take some time.
+
+### Cross-Platform Support
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Given that Quality Muncher is a batch script, this version will likely never be cross-platform. However, Atzur has been making a [python version of Quality Muncher](https://github.com/qm-org/qm-py). This includes all basic features of the batch version of Quality Muncher, along with some advanced features like audio distortion and color correction.
+
+	</div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.4.0/showdown.min.js"></script>
+</body>
+<script>
+  var conv = new showdown.Converter();
+  var txt = document.getElementById('content').innerHTML;
+  console.log(txt);
+  document.getElementById('content').innerHTML = conv.makeHtml(txt);
+  
+  function myFunction() {
+    var x = document.getElementById("myTopnav");
+    if (x.className === "topnav") {
+      x.className += " responsive";
+    } else {
+      x.className = "topnav";
+    }
+  }
+</script>
+</html>

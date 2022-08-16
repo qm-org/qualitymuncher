@@ -9,15 +9,16 @@ a {
 }
 
 .topnav {
-	overflow: hidden;
+  overflow: hidden;
   margin: 0;
   padding: 0;
   overflow: hidden;
   background-color: rgb(23, 23, 23);
   position: fixed;
   top: 0;
-  width: 100%;
+  width: 100vw;
   left: 0px;
+  z-index: 1;
 }
 
 .topnav a {
@@ -31,14 +32,28 @@ a {
   transition-duration: 0.2s;
 }
 
+.topnav a.activepage:hover {
+  background-color: #22353c;
+  transition-duration: 0.4s;
+}
+
+.topnav a.activepage:active {
+  background-color: #2d454e;
+  transition-duration: 0.1s;
+}
+
 .topnav a:hover {
   background-color: rgba(37, 37, 37);
   transition-duration: 0.4s;
 }
 
-.topnav a.active {
+.topnav a:active {
+  background-color: rgb(47, 47, 47);
+  transition-duration: 0.1s;
+}
+
+.topnav a.activepage {
   background-color: #14252b;
-  color: white;
 }
 
 .topnav .icon {
@@ -55,6 +70,7 @@ a {
 
 body {
 	background-color:rgb(0, 0, 0);
+    margin: 0px 0px;
 }
 
 @media screen and (max-width: 600px) {
@@ -90,6 +106,21 @@ p {
   color: white;
 }
 
+.link {
+  color: -webkit-link;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #5ea6f8;
+  transition-duration: 250ms;
+}
+
+.link:hover {
+  color: -webkit-link;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #8dd1ff;
+}
+
 .textbox {
   color: white;
   text-align: center;
@@ -114,7 +145,7 @@ p {
 }
 
 .header {
-  font-size: max(70px, 6vw);
+  font-size: min(max(70px, 6vw), 120px);
   min-width: 300px;
 }
 
@@ -236,6 +267,14 @@ p {
 
 .activepage {
   background-color: #14252b;
+}
+
+.subtitle {
+    font-size: max(20px, 1.5vw);
+}
+
+.seperator {
+  height: 3vh;
 }
 
 @keyframes moveup {
