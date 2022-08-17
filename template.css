@@ -337,6 +337,23 @@ p {
   animation-iteration-count: 1;
 }
 
+@keyframes fadein3 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.fadein3 {
+  animation-name: fadein3;
+  animation-duration: 1.3s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 1;
+}
+
 @keyframes fadein {
   0% {
     opacity: 0;
