@@ -4,14 +4,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
- - generating and uploading error logs
- - corruption
- - optional trimmer
- - fully seperate/unique speed/audio speed
- - flite not installed warning (text to speech)
- - options for other scaling algorithms
- - super long, super long negative, or forever increasing video duration (EXTREMELY expiramental and needs much more testing)
- - WebM with variable resolution
+No new features are currently here, but multiqueue support for all-video inputs is being worked on. So far, all of the changes being made are internal.
 
 # Bugs
 
