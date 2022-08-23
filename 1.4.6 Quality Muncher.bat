@@ -848,9 +848,9 @@ goto :eof
 :textmath
 :: use width and size of the text, and the user's inputted text size to determine font size
 set /a fontsize=(%desiredwidth%/%strlength%)*2
-set fontsize=(%fontsize%)/%tsize%
+set /a fontsize=(%fontsize%)/%tsize%
 set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
-set fontsizebottom=(%fontsizebottom%)/%tsize2%
+set /a fontsizebottom=(%fontsizebottom%)/%tsize2%
 :fontcheck
 set /a triplefontsize=%fontsize%*3
 if %triplefontsize% gtr %desiredheight% (
