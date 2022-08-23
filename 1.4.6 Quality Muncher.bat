@@ -11,17 +11,17 @@ setlocal enabledelayedexpansion
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
     :: automatic update checks, highly recommended to keep this enabled
-    set autoupdatecheck=true
+    set autoupdatecheck=y
     :: directory for logs, if none set the input's directory is used ***add quotes if there is a space***
     set loggingdir=
     :: stay open after the file is done rendering
-    set stayopen=true
+    set stayopen=y
     :: shows title
-    set showtitle=true
+    set showtitle=y
     :: clear screen after each option is selected
-    set cleanmode=true
+    set cleanmode=y
     :: cool animations (slows startup speed by a few seconds)
-    set animate=false
+    set animate=n
     :: animation speed (default is 5)
     set animatespeed=5
     :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
@@ -60,10 +60,10 @@ set inpcontain=%~x1
 call :setdefaults
 :: plays an animation is the first parameter is qmloo
 if %1p == qmloop goto colorstart
-if %animate% == true call :loadingbar
+if %animate% == y call :loadingbar
 call :titledisplay
 :: checks for updates
-if %autoupdatecheck% == true goto updatecheck
+if %autoupdatecheck% == y goto updatecheck
 :: afterstartup is everything that happens after the main "startup" - setting constants, defaults, options, doing animations, checking updates, etc
 :afterstartup
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
@@ -123,15 +123,25 @@ if %errorlevel% == 8 goto thing2
 if %errorlevel% == 9 goto thing3
 :: adds the option to force an update
 if %errorlevel% == 10 (
-    set forceupdate=true
+    set forceupdate=y
     goto updatecheck
 )
 if %errorlevel% == 11 (
     call :announcement
     goto afterstartup
 )
-echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
-choice /n /c 1234CR
+if %complexity% == s (
+    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+    choice /n /c 1234CR
+) else (
+    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+    echo You can also press [F] to use a custom config file.
+    choice /n /c 1234CRF
+    if !errorlevel! == 7 (
+        call :clearlastprompt
+        goto customconfig
+    )
+)
 call :clearlastprompt
 :: set quality
 set "customizationquestion=%errorlevel%"
@@ -256,6 +266,9 @@ if not %complexity% == s call :audiodistortion
 if not %complexity% == s call :voicesynth
 :: replacing audio questions
 if not %complexity% == s call :replaceaudioquestion
+:: asks if the user wants to save to a config file
+if not %complexity% == s call :savetoconfigquestion
+:afterquestions
 :: encoding all files
 set totalfiles=0
 for %%x in (%*) do Set /A totalfiles+=1
@@ -271,11 +284,21 @@ title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
 :end
 echo.
 echo [92mDone^^![0m
-set done=true
-:: delete temp files and show ending (unless stayopen is false)
+set done=y
+:: delete temp files and show ending (unless stayopen is n)
 if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
-if %stayopen% == false goto ending
+if %stayopen% == n goto ending
 goto exiting
+
+:customconfig
+set /p "configfile=Please enter the path of your config file: "
+if not exist %configfile% (
+    call :clearlastprompt
+    echo [91mFile not found.[0m
+    goto :customconfig
+)
+call %configfile%
+goto afterquestions
 
 :videospecificstuff
 :: video filters
@@ -314,7 +337,7 @@ set "fpsfilter=fps=%outputfps%,"
 :: resampling and/or interpolation
 if %resample% == y call :resamplemath
 :: frying
-if %frying% == true call :fryingmath
+if %frying% == y call :fryingmath
 :: color filters
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
@@ -333,6 +356,7 @@ if %multiqueuef% == n (
 if exist "%filename%%container%" call :renamefile
 :: let the user know encoding is happening
 if %multiqueuef% == y (
+    if not %filesdone% == 1 echo.
     echo [38;2;254;165;0mEncoding file %videoinp%[0m
     echo [38;2;254;165;0m%filesdoneold% of %totalfiles%[0m
 ) else (
@@ -342,7 +366,7 @@ echo.
 :: if simple, go to encoding option 3 (avoids any variables that might be missing in simple mode)
 if %complexity% == s goto encodesimple
 :: if the user selected to fry the video, encode all of the needed parts
-if %frying% == true call :encodefried
+if %frying% == y call :encodefried
 :: goto the correct encoding option
 if %replaceaudio% == n goto encodewithnormalaudio
 if %replaceaudio% == y goto encodereplacedaudio
@@ -381,10 +405,10 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 set outputvar="%cd%\%filename%%container%"
 :endofthis
 :: if text to speech, encode the voice and merge outputs
-if %hasvideo% == false goto skipvideoencodingoptions
+if %hasvideo% == n goto skipvideoencodingoptions
 if "%tts%"=="y" call :encodevoice
-if %spoofduration% == true goto outputdurationspoof
-if %bouncy% == true call :encodebouncy
+if %spoofduration% == y goto outputdurationspoof
+if %bouncy% == y call :encodebouncy
 :donewithdurationspoof
 if "%corrupt%"=="y" call :corruptoutput
 :skipvideoencodingoptions
@@ -495,7 +519,7 @@ echo [91mWarning^^! This is an EXTREMELY expiramental feature and might not wor
 if %corrupt% == y echo [91mThis setting may cause issues when used with corruption (which you have enabled).[0m
 choice /n
 if %errorlevel% == 1 (
-    set spoofduration=true
+    set spoofduration=y
 ) else (
     call :clearlastprompt
     goto :eof
@@ -515,10 +539,10 @@ if %tts% == y (
     del %outputvar%
     set outputvar="%cd%\%filename%2.mp4"
 )
-set nextline=false
+set nextline=n
 :: encode the video to hex
 certutil -encodehex %outputvar% "%temp%\%filename% hexed.txt"
-set theline=no
+set theline=n
 :: loop through the file's lines until the line containing duration is found and replacde
 set linenum=0
 for /f "usebackq tokens=*" %%a in ("%temp%\%filename% hexed.txt") do (
@@ -537,7 +561,7 @@ goto donewithdurationspoof
 :findmvhdlineandreplacenext
 set /a linenum+=1
 set "linecontent=%~1"
-if %nextline% == true (
+if %nextline% == y (
     if %durationtype% == superlongnegative (
         set /a "theline=%linenum%+1"
     ) else (
@@ -547,16 +571,16 @@ if %nextline% == true (
     if %durationtype% == superlong call :thelinesuperlong
     if %durationtype% == superlongnegative call :superlongnegative
     if %durationtype% == increasing call :thelineincreasing
-    if %numofloops%1 == 11 set nextline=false
+    if %numofloops%1 == 11 set nextline=n
 )
 :: exit the for loop if the line is found and replaced
 if %linenum% gtr %theline% goto endloop
 if not %durationtype% == superlongnegative (
-    if %nextline% == true (
+    if %nextline% == y (
         goto endloop
     )
 )
-if not "%linecontent%" == "%linecontent:mvhd=%" set nextline=true
+if not "%linecontent%" == "%linecontent:mvhd=%" set nextline=y
 goto :eof
 
 :: replace the information with super long duration
@@ -714,10 +738,10 @@ goto :eof
 :webmstretch
 choice /m "Do you want to make the video into a bouncing WebM?"
 :: warn of incompatabilities
-if %spoofduration% == true echo [91mThis setting does not work with duration spoofing (which you have enabled).[0m
-:: set variable to true if yes, exit the function if no
+if %spoofduration% == y echo [91mThis setting does not work with duration spoofing (which you have enabled).[0m
+:: set variable to y if yes, exit the function if no
 if %errorlevel% == 1 (
-    set "bouncy=true"
+    set "bouncy=y"
 ) else (
     call :clearlastprompt
     goto :eof
@@ -783,10 +807,10 @@ if %errorlevel% == 2 (
     goto :eof
 )
 :: if there's no video, skip this question
-if not %hasvideo% == false set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
+if not %hasvideo% == n set /p "speedq=What should the video speed be? [93m(must be a positive number between 0.5 and 100)[0m: "
 set "audiopromptfill=(leave blank to match the video)"
 :: if there's no video, this is the first time being asked, so tell the users of the parameters needed, otherwise just tell them how to match it
-if %hasvideo% == false (
+if %hasvideo% == n (
     set "audiopromptfill=(must be a positive number between 0.5 and 100)"
 ) else (
     set "audiopromptfill=(leave blank to match the video)"
@@ -818,12 +842,6 @@ if %tsize% == 4 set tsize=6
 :: top text
 set "toptext= "
 set /p "toptext=Text one: "
-:: remove spaces and count the characters in the text
-set toptextnospace=%toptext: =_%
-echo "%toptextnospace%" > %temp%\toptext.txt
-for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
-:: if below 16 characters, set it to 16 (essentially caps the font size)
-if %strlength% LSS 16 set strlength=16
 :: ask the user where the font should go on the video
 call :screenlocation "text one" textonepos
 :: THE NEXT LINES UNTIL setting the text filter IS THE SAME AS THE TOP TEXT, BUT WITH DIFFERENT VARIABLE NAMES
@@ -834,18 +852,25 @@ if %tsize2% == 4 set tsize2=6
 :: secoond text
 set "bottomtext= "
 set /p "bottomtext=Text two: "
-set bottomtextnospace=%bottomtext: =_%
-echo "%bottomtextnospace%" > %temp%\bottomtext.txt
-for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
-if %strlengthb% LSS 16 set strlengthb=16
 call :screenlocation "text two" texttwopos
 :: setting text filter
-if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
-if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
 call :clearlastprompt
 goto :eof
 
 :textmath
+:: remove spaces and count the characters in the text
+set toptextnospace=%toptext: =_%
+echo "%toptextnospace%" > %temp%\toptext.txt
+for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
+if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
+:: if below 16 characters, set it to 16 (essentially caps the font size)
+if %strlength% LSS 16 set strlength=16
+:: bottom text
+set bottomtextnospace=%bottomtext: =_%
+echo "%bottomtextnospace%" > %temp%\bottomtext.txt
+for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
+if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
+if %strlengthb% LSS 16 set strlengthb=16
 :: use width and size of the text, and the user's inputted text size to determine font size
 set /a fontsize=(%desiredwidth%/%strlength%)*2
 set /a fontsize=(%fontsize%)/%tsize%
@@ -944,6 +969,79 @@ set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
 set /a desiredwidth=(%desiredwidth%/2)*2
 goto :eof
 
+:savetoconfigquestion
+choice /m "Do you want to save these settings to a config file?"
+call :clearlastprompt
+if %errorlevel% == 2 goto :eof
+echo :: Configuration file for Quality Muncher v%version% > "QM Config.bat"
+echo :: Created at %time% on %date% >> "QM Config.bat"
+(
+    echo set outputfps=%outputfps%
+    echo set videobr=%videobr%
+    echo set audiobr=%audiobr%
+    echo set /a badaudiobitrate=80/%audiobr%
+    echo set scaleq=%scaleq%
+    echo set details=%details%
+
+    echo set trimmed=%trimmed%
+    echo set starttime=%starttime%
+    echo set vidtime=%vidtime%
+
+    echo set speedq=%speedq%
+    echo set "speedfilter=setpts=(1/%speedq%)*PTS,"
+    echo set audiospeedq=%audiospeedq%
+
+    echo set addedtextq=%addedtextq%
+    echo set tsize=%tsize%
+    echo set toptext=%toptext%
+    echo set textonepos=%textonepos%
+    echo set tsize2=%tsize2%
+    echo set bottomtext=%bottomtext%
+    echo set texttwopos=%texttwopos%
+
+    echo set colorfilter=%colorfilter%
+
+    echo set stretchres=%stretchres%
+    echo set widthratio=%widthratio%
+    echo set heightratio=%heightratio%
+    echo set "aspectratio=%widthratio%/%heightratio%"
+
+    echo set corrupt=%corrupt%
+    echo set corruptsev=%corruptsev%
+
+    echo set spoofduration=%spoofduration%
+    echo set durationtype=%durationtype%
+
+    echo set bouncy=%bouncy%
+    echo set incrementbounce=%incrementbounce%
+    echo set minimumbounce=%minimumbounce%
+    echo set bouncetype=%bouncetype%
+
+    echo set resample=%resample%
+
+    echo set frying=%frying%
+    echo set levelcolor=%levelcolor%
+
+    echo set stutter=%stutter%
+    echo set stutteramount=%stutteramount%
+
+    echo set filtercl=%filtercl%
+
+    echo set audiofilters=%audiofilters%
+
+    echo set tts=%tts%
+    echo set ttstext=%ttstext%
+    echo set volume=%volume%
+
+    echo set replaceaudio=%replaceaudio%
+    echo set lowqualmusic=%lowqualmusic%
+    echo exit /b
+) >> "QM Config.bat"
+echo You config file is located at "%cd%\QM Config.bat"
+pause
+call :clearlastprompt
+call :newline
+goto :eof
 :: asks if they want music and if so, the file to get it from and the start time
 :replaceaudioquestion
 call :newline
@@ -1069,12 +1167,12 @@ goto :eof
 :: miscillaneous filters that are too small to be their own options
 :: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
 :filterlist
-if "%tcltrue%" == "false" (
+if "%tcly%" == "n" (
     choice /m "Do you want some extra video effects?"
 ) else (
     echo Do you want to add some extra video effects?
 )
-if "%tcltrue%" == "false" (
+if "%tcly%" == "n" (
     if %errorlevel% == 2 (
         call :clearlastprompt
         goto :eof
@@ -1099,12 +1197,12 @@ echo [12A
 goto :filterlist
 
 :: what all of the toglectl(x) functions do is:
-:: - confirm that an option has been made (setting tcltrue to true)
+:: - confirm that an option has been made (setting tcly to y)
 :: - if the option was previously set to disabled, enable it and add the filter to the filters, highlight the selection, then exit the function
 :: - if the option was previously set to enabled, disable it and remove the filter from the filters, remove the highlight, and exit the function
 
 :toggletcl1
-    set tcltrue=true
+    set tcly=y
     if "%tcl1%2" == "[92m2" (
         set "tcl1= "
         set "filtercl=%filtercl:,erosion=%"
@@ -1115,7 +1213,7 @@ goto :filterlist
 goto :eof
 
 :toggletcl2
-    set tcltrue=true
+    set tcly=y
     if "%tcl2%2" == "[92m2" (
         set "tcl2= "
         set "filtercl=%filtercl:,lagfun=%"
@@ -1126,7 +1224,7 @@ goto :eof
 goto :eof
 
 :toggletcl3
-    set tcltrue=true
+    set tcly=y
     if "%tcl3%2" == "[92m2" (
         set "tcl3= "
         set "filtercl=%filtercl:,negate=%"
@@ -1137,7 +1235,7 @@ goto :eof
 goto :eof
 
 :toggletcl4
-    set tcltrue=true
+    set tcly=y
     if "%tcl4%2" == "[92m2" (
         set "tcl4= "
         set "filtercl=%filtercl:,interlace=%"
@@ -1148,7 +1246,7 @@ goto :eof
 goto :eof
 
 :toggletcl5
-    set tcltrue=true
+    set tcly=y
     if "%tcl5%2" == "[92m2" (
         set "tcl5= "
         set "filtercl=%filtercl:,edgedetect=%"
@@ -1159,7 +1257,7 @@ goto :eof
 goto :eof
 
 :toggletcl6
-    set tcltrue=true
+    set tcly=y
     if "%tcl6%2" == "[92m2" (
         set "tcl6= "
         set "filtercl=%filtercl:,shufflepixels=%"
@@ -1170,7 +1268,7 @@ goto :eof
 goto :eof
 
 :toggletcl7
-    set tcltrue=true
+    set tcly=y
     if "%tcl7%2" == "[92m2" (
         set "tcl7= "
         set "filtercl=%filtercl:,guided=%"
@@ -1201,7 +1299,7 @@ set /a wb9=3428*12/5234*32-453+54+(8234*2+(300-3)*2)/3*7/2-3053
 call :clearlastprompt
 ping /n 1 discord.com  | find "Reply" > nul
 if %errorlevel% == 1 (
-    set internet=false
+    set internet=n
     echo [91mSorry, either discord is down or you're not connected to the internet. Please try again later.[0m
     echo.
     pause
@@ -1351,7 +1449,7 @@ if %errorlevel% == 6 goto thing1
 if %errorlevel% == 7 goto thing2
 if %errorlevel% == 8 goto thing3
 if %errorlevel% == 9 (
-    set forceupdate=true
+    set forceupdate=y
     goto updatecheck
 )
 if %errorlevel% == 10 (
@@ -1364,7 +1462,7 @@ goto closingbar
 :exiting
 echo.
 where /q ffplay || goto aftersound
-if %done% == true start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
+if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound
 if not b%2 == b goto nopipingforyou
 echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
@@ -1434,6 +1532,7 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         incrementbounce: %incrementbounce%
     echo         minimumbounce: %incrementbounce%
     echo     speedq: %speedq%
+    echo     audiospeedq: %audiospeedq%
     echo     resample: %resample%
     echo     stretchres %stretchres%
     echo         custom width by height aspect ratio: %widthratio% by %heightratio%
@@ -1451,14 +1550,13 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         method: %method%
     echo         distortionseverity: %distortionseverity%
     echo         distsev {distortionseverity*10}: %distsev%
-    echo     noglobalspeed {true means audio speed is always 1}: %noglobalspeed%
     echo     frying: %frying%
     echo     tts: %tts%
     echo         ttstext: %ttstext%
     echo         volume: %volume%
     echo     extra effects
     echo         filtercl: %filtercl%
-    echo         tcltrue {at least one effect is enabled}: %tcltrue%
+    echo         tcly {at least one effect is enabled}: %tcly%
     echo     stutter: %stutter%
     echo         stutteramount: %stutteramount%
     echo.
@@ -1489,7 +1587,7 @@ set /p "author=What is your name on discord? [93mThis is optional but very help
 :: check if the user can connect to the site
 ping /n 1 transfer.sh  | find "Reply" > nul
 if %errorlevel% == 1 (
-    set internet=false
+    set internet=n
     echo [91mSorry, either the transfer service is down or you're not connected to the internet. Please try again later.[0m
     echo.
     pause
@@ -1512,7 +1610,7 @@ goto :eof
 
 :: pipes the output to another script of the user's choosing
 :piped
-if %cleanmode% == true call :titledisplay
+if %cleanmode% == y call :titledisplay
 echo Scripts found:
 :: add scripts here, if you want
 echo [S] Custom Script
@@ -1550,12 +1648,12 @@ echo.
 echo [38;2;254;165;0mEncoding...[0m
 echo.
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% %ffmpeginput%
-set done=true
+set done=y
 echo.
 echo [92mDone^^![0m
 echo.
 where /q ffplay || goto aftersound2
-if %done% == true start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
+if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound2
 pause
 goto :eof
@@ -1584,7 +1682,7 @@ if %errorlevel% == 1 (
     call :nointernet
     goto afterstartup
 )
-set internet=true
+set internet=y
 :: grabs the version of the latest public release from the github
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/version.txt" --output %temp%\QMnewversion.txt
 set /p newversion=<%temp%\QMnewversion.txt
@@ -1592,8 +1690,8 @@ if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 :: if the new version is the same as the current one, go to the start
 :: however, if the user choose to update from the main menu, give the option for the user to force an update
 if "%version%" == "%newversion%" (
-    set isupdate=false
-    if %forceupdate% == false (
+    set isupdate=n
+    if %forceupdate% == n (
         goto afterstartup
     ) else (
         echo Your version of Quality Muncher is up to date^^! Press [C] to continue
@@ -1606,15 +1704,15 @@ if "%version%" == "%newversion%" (
         )
     )
 ) else (
-    set isupdate=true
+    set isupdate=y
 )
 :: tells the user a new update is out and asks if they want to update
 echo [96mThere is a new version (%newversion%) of Quality Muncher available^^!
 echo Press [U] to update or [S] to skip.
-echo [90mTo hide this message in the future, set the variable "autoupdatecheck" in the script options to false.[0m
+echo [90mTo hide this message in the future, set the variable "autoupdatecheck" in the script options to n.[0m
 choice /c US /n
 echo.
-set isupdate=false
+set isupdate=n
 if %errorlevel% == 2 (
     call :clearlastprompt
     goto afterstartup
@@ -1655,7 +1753,7 @@ exit
 
 :: runs if there isn't internet (comes from update check)
 :nointernet
-set internet=false
+set internet=n
 echo [91mUpdate check failed, skipping.[0m
 echo.
 goto :eof
@@ -1732,7 +1830,7 @@ set /a audiobr=%random% * %max% / 32768 + %min%
 set endingmsg=Random Quality
 goto :eof
 
-:: runs at the start of the script if animate is true (disabled by default)
+:: runs at the start of the script if animate is y (disabled by default)
 :: make terminal wider until it reaches 120
 :loadingbar
 mode con: cols=%cols% lines=%lines%
@@ -1751,9 +1849,9 @@ if not %lines% == 30 mode con: cols=%cols% lines=30
 powershell -noprofile -command "&{(get-host).ui.rawui.buffersize=@{width=120;height=9901};}"
 goto :eof
 
-:: essentially the opposite of loadingbar (but exits if animate is false)
+:: essentially the opposite of loadingbar (but exits if animate is n)
 :closingbar
-if %animate% == false exit
+if %animate% == n exit
 :closingloop
 mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%-5
@@ -1781,7 +1879,7 @@ goto :eof
 set audioencoder=aac
 :: the AAC codec has weird issues with mp3 - sometimes this causes issue but really i don't know for sure and i can't consistently reproduce them so this tries to fix that but using a different codec
 if %audiocontainer% == .mp3 set audioencoder=libmp3lame
-set hasvideo=false
+set hasvideo=n
 echo [38;2;254;165;0mInput is an audio file.[0m
 echo.
 set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
@@ -1821,8 +1919,8 @@ goto :eof
 :renamefile
 :: start of the repeat until loop (repeats until the file doesn't exist)
 :renamefileloop
-if %isimage% == true set container=%imagecontainer%
-if %hasvideo% == false set "container=%audiocontainer%"
+if %isimage% == y set container=%imagecontainer%
+if %hasvideo% == n set "container=%audiocontainer%"
 set /a "i+=1"
 if exist "%filename% (%i%)%container%" goto renamefileloop
 set "filename=%filename% (%i%)"
@@ -1837,7 +1935,7 @@ goto afterstartup
 
 :: used to munch images/gifs
 :imagemunch
-set isimage=true
+set isimage=y
 set "fryfilter="
 echo [38;2;254;165;0mInput is an image or gif.[0m
 :: grabs dimensions of the input
@@ -1960,7 +2058,7 @@ goto endgifmoment1
 choice /m "Do you want to fry the video? (will cause extreme distortion)"
 if %errorlevel% == 2 call :clearlastprompt
 if %errorlevel% == 2 goto :eof
-set frying=true
+set frying=y
 set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
 if %errorlevel% == 2 (
@@ -2004,13 +2102,13 @@ goto :eof
 
 :: clears the screen up until the title, preventing flashing but keeping the terminal clean
 :clearlastprompt
-if %cleanmode% == false goto :eof
+if %cleanmode% == n goto :eof
 :: move cursor to saved point, then clear any text after the cursor
 echo [H[u[0J
 goto :eof
 
 :newline
-if %cleanmode% == false echo.
+if %cleanmode% == n echo.
 goto :eof
 
 :: provides the user a list of recent announcements from the devs
@@ -2018,7 +2116,7 @@ goto :eof
 :: checks if github is able to be accessed
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 goto failure
-set internet=true
+set internet=y
 :: grabs the announcements from github
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
     echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
@@ -2036,15 +2134,15 @@ for /f "tokens=*" %%s in (%temp%\anouncementQM.txt) do (
 if exist "%temp%\anouncementQM.txt" del "%temp%\anouncementQM.txt"
 echo.
 pause
-if %cleanmode% == true call :titledisplay
+if %cleanmode% == y call :titledisplay
 goto :eof
 
 :: fails to access github
 :failure
-set internet=false
+set internet=n
 echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
 pause
-if %cleanmode% == false goto :eof
+if %cleanmode% == n goto :eof
 echo [H[u[0J
 goto :eof
 
@@ -2077,7 +2175,7 @@ set /a qv=(%qv%*3)+1
 call :newmunchworking %1 %loopn% %qv% %imagesc%
 echo.
 echo [92mDone^^![0m
-set done=true
+set done=y
 goto exiting
 exit
 
@@ -2171,22 +2269,22 @@ goto :eof
 
 :setdefaults
 :: default values for variables
-set isimage=false
-set isupdate=false
+set isimage=n
+set isupdate=n
 set cols=15
 set lines=8
 set replaceaudio=n
-set done=false
-set hasvideo=true
+set done=n
+set hasvideo=y
 set distortaudio=n
 set tts=n
-set frying=false
+set frying=n
 set stretchres=n
 set colorq=n
 set addedtextq=n
 set resample=n
 set stutter=n
-set tcltrue=false
+set tcly=n
 set internet=undetermined
 set speedq=1
 set audiospeedq=1
@@ -2201,10 +2299,10 @@ set saturationvalue=1
 set brightnessvalue=0
 set widthratio=1
 set heightratio=1
-set forceupdate=false
-set spoofduration=false
+set forceupdate=n
+set spoofduration=n
 set durationtype=superlong
-set bouncy=false
+set bouncy=n
 set "audiofilters="
 set "tcl1= "
 set "tcl2= "
@@ -2221,7 +2319,7 @@ goto :eof
 cls
 echo [s
 cls
-if %showtitle% == false goto :eof
+if %showtitle% == n goto :eof
 echo [38;2;39;55;210m       :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
 echo [38;2;39;61;210m    ^^!5GP5YYY5PPY^^^^    :@?           :@J      :#@7       ~@^^!           Y^&..JYYYYYY@BJYYYYY^^! ^^!BG~        .?#P:
 echo [38;2;40;68;209m  ~BG7:       :?BG:  ^^^^@J           :@Y     .BB5@~      ^^!@^^!           Y@:       .@Y          7BG~    .?#G~
@@ -2248,4 +2346,4 @@ echo.[s
 goto :eof
 
 :ending
-if %animate% == true goto closingbar
+if %animate% == y goto closingbar

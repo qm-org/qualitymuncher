@@ -5,10 +5,10 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 # Current New Features
 
  - Multiqueue for videos (highly expiramental)
+ - config files for videos
 
 # Planned
 
- - Config files
 
 # Bugs
 
