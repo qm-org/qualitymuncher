@@ -4,7 +4,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
-No new features are currently here, but multiqueue support for all-video inputs is being worked on. So far, all of the changes being made are internal.
+ - Multiqueue for videos (highly expiramental)
 
 # Bugs
 

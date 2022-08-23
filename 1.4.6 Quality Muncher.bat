@@ -45,28 +45,22 @@ setlocal enabledelayedexpansion
 :: code page, version, and title
 chcp 437 > nul
 set version=1.4.6
-if check%2 == check title Quality Muncher v%version%
+set multiqueuef=n
+if not check%2 == check set multiqueuef=y
 :: if there is an input file, check the current directory and fix it if needed
 if not check%1 == check (
     set inpath=%~dp1
     set inpath=%inpath:~0,-1%
     if not "%cd%" == "%inpath%" cd /d %inpath%
 )
-:: if less than 2 parameters (not multiqueue), set the title
-if check%2 == check title Quality Muncher v%version%
+:: set the title
+title Quality Muncher v%version%
 set inpcontain=%~x1
-:: disables some features when using multiqueue
-if not check%2 == check (
-    set animate=false
-    set showtitle=false
-)
 :: default values for variables
 call :setdefaults
 :: plays an animation is the first parameter is qmloo
 if %1p == qmloop goto colorstart
 if %animate% == true call :loadingbar
-:: don't display title in multiqueue
-if not check%2 == check goto afterstartup
 call :titledisplay
 :: checks for updates
 if %autoupdatecheck% == true goto updatecheck
@@ -104,8 +98,6 @@ if "%~x1" == ".gif" set imagecontainer=.gif& goto imagemunch
 :: intro, questions and defining variables
 :: asks advanced or simple version (defaults to simple)
 set complexity=s
-:: skip this menu if using multiqueue
-if not check%2 == check goto skipmenu
 :: main menu options
 :modeselect
 echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, [P] to make a
@@ -145,23 +137,6 @@ call :clearlastprompt
 set "customizationquestion=%errorlevel%"
 :: custom quality
 if %customizationquestion% == 5 set customizationquestion=c
-:skipmenu
-:: skip to skipcustommultiqueue if not using multiqueue
-if 1%2 == 1 goto skipcustommultiqueue
-set customizationquestion=%2
-:: skip to skipcustommultiqueue if multiqueue isn't using custom quality
-if not %2 == c goto skipcustommultiqueue
-if %2 == c (
-    echo Custom %qs%
-    set outputfps=%3
-    set videobr=%4
-    set audiobr=%5
-    set scaleq=%6
-    if %7 == 1 set details=y
-    set endingmsg=Custom Quality
-    goto aftercheck
-)
-:skipcustommultiqueue
 :: random quality
 if %customizationquestion% == 6 (
     set customizationquestion=r
@@ -267,7 +242,6 @@ if not %complexity% == s call :durationspoof
 if not %complexity% == s call :webmstretch
 :: asks about resampling/interpolation
 if not %complexity% == s call :interpolationandresampling
-call :clearlastprompt
 :: video frying questions
 if not %complexity% == s set videoinp=%1
 if not %complexity% == s call :videofrying
@@ -282,10 +256,33 @@ if not %complexity% == s call :audiodistortion
 if not %complexity% == s call :voicesynth
 :: replacing audio questions
 if not %complexity% == s call :replaceaudioquestion
+:: encoding all files
+set totalfiles=0
+for %%x in (%*) do Set /A totalfiles+=1
+set filesdone=1
+for %%a in (%*) do (
+    if not %complexity% == s set videoinp=%%a
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    set /a filesdone=!filesdone!+1
+    call :videospecificstuff %%a
+)
+title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
+:end
+echo.
+echo [92mDone^^![0m
+set done=true
+:: delete temp files and show ending (unless stayopen is false)
+if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
+if %stayopen% == false goto ending
+goto exiting
+
+:videospecificstuff
 :: video filters
 :: sets filters for fps
 :: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
 :: get the file's duration and save to a variable, which is used in frying
+set inputvideo=%1
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
 set /p duration=<%temp%\fileduration.txt
 :: make sure the variable is an integer (no decimals)
@@ -311,9 +308,13 @@ set /a desiredwidth=%width%/%scaleq%
 set /a desiredwidth=(%desiredwidth%/2)*2
 :: setting the width to match the aspect ratio (from the stretch questions)
 if %stretchres% == y call :stretchmath
+:: setting font sizes
 if %addedtextq% == y call :textmath
+set "fpsfilter=fps=%outputfps%,"
+:: resampling and/or interpolation
 if %resample% == y call :resamplemath
-if %interpq% == y set "fpsfilter=minterpolate=fps=%outputfps%,"
+:: frying
+if %frying% == true call :fryingmath
 :: color filters
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
@@ -324,13 +325,19 @@ if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredhe
 :: add the suffix to the output name
 set "filename=%~n1 (%endingmsg%)"
 :: asks if the user wants a custom output name (advanced only)
-if not %complexity% == s call :outputquestion
+if %multiqueuef% == n (
+    if not %complexity% == s call :outputquestion
+)
 :: if the file already exists, append a (1), and if that exists, append a (2) instead, etc
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
-call :clearlastprompt
 :: let the user know encoding is happening
-echo [38;2;254;165;0mEncoding...[0m
+if %multiqueuef% == y (
+    echo [38;2;254;165;0mEncoding file %videoinp%[0m
+    echo [38;2;254;165;0m%filesdoneold% of %totalfiles%[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
 echo.
 :: if simple, go to encoding option 3 (avoids any variables that might be missing in simple mode)
 if %complexity% == s goto encodesimple
@@ -349,7 +356,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
 set outputvar="%cd%\%filename%%container%"
-goto end
+goto endofthis
 :: option two, audio was replaced
 :encodereplacedaudio
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
@@ -361,7 +368,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
 set outputvar="%cd%\%filename%%container%"
-goto end
+goto endofthis
 :: option three, simple mode only, no audio filters
 :encodesimple
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
@@ -372,7 +379,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
 set outputvar="%cd%\%filename%%container%"
-:end
+:endofthis
 :: if text to speech, encode the voice and merge outputs
 if %hasvideo% == false goto skipvideoencodingoptions
 if "%tts%"=="y" call :encodevoice
@@ -381,14 +388,7 @@ if %bouncy% == true call :encodebouncy
 :donewithdurationspoof
 if "%corrupt%"=="y" call :corruptoutput
 :skipvideoencodingoptions
-echo.
-echo [92mDone^^![0m
-set done=true
-:: delete temp files and show ending (unless stayopen is false)
-if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
-if %stayopen% == false goto ending
-if 1%2 == 1 goto exiting
-goto ending
+goto :eof
 
 :: advanced parts - most of the following code isn't read when using simple mode
 
@@ -969,31 +969,27 @@ goto :eof
 
 :: asks about resampling (skips if in simple mode or input fps is less than output)
 :interpolationandresampling
-if %inputfps% gtr %outputfps% call :resamplequestion
-if %outputfps% gtr %inputfps% call :interpolationquestion
+choice /m "Do you want to interpolate/resample the video, depending on the framerate?" 
+if %errorlevel% == 1 set "resample=y"
 call :newline
 call :clearlastprompt
 goto :eof
 
-:resamplequestion
-choice /c YN /m "Do you want to resample frames? This will look like motion blur, but will take longer to render."
-if %errorlevel% == 1 (
-    set resample=y
-)
-goto :eof
-
 :resamplemath
+:: do nothing if the input fps is equal to the output fps
+if %outputfps% == %intputfps% goto :eof
+:: interpolate if output fps is greater than input fps
+if %outputfps% gtr %intputfps% (
+    set "fpsfilter=minterpolate=fps=%outputfps%,"
+    goto :eof
+)
+:: resample if output fps is greater than input fps
 :: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
-set tmixframes=(%fpsvalue%/%framerate%)
+set tmixframes=(%inputfps%/%outputfps%)
 set /a tmixcheck=%tmixframes%
 :: tmix breaks at >128 frames, so make sure it doesn't go above that
 if %tmixcheck% gtr 128 set tmixframes=128
 set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
-goto :eof
-
-:interpolationquestion
-choice /m "The outputfps of your input exceeds the outputfps of the output. Interpolate to fix this?"
-if %errorlevel% == 1 set interpq=y
 goto :eof
 
 :: the start of advanced mode
@@ -1370,6 +1366,7 @@ echo.
 where /q ffplay || goto aftersound
 if %done% == true start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound
+if not b%2 == b goto nopipingforyou
 echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
 choice /n /c COFPL /m "You can also press [L] to generate a debugging log for errors."
 if %errorlevel% == 5 (
@@ -1379,6 +1376,14 @@ if %errorlevel% == 5 (
 if %errorlevel% == 4 goto piped
 if %errorlevel% == 2 %outputvar%
 if %errorlevel% == 3 explorer /select, %outputvar%
+goto closingbar
+
+:nopipingforyou
+choice /n /c CL /m "Press [C] to close or [L] to generate a debugging log for errors."
+if %errorlevel% == 2 (
+    call :makelog
+    goto closingbar
+)
 goto closingbar
 
 :: makes a log for when a user might encounter an error
@@ -1430,7 +1435,6 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         minimumbounce: %incrementbounce%
     echo     speedq: %speedq%
     echo     resample: %resample%
-    echo     interpq: %interpq%
     echo     stretchres %stretchres%
     echo         custom width by height aspect ratio: %widthratio% by %heightratio%
     echo     replaceaudio {added audio}: %replaceaudio%
@@ -1767,7 +1771,8 @@ if %errorlevel% == 2 (
 )
 set /p "filenametemp=Enter your output name [93mwith no extension[0m: "
 set "filename=%filenametemp%"
-echo.
+call :newline
+call :clearlastprompt
 goto :eof
 
 :: audio questions - ran when the user uses an audio file as an input
@@ -1963,6 +1968,10 @@ if %errorlevel% == 2 (
 ) else (
     set levelcolor=%level%
 )
+call :clearlastprompt
+goto :eof
+
+:fryingmath
 :: sets the amount to shift the video back by, fixing some unwanted effects of displacement)
 set /a shiftv=%desiredheight%/4
 set /a shifth=%desiredwidth%/24
@@ -1976,7 +1985,6 @@ set /a smallwidth=((%desiredwidth%/(%level%*2))/2)*2
 set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
 if %smallheight% lss 10 set smallheight=10
 if %smallwidth% lss 10 set smallwidth=10
-call :clearlastprompt
 goto :eof
 
 :: some extra steps for encoding a fried video, in order:
@@ -2176,7 +2184,6 @@ set frying=false
 set stretchres=n
 set colorq=n
 set addedtextq=n
-set interpq=n
 set resample=n
 set stutter=n
 set tcltrue=false
