@@ -1959,77 +1959,76 @@ goto afterstartup
 set isimage=y
 set "fryfilter="
 echo [38;2;254;165;0mInput is an image or gif.[0m
-:: grabs dimensions of the input
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
-if exist "%temp%\height.txt" (del "%temp%\height.txt")
-if exist "%temp%\width.txt" (del "%temp%\width.txt")
 echo.
 :: asks questions for quality and size (skipped if using multiqueue)
-choice /c ON /m "Old or new image munching method?"
+choice /c ON /m "Would you like the old or new image munching method?"
 call :clearlastprompt
 if %errorlevel% == 2 goto newmunch
 :: skip questions if in multiqueue and set the variables
-if not check%3 == check (
-    set imageq=%3
-    set imagesc=%4
-    goto skippedque
-)
 set /p "imageq=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
+set /a badimagebitrate=(%imageq%*3)+1
+set /a pallete=100/%imageq%
 call :clearlastprompt
+call :newline
 set /p "imagesc=[93mOn a scale from 1 to 10[0m, how much should the image be shrunk by? "
 call :clearlastprompt
-:skippedque
-set /a desiredheight=%height%/%imagesc%
-set /a desiredheight=(%desiredheight%/2)*2
-if a%2 == aY (
-    set fricheck=1
-    goto skipq2
-)
-if a%2 == aN (
-    set fricheck=2
-    goto skipq2
-)
+call :newline
 choice /m "Deep fry the image?"
 set fricheck=%errorlevel%
-:skipq2
 set sep=r
 if %fricheck% == 1 (
     set "fryfilter=noise=alls=20,eq=saturation=2.5:contrast=200:brightness=0.3,noise=alls=10"
     set "sep=r,"
+) else (
+    call :clearlastprompt
 )
-if %fricheck% == 2 call :clearlastprompt
 call :newline
-set "filename=%~n1 (Quality Munched)"
-:: very work-in-progress formula, not even sure if it works completely
-set /a badimagebitrate=(%imageq%*2)+10
-if %badimagebitrate% LSS 2 set badimagebitrate=2
-if exist "%filename%%imagecontainer%" call :renamefile
-:afternamecheck
-if %fricheck% == 2 (
-    echo [38;2;254;165;0mEncoding...[0m
-    echo.
+if not "%fryfilter%1" == "1" call :fried
+set totalfiles=0
+for %%x in (%*) do Set /A totalfiles+=1
+set filesdone=1
+for %%a in (%*) do (
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    set /a filesdone=!filesdone!+1
+    call :oldmunchencode %%a
 )
+title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
+goto end
+
+:oldmunchencode
+if %multiqueuef% == y (
+    if not %filesdone% == 1 echo.
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
+:: grabs dimensions of the input
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %temp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %1 -of csv=p=0 > %temp%\height.txt
+set /p height=<%temp%\height.txt
+set /p width=<%temp%\width.txt
+if exist "%temp%\height.txt" (del "%temp%\height.txt")
+if exist "%temp%\width.txt" (del "%temp%\width.txt")
+set /a desiredheight=%height%/%imagesc%
+set /a desiredheight=(%desiredheight%/2)*2
+set /a desiredwidth=%width%/%imagesc%
+set /a desiredwidth=(%desiredwidth%/2)*2
+set "filename=%~n1 (Quality Munched)"
+if exist "%filename%%imagecontainer%" call :renamefile
+if not "%fryfilter%1" == "1" goto friedimage
 :: the amount of colors to use in the image
-set /a pallete=100/%imageq%
-if not "%fryfilter%1" == "1" goto fried
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -vf palettegen=max_colors=%pallete% "%temp%\palletforqm.jpg"
 if %imagecontainer% == .gif goto gifmoment1
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" "%filename%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" "%filename%%imagecontainer%"
 :endgifmoment1
 if exist "%temp%\palletforqm.jpg" (del "%temp%\palletforqm.jpg")
 if exist "%temp%\%filename%%container%" (del "%temp%\%filename%%container%")
-goto end
+goto :eof
 
 :: used when an image is set to be deep fried
 :fried
 :: skip the questions if in multiqueue
-if not a%2 == a (
-    set level=%5
-    goto skipq3
-)
 set /p "level=How fried do you want the image or gif, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
 if %errorlevel% == 2 (
@@ -2038,39 +2037,40 @@ if %errorlevel% == 2 (
     set frich=1
 )
 call :clearlastprompt
-:skipq3
-echo [38;2;254;165;0mEncoding...[0m
-echo.
+goto :eof
+
+:friedimage
+set /a smallwidth=((%desiredwidth%/(%level%*2))/2)*2
+set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
+if %smallheight% lss 10 set smallheight=10
+if %smallwidth% lss 10 set smallwidth=10
 if not 1%frich% == 11 (
     set "fryfilter=eq=saturation=2.5:contrast=%level%,noise=alls=%level%*2"
     set "sep=r,"
 )
 :: not in order but, but this makes a noise map in 1/10 size, scales it to the final sizxe, makes a pallete of colors to use, scales down the input to the final size and uses the set amount of colors, and displaces the input with the noise map and does the color stuff and bitrate stuff
-set /a desiredwidth=((%width%/%imagesc%)/2)*2
-set /a smallwidth=((%desiredwidth%/10)/2)*2
-set /a smallheight=((%desiredheight%/10)/2)*2
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=1 -frames:v 1 -vf "noise=allf=t:alls=%level%*2:all_seed=%random%,eq=contrast=%level%*%level%" -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled.png"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -vf palettegen=max_colors=%pallete% -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i pipe: -filter_complex "paletteuse,scale=%desiredwidth%:%desiredheight%" "%temp%\scaledinput%imagecontainer%"
 if %imagecontainer% == .gif goto gifmoment
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate%/%level% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" "%filename%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" "%filename%%imagecontainer%"
 set outputvar="%cd%\%filename%%imagecontainer%"
 :endgifmoment
 if exist "%temp%\noisemapscaled.png" (del "%temp%\noisemapscaled.png")
 if exist "%temp%\scaledinput%imagecontainer%" (del "%temp%\scaledinput%imagecontainer%")
 if exist "%temp%\palletforqm.jpg" (del "%temp%\palletforqm.jpg")
-goto end
+goto :eof
 
 :: specific settings used for gif since you need -f gif - used for frying gifs
 :gifmoment
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate%/%level% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" -f gif "%filename%.gif"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" -f gif "%filename%.gif"
 set outputvar="%cd%\%filename%.gif"
 goto endgifmoment
 
 :: used for not frying gifs
 :gifmoment1
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -b:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f gif "%filename%.gif"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f gif "%filename%.gif"
 set outputvar="%cd%\%filename%.gif"
 goto endgifmoment1
 
@@ -2136,7 +2136,7 @@ goto :eof
 :announcement
 :: checks if github is able to be accessed
 ping /n 1 github.com  | find "Reply" > nul
-if %errorlevel% == 1 goto failure
+if %errorlevel% == 1 goto fetchannouncementfail
 set internet=y
 :: grabs the announcements from github
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
@@ -2159,7 +2159,7 @@ if %cleanmode% == y call :titledisplay
 goto :eof
 
 :: fails to access github
-:failure
+:fetchannouncementfail
 set internet=n
 echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
 pause
@@ -2193,7 +2193,16 @@ set /p "qv=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
 set /p "imagesc=[93mOn a scale from 1 to 10[0m, how much should the image be shrunk by? "
 set /a qv=(%qv%*3)+1
 :: new munching
-call :newmunchworking %1 %loopn% %qv% %imagesc%
+set totalfiles=0
+for %%x in (%*) do Set /A totalfiles+=1
+set filesdone=1
+for %%a in (%*) do (
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    set /a filesdone=!filesdone!+1
+    call :newmunchworking %%a %loopn% %qv% %imagesc%
+)
+title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
 echo.
 echo [92mDone^^![0m
 set done=y
@@ -2201,8 +2210,12 @@ goto exiting
 
 :newmunchworking
 call :clearlastprompt
-echo [38;2;254;165;0mEncoding...[0m
-echo.
+if %multiqueuef% == y (
+    if not %filesdone% == 1 echo.
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
 set loopn=%2
 set qv=%3
 :: qv*3 is used for webp/vp9, qv is used for -q:v in mjpeg
@@ -2242,29 +2255,31 @@ if %imagecontainer% == .gif (
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
 set /a loopnreal=%loopn%-1
 :: loop through a few encoders until the loop is over
+echo 0/%loopn%
+set /a i=0
 :startmunch
 set /a i+=1
 set /a i1=%i%+1
-echo %i%/%loopn%
+echo [1A[0J%i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %qv% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
-echo %i%/%loopn%
+echo [1A[0J%i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
-echo %i%/%loopn%
+echo [1A[0J%i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %qv3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 goto startmunch
 :endmunch
 set /a i2=%i1%+1
-echo %loopn%/%loopn%
+echo [1A[0J%loopn%/%loopn%
 set "filename=%~dpn1 (Quality Munched)"
 :: skip the loop if the file already doesn't exist
 if not exist "%filename%%imagecontainerbackup%" goto afterrename
