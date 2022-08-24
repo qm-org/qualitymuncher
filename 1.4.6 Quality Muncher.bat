@@ -976,6 +976,7 @@ if %errorlevel% == 2 goto :eof
 echo :: Configuration file for Quality Muncher v%version% > "QM Config.bat"
 echo :: Created at %time% on %date% >> "QM Config.bat"
 (
+    echo set endingmsg=%endingmsg%
     echo set outputfps=%outputfps%
     echo set videobr=%videobr%
     echo set audiobr=%audiobr%
@@ -1857,6 +1858,7 @@ mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%-5
 set /a lines=%lines%-1
 if not %cols% == 14 goto closingloop
+endlocal
 exit
 
 :: asks if the user wants a custom output name
@@ -2177,7 +2179,6 @@ echo.
 echo [92mDone^^![0m
 set done=y
 goto exiting
-exit
 
 :newmunchworking
 call :clearlastprompt
