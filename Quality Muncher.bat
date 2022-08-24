@@ -357,8 +357,7 @@ if exist "%filename%%container%" call :renamefile
 :: let the user know encoding is happening
 if %multiqueuef% == y (
     if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0mEncoding file %videoinp%[0m
-    echo [38;2;254;165;0m%filesdoneold% of %totalfiles%[0m
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
 ) else (
     echo [38;2;254;165;0mEncoding...[0m
 )
@@ -406,7 +405,7 @@ set outputvar="%cd%\%filename%%container%"
 :endofthis
 :: if text to speech, encode the voice and merge outputs
 if %hasvideo% == n goto skipvideoencodingoptions
-if "%tts%"=="y" call :encodevoice
+if %tts% == y call :encodevoice
 if %spoofduration% == y goto outputdurationspoof
 if %bouncy% == y call :encodebouncy
 :donewithdurationspoof
@@ -1876,11 +1875,13 @@ call :clearlastprompt
 goto :eof
 
 :: audio questions - ran when the user uses an audio file as an input
-:: this shouldn't be too comlicated so i didn't leave many comments, but if you have questions dm me (Frost#5872)
 :novideostream
-set audioencoder=aac
-:: the AAC codec has weird issues with mp3 - sometimes this causes issue but really i don't know for sure and i can't consistently reproduce them so this tries to fix that but using a different codec
-if %audiocontainer% == .mp3 set audioencoder=libmp3lame
+:: AAC has weird issues with mp3 - sometimes this causes issue but really i don't know for sure and i can't consistently reproduce them so this tries to fix that but using a different codec
+if %audiocontainer% == .mp3 (
+    set audioencoder=libmp3lame
+) else (
+    set audioencoder=aac
+)
 set hasvideo=n
 echo [38;2;254;165;0mInput is an audio file.[0m
 echo.
@@ -1890,10 +1891,28 @@ call :durationquestions
 call :speedquestions
 call :newline
 call :audiodistortion
+call :voicesynth
+set totalfiles=0
+for %%x in (%*) do Set /A totalfiles+=1
+set filesdone=1
+for %%a in (%*) do (
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    set /a filesdone=!filesdone!+1
+    call :audioencode %%a
+)
+title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
+goto :end
+
+:audioencode
 set "filename=%~n1 (Quality Munched)"
 if exist "%filename%%audiocontainer%" call :renamefile
-call :voicesynth
-echo [38;2;254;165;0mEncoding...[0m
+if %multiqueuef% == y (
+    if not %filesdone% == 1 echo.
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
 echo.
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %1 ^
@@ -1902,8 +1921,8 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 %audiofilters% ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%"
 set outputvar="%cd%\%filename%%audiocontainer%
-if "%tts%"=="y" call :encodevoiceNV
-goto end
+if %tts% == y call :encodevoiceNV
+goto :eof
 
 :: text-to-speech encoding for no video stream
 :: seperate from the video one since it has some options that aren't the same
