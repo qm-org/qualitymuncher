@@ -94,7 +94,7 @@ if "%~x1" == ".jpeg" goto imagemunch
 if "%~x1" == ".jfif" goto imagemunch
 if "%~x1" == ".pjpeg" goto imagemunch
 if "%~x1" == ".pjp" goto imagemunch
-if "%~x1" == ".gif" set imagecontainer=.gif& goto imagemunch
+if "%~x1" == ".gif" goto imagemunch
 :: intro, questions and defining variables
 :: asks advanced or simple version (defaults to simple)
 set complexity=s
@@ -1983,6 +1983,7 @@ if %fricheck% == 1 (
     call :clearlastprompt
 )
 call :newline
+set originalimagecontainer=%imagecontainer%
 if not "%fryfilter%1" == "1" call :fried
 set totalfiles=0
 for %%x in (%*) do Set /A totalfiles+=1
@@ -1997,6 +1998,11 @@ title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
 goto end
 
 :oldmunchencode
+if "%~x1" == ".gif" (
+    set imagecontainer=.gif
+) else (
+    set imagecontainer=%originalimagecontainer%
+)
 if %multiqueuef% == y (
     if not %filesdone% == 1 echo.
     echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
@@ -2062,15 +2068,20 @@ if exist "%temp%\scaledinput%imagecontainer%" (del "%temp%\scaledinput%imagecont
 if exist "%temp%\palletforqm.jpg" (del "%temp%\palletforqm.jpg")
 goto :eof
 
-:: specific settings used for gif since you need -f gif - used for frying gifs
+:: specific settings used for gif since you need -f gif
+:: used for frying gifs
 :gifmoment
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" -f gif "%filename%.gif"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%imagecontainer%" -i "%temp%\noisemapscaled.png" -i "%temp%\noisemapscaled.png" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "split,displace=edge=wrap,scale=%desiredwidth%:%desiredheight%:flags=neighbo%sep%%fryfilter%" -f matroska "%temp%\%filename%.mkv"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\%filename%.mkv" -f gif "%filename%.gif"
+if exist "%temp%\%filename%.mkv" (del "%temp%\%filename%.mkv")
 set outputvar="%cd%\%filename%.gif"
 goto endgifmoment
 
 :: used for not frying gifs
 :gifmoment1
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f gif "%filename%.gif"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %1 -i "%temp%\palletforqm.jpg" -preset %encodingspeed% -c:v mjpeg -q:v %badimagebitrate% -pix_fmt yuv410p -filter_complex "paletteuse,scale=-2:%desiredheight%:flags=%scalingalg%,noise=alls=%imageq%/4,eq=saturation=(%imageq%/50)+1:contrast=1+(%imageq%/50)" -f matroska "%temp%\%filename%.mkv"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\%filename%.mkv" -f gif "%filename%.gif"
+if exist "%temp%\%filename%.mkv" (del "%temp%\%filename%.mkv")
 set outputvar="%cd%\%filename%.gif"
 goto endgifmoment1
 
@@ -2193,6 +2204,7 @@ set /p "qv=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
 set /p "imagesc=[93mOn a scale from 1 to 10[0m, how much should the image be shrunk by? "
 set /a qv=(%qv%*3)+1
 :: new munching
+set originalimagecontainer=%imagecontainer%
 set totalfiles=0
 for %%x in (%*) do Set /A totalfiles+=1
 set filesdone=1
@@ -2209,6 +2221,11 @@ set done=y
 goto exiting
 
 :newmunchworking
+if "%~x1" == ".gif" (
+    set imagecontainer=.gif
+) else (
+    set imagecontainer=%originalimagecontainer%
+)
 call :clearlastprompt
 if %multiqueuef% == y (
     if not %filesdone% == 1 echo.
@@ -2222,12 +2239,7 @@ set qv=%3
 set /a qv3=%qv%*3
 set /a imagesc=%4
 set "tempfolder=%temp%\processingvideo"
-if not exist "%tempfolder%" goto afterrenamefolder
-:renamefolder
-set /a "u+=1"
-if exist "%tempfolder% %u%" goto renamefolder
-set "tempfolder=%tempfolder% %u%"
-:afterrenamefolder
+if exist "%tempfolder%" (rmdir "%tempfolder%" /q /s)
 mkdir "%tempfolder%"
 :: grab width and height of the input video
 ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %temp%\width.txt
@@ -2292,12 +2304,11 @@ set "filename=%filename% (%f%)"
 :: if it's a gif, encode it as a video then reencode it to a gif
 :: otherwisem encode it as a picture
 if %imagecontainerbackup% == .gif (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -crf %qv% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -vf "scale=%width%x%height%:flags=%scalingalg%" -f gif "%filename%%imagecontainerbackup%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %qv% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%"
 ) else (
     ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %qv% -f mjpeg "%filename%%imagecontainerbackup%"
 )
-:notgif
 rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"
 goto :eof
