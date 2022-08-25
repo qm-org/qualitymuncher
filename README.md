@@ -4,9 +4,8 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
- - multiqueue for video (highly expiramental)
+ - multiqueue for video, audio, gifs, and images (highly expiramental)
  - config files for videos
- - multiqueue for audio
 
 # Planned
 

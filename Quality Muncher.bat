@@ -972,6 +972,11 @@ goto :eof
 choice /m "Do you want to save these settings to a config file?"
 call :clearlastprompt
 if %errorlevel% == 2 goto :eof
+:: have to escape parentheses because they're nested and this is how i have to do it
+set textoneposesc=%textonepos:(=^^^^^^^^^^(%
+set textoneposesc=%textoneposesc:)=^^^^^^)%
+set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
+set texttwoposesc=%texttwoposesc:)=^^^^^^)%
 echo :: Configuration file for Quality Muncher v%version% > "QM Config.bat"
 echo :: Created at %time% on %date% >> "QM Config.bat"
 (
@@ -994,10 +999,10 @@ echo :: Created at %time% on %date% >> "QM Config.bat"
     echo set addedtextq=%addedtextq%
     echo set tsize=%tsize%
     echo set toptext=%toptext%
-    echo set textonepos=%textonepos%
+    echo set textonepos=%textoneposesc%
     echo set tsize2=%tsize2%
     echo set bottomtext=%bottomtext%
-    echo set texttwopos=%texttwopos%
+    echo set texttwopos=%texttwoposesc%
 
     echo set colorfilter=%colorfilter%
 
