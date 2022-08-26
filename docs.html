@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<style>
+.box {
+  margin-left: auto;
+  font-family: quicksand;
+  margin-right: auto;
+  text-align: left;
+  display: block;
+  width: 88vw;
+  max-width: 1000px;
+  min-height: 80px;
+  overflow: auto;
+  border: 3px solid white;
+  margin: 0px 0px;
+  padding: 3px max(3vw, 3px);
+}
+.seperator {
+  height: 3vh;
+}
+pre {
+  background-color: rgb(50, 50, 50);
+  margin: 0px;
+  padding: 0.5em 0.2em;
+}
+canvas {
+  background: #232323;
+  position: fixed;
+}
+a:-webkit-any-link {
+  color: -webkit-link;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #5ea6f8;
+}
+</style>
+  <!-- Import element definition -->
+  <script
+    type="module"
+    src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.min.js"
+  ></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <link rel="icon" type="image/x-icon" href="images/icon.png" />
+  <link rel="stylesheet" href="template.css" />
+  <title>Quality Muncher</title>
+  <div class="topnav" id="myTopnav">
+	<a href="index.html">Home</a>
+	<a href="features.html">Features</a>
+	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+	<a href="faq.html">FAQ</a>
+	<a href="about.html">About</a>
+	<a href="devblogs.html">Blog</a>
+	<a class="activepage" href="docs.html">Documentation</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+</head>
+<body class="noscrollbar">
+  <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
+  <div class="header centertext fadein divtext center textboxwide" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(60px, 6vw), 110px); max-width: 1300px; line-height: 1.2;">
+    <strong>
+      Quality Muncher Documentation (Batch)
+    </strong>
+    <p class="centertext fadein subtitle" style="animation-duration: 2.5s;">Written by Frost</p>
+  </div>
+  <div class="box moveup center">
+	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;" class="fadein">
+## Table of Contents
+- [1 Description](#1-Description)
+- [2 Requirements](#2%20Requirements)
+- [3 Inputs](#3%20Inputs)
+	- [3.1 Video](#3.1%20Video)
+	- [3.2 Audio](#3.2%20Audio)
+	- [3.3 Image](#3.3%20Image)
+	- [3.4 GIF](#3.4%20GIF)
+- [4 Options](#4%20Options)
+	- [4.1 Miscellaneous](#4.1%20Miscellaneous)
+	- [4.2 Aesthetic](#4.2%20Aesthetic)
+	- [4.3 Encoding](#4.3%20Encoding)
+	- [4.4 Containers](#4.4%20Containers)
+- [5 Output Settings](#5%20Output%20Settings)
+	- [5.1 Video](#5.1%20Video)
+		- [5.1.1 Basic Quality Presets](#5.1.1%20Basic%20Quality%20Presets)
+		- [5.1.2 Advanced](#5.1.2%20Advanced)
+			- [5.1.2.1 Start Time and Duration](#5.1.2.1%20Start%20Time%20and%20Duration)
+			- [5.1.2.2 Speed](#5.1.2.2%20Speed)
+			- [5.1.2.3 Text](#5.1.2.3%20Text)
+			- [5.1.2.4 Color](#5.1.2.4%20Color)
+			- [5.1.2.5 Stretch](#5.1.2.5%20Stretch)
+			- [5.1.2.6 Corruption](#5.1.2.6%20Corruption)
+			- [5.1.2.7 Duration Spoofing](#5.1.2.7%20Duration%20Spoofing)
+			- [5.1.2.8 Variable Resolution / "Bouncy WebM"](#5.1.2.8%20Variable%20Resolution%20/%20%22Bouncy%20WebM%22)
+			- [5.1.2.9 Resampling/Interpolation](#5.1.2.9%20Resampling/Interpolation)
+			- [5.1.2.10 Frying](#5.1.2.10%20Frying)
+			- [5.1.2.11 Frame Stutter](#5.1.2.11%20Frame%20Stutter)
+			- [5.1.2.12 Misc. Filters](#5.1.2.12%20Misc.%20Filters)
+				- [5.1.2.12.1 Erosion](#5.1.2.12.1%20Erosion)
+				- [5.1.2.12.2 Lagfun](#5.1.2.12.2%20Lagfun)
+				- [5.1.2.12.3 Negate](#5.1.2.12.3%20Negate)
+				- [5.1.2.12.4 Interlace](#5.1.2.12.4%20Interlace)
+				- [5.1.2.12.5 Edgedetect](#5.1.2.12.5%20Edgedetect)
+				- [5.1.2.12.6 Shufflepixels](#5.1.2.12.6%20Shufflepixels)
+				- [5.1.2.12.7 Guided](#5.1.2.12.7%20Guided)
+	- [5.2 Audio (With Video)](#5.2%20Audio%20(With%20Video))
+		- [5.2.1 Basic Quality Presets](#5.2.1%20Basic%20Quality%20Presets)
+		- [5.2.2 Advanced](#5.2.2%20Advanced)
+			- [5.2.2.1 Start Time and Duration](#5.2.2.1%20Start%20Time%20and%20Duration)
+			- [5.2.2.2 Speed](#5.2.2.2%20Speed)
+			- [5.2.2.3 Distortion / "Earrape"](#5.2.2.3%20Distortion%20/%20%22Earrape%22)
+				- [5.2.2.3.1 Simple Distortion](#5.2.2.3.1%20Simple%20Distortion)
+				- [5.2.2.3.2 Advanced Distortion](#5.2.2.3.2%20Advanced%20Distortion)
+			- [5.2.2.4 Text to Speech](#5.2.2.4%20Text%20to%20Speech)
+			- [5.2.2.5 Replacing](#5.2.2.5%20Replacing)
+	- [5.3 Audio (Without Video)](#5.3%20Audio%20(Without%20Video))
+		- [5.3.1 Bitrate](#5.3.1%20Bitrate)
+		- [5.3.2 Start Time and Duration](#5.3.2%20Start%20Time%20and%20Duration)
+		- [5.3.3 Speed](#5.3.3%20Speed)
+		- [5.3.4 Distortion](#5.3.4%20Distortion)
+			- [5.3.4.1 Simple Distortion](#5.3.4.1%20Simple%20Distortion)
+			- [5.3.4.2 Advanced Distortion](#5.3.4.2%20Advanced%20Distortion)
+		- [5.3.5 Text to Speech](#5.3.5%20Text%20to%20Speech)
+	- [5.4 Images and GIFS](#5.4%20Images%20and%20GIFs)
+		- [5.4.1 Old](#5.4.1%20Old)
+			- [5.4.1.1 Quality](#5.4.1.1%20Quality)
+			- [5.4.1.2 Scale](#5.4.1.2%20Scale)
+			- [5.4.1.3 Frying](#5.4.1.3%20Frying)
+		- [5.4.2 New](#5.4.2%20New)
+			- [5.4.2.1 Times to Compress](#5.4.2.1%20Times%20to%20Compress)
+			- [5.4.2.2 Quality](#5.4.2.2%20Quality)
+			- [5.4.2.3 Scale](#5.4.2.3%20Scale)
+- [6 Multiqueue](#6%20Multiqueue)
+- [7 Config Files](#7%20Config%20Files)
+- [8 Updating](#8%20Updating)
+	- [8.1 Auto-Update Check](#8.1%20Auto-Update%20Check)
+	- [8.2 Force Update / Repair](#8.2%20Force%20Update%20/%20Repair)
+- [9 Developers](#9%20Developers)
+- [10 Contact](#10%20Contact)
+
+# 1 Description
+This is the documentation for Quality Muncher. This documentation is **not** for the [Python version of Quality Muncher](https://github.com/qm-org/qm-py).
+
+# 2 Requirements
+- Windows 10 or 11 (untested on earlier versions)
+- Command Prompt ([Windows Terminal](https://github.com/microsoft/terminal) has been known to cause issues)
+- FFmpeg installed and added to PATH (with libflite enabled)
+	- [gyan.dev has a full version which I recommend](https://www.gyan.dev/ffmpeg/builds/), but make sure you're installing **full**, not essentials.
+
+# 3 Inputs
+Quality Muncher works with pretty much any media format, as long as it's [supported by FFmpeg](https://ffmpeg.org/ffmpeg-codecs.html#Decoders).
+
+## 3.1 Video
+
+Any video that is supported by FFmpeg and has at least one functional video stream will work and be recognized as a video.
+
+## 3.2 Audio
+
+Any audio format that is supported by FFmpeg will work. If it has a video stream, it will be grouped with video, otherwise it will skip any video-related options.
+
+## 3.3 Image
+
+Any image format using any of the following containers will work:
+- .png
+- .jpg
+- .jpeg
+- .jfif
+- .jpe
+- .jif
+- .jfi
+- .pjpeg
+- .bmp
+- .tiff
+- .tif
+- .raw
+- .heif
+- .heic
+- .webp
+- .jp2
+- .j2k
+- .jpx
+- .jpm
+- .jpm
+- .mj2
+- .gif
+
+## 3.4 GIF
+
+Any GIF using the .gif container will work.
+
+# 4 Options
+
+## 4.1 Miscellaneous
+
+- autoupdatecheck
+	- whether or not to check for updates when launched
+	- can be set to `y` or `n`
+		- default value is `y`
+- loggingdir
+	- where logs should go
+	- can be set to any valid file path, or blank
+		- by default this option has no value
+- stayopen
+	- whether or not to stay open after done rendering
+	- can be set to `y` or `n`
+		- default value is `y`
+
+## 4.2 Aesthetic
+
+- showtitle
+	- whether or not to show the title
+	- can be set to `y` or `n`
+		- default value is `y`
+- cleanmode
+	- whether questions should be cleared or not after answered
+	- can be set to `y` or `n`
+		- default value is `y`
+- animate
+	- whether or not to show an animation when opening and closing
+	- can be set to `y` or `n`
+		- default value is `n`
+- animatespeed
+	- the speed that animations play
+	- can be set to any natural number
+		- default value is `5`
+
+## 4.3 Encoding
+
+- encodingspeed
+	- the preset speed used when encoding
+	- can be set to `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`, or `placebo`
+		- default value is `ultrafast`
+- scalingalg
+	- the algorithm to use when scaling
+	- can be set to `fast_bilinear`, `bilinear`, `bicubic`, `expiramental`, `neighbor`, `area`, `bicublin`, `gauss`, `sinc`, `lanczos`, or `spline`
+		- default value is `neighbor`
+- updatespeed
+	- the speed that stats are updated
+	- can be set to any rational number greater than 0
+		- default value is `0.05`
+		- values below `0.05` may cause performance issues
+
+## 4.4 Containers
+
+- container
+	- the container used for videos
+	- can be set to most video containers that support x264
+		- default value is `.mp4`
+- audiocontainer
+	- the container used for audio
+	- can be set to most audio containers that support AAC, but when set to `mp3`, libmp3lame is used for encoding audio
+		- default value is `.mp3`
+- imagecontainer
+	- the container used for images
+	- can be set to most containers that support mjpeg
+		- default value is `.jpg`
+
+# 5 Output Settings
+These are settings that can be modified to alter the appearance of a video. Some may be hardly noticable, some may be extremely apparant.
+
+## 5.1 Video
+
+### 5.1.1 Basic Quality Presets
+These are presets that help set the framerate, video and audio bitrate, and resolution. They have 4 values:
+`framerate`
+	The framerate of the video
+`videobr`
+	How visually bad the video bitrate should be, higher is worse
+`audiobr`
+	How bad the audio bitrate should sound, higher is worse
+`scale`
+	The amount to divide the original resolution by
+
+The options for quality are as follows:
+`decent`
+	framerate: 24
+	videobr: 3
+	audiobr: 3
+	scale: 2
+`bad`
+	framerate: 12
+	videobr: 5
+	audiobr: 5
+	scale: 4
+`terrible`
+	framerate: 6
+	videobr: 8
+	audiobr: 8
+	scale: 8
+`unbearable`
+	framerate: 1
+	videobr: 16
+	audiobr: 9
+	scale: 12
+`decent`
+	*All values are chosen by user*
+`random`
+	*All values are randomly chosen*
+
+### 5.1.2 Advanced
+These are more advanced and specific options that the user can choose to unlock through the main menu.
+
+#### 5.1.2.1 Start Time and Duration
+The start time and duration of the video.
+
+#### 5.1.2.2 Speed
+The speed of the video, from 0.5 to 100.
+
+#### 5.1.2.3 Text
+2 texts that can be applied to the video, with 4 options that are individual for each text:
+`size`
+	Big, medium, small, or very small
+`text`
+	Any text that doesn't contain any batch poison characters will work
+`position`
+	Any number 1 through 9, each corresponding to a third of the screen, going left to right, top to bottom
+
+#### 5.1.2.4 Color
+Color filters that can be applied to the video.
+`contrast`
+	Any float from -1000 to 1000, default is 1
+`saturation`
+	Any float from 0 to 3, default is 1
+`brightness`
+	Any float from -1 to 1, default is 0
+
+#### 5.1.2.5 Stretch
+Stretches the width and height of the video individually, with any natural number being an accepted input.
+
+#### 5.1.2.6 Corruption
+Corrupts the bitstream of the video with noise.
+`corruptsev`
+	Any natural number between 1 and 10
+
+#### 5.1.2.7 Duration Spoofing
+Spoofs the duration of the video by editing the raw hexadecimal values. Users can pick from super long duration, super long negative duration, and ever-increasing duration.
+
+#### 5.1.2.8 Variable Resolution / "Bouncy WebM"
+Sets a variable resolution for the video, using a cosine graph as the scale. A visualisation can be found [here](https://www.desmos.com/calculator/vl9mpjnqhm).
+
+`bouncingspeed`
+	The rate of change
+`minimumbounce`
+	The minimum relative scale the resolution will decrease to, from 0 to 1 (0.5 for example would be half of the original size).
+`bouncetype`
+	The axis to apply the changes too, `width`, `height`, or `both`
+
+#### 5.1.2.9 Resampling/Interpolation
+If this is enabled, there are 3 possible outcomes, dependant on the input and output framerates.
+If the output framerate is **greater than** the input framerate:
+	the video will be interpolated to the output framerate (which creates extra frames using an algorithm)
+If the output framerate is **equal to** the input framerate:
+	the video framerate will not be changed or modified in any way
+If the output framerate is **less than** the input framerate:
+	the video will be resampled to the output framerate (which combines frames together)
+
+#### 5.1.2.10 Frying
+This effect is akin to what is commonly referred to as "deep frying". This effect warps the video using a noise map for displacement and changes colors.
+`level`
+	The strength of the distortion
+`colorchanges`
+	Whether or not to apply effects such as contrast and saturation to the video
+
+#### 5.1.2.11 Frame Stutter
+Randomizes the order of frames of a video from an internal cache (group).
+`stutteramount`
+	A number 2-512 that dictates the frames in the internal cache
+![Frame Stutter Visualisation][https://qualitymuncher.lgbt/images/framestutter.png]
+
+#### 5.1.2.12 Misc. Filters
+These are miscellaneous filters that don't have any options besides a toggle. The description for these are all paraphrased from FFmpeg's [filter documentation](https://ffmpeg.org/ffmpeg-filters.html), so go there if you want a more in-depth explanation.
+Each filter has an image at the end of the description showing its effects. Here is the original image for reference.
+![Original][https://qualitymuncher.lgbt/images/original.png]
+
+##### 5.1.2.12.1 Erosion
+Replaces the pixel by the local(3x3) minimum.
+![Erosion][https://qualitymuncher.lgbt/images/erosion.png]
+
+##### 5.1.2.12.2 Lagfun
+This filter makes short flashes of light appear longer.
+![Lagfun][https://qualitymuncher.lgbt/images/lagfun.png]
+
+##### 5.1.2.12.3 Negate
+Negate (invert) the input video.
+![Negate][https://qualitymuncher.lgbt/images/negate.png]
+
+##### 5.1.2.12.4 Interlace
+Simple interlacing filter from progressive contents. This interleaves upper (or lower) lines from odd frames with lower (or upper) lines from even frames, halving the frame rate and preserving image height.
+![Interlace][https://qualitymuncher.lgbt/images/interlace.png]
+
+##### 5.1.2.12.5 Edgedetect
+Detect and draw edges. The filter uses the Canny Edge Detection algorithm.
+![Edgedetect][https://qualitymuncher.lgbt/images/edgedetect.png]
+
+##### 5.1.2.12.6 Shufflepixels
+Reorder pixels in video frames.
+![Shufflepixels][https://qualitymuncher.lgbt/images/shufflepixels.png]
+
+##### 5.1.2.12.7 Guided
+Apply guided filter for edge-preserving smoothing, dehazing and so on.
+![Guided][https://qualitymuncher.lgbt/images/guided.png]
+
+## 5.2 Audio (With Video)
+
+### 5.2.1 Basic Quality Presets
+See [5.1.1 Basic Quality Presets](#5.1.1%20Basic%20Quality%20Presets).
+
+### 5.2.2 Advanced
+Advanced options for audio.
+
+#### 5.2.2.1 Start Time and Duration
+Dictated by the video start
+
+#### 5.2.2.2 Speed
+The speed of the audio, from 0.5 to 100.
+
+#### 5.2.2.3 Distortion / "Earrape"
+Distorts the audio using one of two methods.
+
+##### 5.2.2.3.1 Simple Distortion
+Boosts specific frequencies.
+`distortionseverity`
+	Severity of distortion, from 1 to 10.
+
+##### 5.2.2.3.2 Advanced Distortion
+Boosts specific frequencies, adds individual delay to channels, swaps the left and right channel, and adds echo.
+`distortionseverity`
+	Severity of distortion, from 1 to 10.
+
+#### 5.2.2.4 Text to Speech
+Text that is spoken and combined with the existing audio. Your FFmpeg installation must have libflite enabled for this to work. This uses flite's kal16 voice.
+`ttstext`
+	The text that is spoken
+`volume`
+	The boost, in dB, added to the text to speech.
+
+#### 5.2.2.5 Replacing
+Replaces the audio with the audio from another file
+`starttime`
+	The time in the audio file that is played from when the video starts.
+
+## 5.3 Audio (Without Video)
+
+### 5.3.1 Bitrate
+A value from 1-10 that dictates the bitrate of the audio, 10 being worse.
+
+### 5.3.2 Start Time and Duration
+The start time and duration of the audio.
+
+### 5.3.3 Speed
+See [5.2.2.2 Speed](#5.2.2.2%20Speed).
+
+### 5.3.4 Distortion
+See [5.2.2.3 Distortion / "Earrape"](#5.2.2.3%20Distortion%20/%20%22Earrape%22).
+
+#### 5.3.4.1 Simple Distortion
+See [5.2.2.3.1 Simple Distortion](#5.2.2.3.1%20Simple%20Distortion).
+
+#### 5.3.4.2 Advanced Distortion
+See [5.2.2.3.2 Advanced Distortion](#5.2.2.3.2%20Advanced%20Distortion).
+
+### 5.3.5 Text to Speech
+See [5.2.2.4 Text to Speech](#5.2.2.4%20Text%20to%20Speech).
+
+## 5.4 Images and GIFs
+
+### 5.4.1 Old
+The older, faster way to munch images.
+
+#### 5.4.1.1 Quality
+`quality`
+	The quality of the image/GIF, 1-10, 1 being the highest quality
+
+#### 5.4.1.2 Scale
+`scale`
+	The amount to divide the image/GIF by.
+
+#### 5.4.1.3 Frying
+See [5.1.2.10 Frying](#5.1.2.10%20Frying).
+
+### 5.4.2 New
+The newer method to munch images. It is slower yet more effective at reducing quality.
+
+#### 5.4.2.1 Times to Compress
+The amount of times to compress the image, which can be anywhere from 1 to 32767.
+
+#### 5.4.2.2 Quality
+See [5.4.1.1 Quality](#5.4.1.1%20Quality).
+
+#### 5.4.2.3 Scale
+See [5.4.1.2 Scale](#5.4.1.2%20Scale).
+
+# 6 Multiqueue
+Multiqueue is supported for all input types, but all inputs must be the same type, except for images and GIFs, which can be queued together.
+
+# 7 Config Files
+*As of version 1.4.6, only videos support config files.*
+
+After answering all of the output settings, users are asked if they want to create a config file with the selected options. These config files can be used to skip answering most questions, and automatically set the values that were used to make the file. Config files work both with and without multiqueue.
+
+# 8 Updating
+Updating through the app can be done in two ways, auto-updating and forcing an update.
+
+## 8.1 Auto-Updating
+
+Unless the option is set to false in the file, every time Quality Muncher is opened, it will try to check for updates automatically. If your version is different from the most recent one, it will ask if you want to update or skip updating. If you choose to update, you are given the choice between overwriting your current version, copying the current version and *then* overwriting, or going back and not updating at all.
+
+## 8.2 Force Update / Repair
+
+Forcing an update, or repairing, can be done by opening Quality Muncher, pressing "C" to check for updates, then pressing "F". This will then ask you if you want to proceed, copy the file and then proceed, or go back. Choose either of the first two will forcibly update Quality Muncher.
+
+# 9 Developers
+Quality Muncher is developer by [Frost](https://github.com/Thqrn), or Frost#5872 on Discord. The Python version is developed by [Atzur](https://github.com/atzuur), or atzur#3938 on Discord.
+
+# 10 Contact
+You can contact us in our [Discord Server](https://discord.qualitymuncher.lgbt), or by emailing us at qualitymuncher@gmail.com.
+	</div>
+  </div>
+</body>
+</html>
