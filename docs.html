@@ -27,20 +27,43 @@
 .seperator {
   height: 3vh;
 }
+
 pre {
   background-color: rgb(50, 50, 50);
   margin: 0px;
   padding: 0.5em 0.2em;
 }
+
 canvas {
   background: #232323;
   position: fixed;
 }
+
 a:-webkit-any-link {
   color: -webkit-link;
   cursor: pointer;
   text-decoration: underline;
   color: #5ea6f8;
+}
+
+#toTopButton {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  background-color: #14252b;
+  color: white;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+#toTopButton:hover {
+  background-color: #555;
 }
 </style>
   <!-- Import element definition -->
@@ -69,41 +92,42 @@ a:-webkit-any-link {
   </div>
 </head>
 <body class="noscrollbar">
+  <button onclick="topFunction()" id="toTopButton" title="Go to top">Top</button>
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
-  <div class="header centertext divtext center textboxwide" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(60px, 6vw), 110px); max-width: 1300px; line-height: 1.2;">
+  <div class="header centertext divtext center textboxwide fadein" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(45px, 6vw), 110px); max-width: 1300px; line-height: 1.2; padding: 16px 0px;">
     <strong>
       Quality Muncher Documentation (Batch)
     </strong>
     <p class="centertext subtitle" style="animation-duration: 2.5s;">Written by Frost</p>
   </div>
   <div class="box center">
-	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;">
+	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;" class="fadein">
 ## Table of Contents
 - [1 Description](#1description)
 - [2 Requirements](#2requirements)
-- [3 Inputs](#3Inputs)
-	- [3.1 Video](#3.1Video)
-	- [3.2 Audio](#3.2Audio)
-	- [3.3 Image](#3.3Image)
-	- [3.4 GIF](#3.4GIF)
-- [4 Options](#4Options)
-	- [4.1 Miscellaneous](#4.1Miscellaneous)
-	- [4.2 Aesthetic](#4.2Aesthetic)
+- [3 Inputs](#3inputs)
+	- [3.1 Video](#31video)
+	- [3.2 Audio](#32audio)
+	- [3.3 Image](#33image)
+	- [3.4 GIF](#34gif)
+- [4 Options](#4options)
+	- [4.1 Miscellaneous](#41miscellaneous)
+	- [4.2 Aesthetic](#42aesthetic)
 	- [4.3 Encoding](#43encoding)
-	- [4.4 Containers](#4.4Containers)
-- [5 Output Settings](#5OutputSettings)
-	- [5.1 Video](#5.1Video)
+	- [4.4 Containers](#44containers)
+- [5 Output Settings](#5outputsettings)
+	- [5.1 Video](#51video)
 		- [5.1.1 Basic Quality Presets](#511basicqualitypresets)
 		- [5.1.2 Advanced](#512advanced)
 			- [5.1.2.1 Start Time and Duration](#5121starttimeandduration)
-			- [5.1.2.2 Speed](#5.1.2.2speed)
-			- [5.1.2.3 Text](#5.1.2.3text)
-			- [5.1.2.4 Color](#5.1.2.4color)
-			- [5.1.2.5 Stretch](#5.1.2.5stretch)
+			- [5.1.2.2 Speed](#5122speed)
+			- [5.1.2.3 Text](#5123text)
+			- [5.1.2.4 Color](#5124color)
+			- [5.1.2.5 Stretch](#5125stretch)
 			- [5.1.2.6 Corruption](#5126corruption)
 			- [5.1.2.7 Duration Spoofing](#5127durationspoofing)
 			- [5.1.2.8 Variable Resolution / "Bouncy WebM"](#5128variableresolutionbouncywebm)
-			- [5.1.2.9 Resampling/Interpolation](#5129resamplinginterpolation)
+			- [5.1.2.9 Resampling and Interpolation](#5129resamplingandinterpolation)
 			- [5.1.2.10 Frying](#51210frying)
 			- [5.1.2.11 Frame Stutter](#51211framestutter)
 			- [5.1.2.12 Misc. Filters](#51212miscfilters)
@@ -320,13 +344,13 @@ The options for quality are as follows:
 	audiobr: 9
 	scale: 12
 
-`decent`
+`custom`
 
-	*All values are chosen by user*
+&nbsp;&nbsp;&nbsp;&nbsp;*All values are chosen by user*
 
 `random`
 
-	*All values are randomly chosen*
+&nbsp;&nbsp;&nbsp;&nbsp;*All values are randomly chosen*
 
 
 ### 5.1.2 Advanced
@@ -377,7 +401,7 @@ Sets a variable resolution for the video, using a cosine graph as the scale. A v
 `bouncetype`
 	The axis to apply the changes too, `width`, `height`, or `both`
 
-#### 5.1.2.9 Resampling/Interpolation
+#### 5.1.2.9 Resampling and Interpolation
 If this is enabled, there are 3 possible outcomes, dependant on the input and output framerates.
 If the output framerate is **greater than** the input framerate:
 	the video will be interpolated to the output framerate (which creates extra frames using an algorithm)
@@ -575,5 +599,24 @@ You can contact us in our [Discord Server](https://discord.qualitymuncher.lgbt),
       x.className = "topnav";
     }
   }
+  //Get the button
+var mybutton = document.getElementById("toTopButton");
+
+// When the user scrolls down 20px from the top of the document, show the button
+window.onscroll = function() {scrollFunction()};
+
+function scrollFunction() {
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    mybutton.style.display = "block";
+  } else {
+    mybutton.style.display = "none";
+  }
+}
+
+// When the user clicks on the button, scroll to the top of the document
+function topFunction() {
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
 </script>
 </html>
