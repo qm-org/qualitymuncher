@@ -6,9 +6,11 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
  - multiqueue for video, audio, gifs, and images (highly expiramental)
  - config files for videos
+ - a GUI for videos
 
 # Planned
 
+ - bug fixes and improvements for the GUI
 
 # Bugs
 

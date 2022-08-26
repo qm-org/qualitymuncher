@@ -198,7 +198,9 @@ if %stayopen% == n goto ending
 goto exiting
 
 :customconfig
-set /p "configfile=Please enter the path of your config file: "
+echo Please enter the path of your config file, or type [38;2;254;165;0mB[0m to go back.
+set /p "configfile="
+if %configfile% == b goto :eof
 if not exist %configfile% (
     call :clearlastprompt
     echo [91mFile not found.[0m
@@ -340,6 +342,7 @@ if %errorlevel% == 1 (
 )
 :: sends the user to the method they choose
 choice /n /c 12 /m "Which distortion method should be used, simple [1] or advanced [2]?"
+set disrortionseverity=3
 if %errorlevel% == 1 (
     set method=classic
     call :classic
@@ -963,6 +966,7 @@ pause
 call :clearlastprompt
 call :newline
 goto :eof
+
 :: asks if they want music and if so, the file to get it from and the start time
 :replaceaudioquestion
 call :newline
@@ -1022,7 +1026,7 @@ if %complexity% == s (
     choice /n /c 1234CR
     ) else (
         echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
-        echo You can also press [F] to use a custom config file.
+        echo You can also press [F] to load a custom config file.
         choice /n /c 1234CRF
         if !errorlevel! == 7 (
             call :clearlastprompt
@@ -1503,7 +1507,7 @@ if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50
 :aftersound
 if not b%2 == b goto nopipingforyou
 echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
-choice /n /c COFPL /m "You can also press [L] to generate a debugging log for errors."
+choice /n /c COFPLX /m "You can also press [X] to make a config file, or [L] to generate a debugging log for errors."
 if %errorlevel% == 5 (
     call :makelog
     goto closingbar
@@ -1511,14 +1515,16 @@ if %errorlevel% == 5 (
 if %errorlevel% == 4 goto piped
 if %errorlevel% == 2 %outputvar%
 if %errorlevel% == 3 explorer /select, %outputvar%
+if %errorlevel% == 6 call :savetoconfig
 goto closingbar
 
 :nopipingforyou
-choice /n /c CL /m "Press [C] to close or [L] to generate a debugging log for errors."
+choice /n /c CLX /m "Press [C] to close, [X] to make a config file, or [L] to generate a debugging log for errors."
 if %errorlevel% == 2 (
     call :makelog
     goto closingbar
 )
+if %errorlevel% == 3 call :savetoconfig
 goto closingbar
 
 :: makes a log for when a user might encounter an error
@@ -2454,7 +2460,7 @@ set details=n
 set "qs=Quality Selected^^!"
 set "colorfilter="
 set usinggui=n
-set readytorender=n
+set method=classic
 goto :eof
 
 :titledisplay
@@ -2497,7 +2503,7 @@ echo                                                          [38;2;254;165;0m[
 echo.
 echo                                     [V]ideo                                  [A]udio
 echo.
-echo                                  [O]pen Config                            [S]ave Config
+echo                                  [L]oad Config                            [S]ave Config
 echo.
 if not %videobr% == a (
     echo                                                        [92m[R]ender[0m
@@ -2505,14 +2511,17 @@ if not %videobr% == a (
     echo.
 )
 echo.
-choice /c VAOSBR /n 
+choice /c VALSBR /n 
 if %errorlevel% == 1 goto guivideooptions
 if %errorlevel% == 2 goto guiaudiooptions
 if %errorlevel% == 3 (
     call :customconfig
     goto guimenu
 )
-if %errorlevel% == 4 goto savetoconfig
+if %errorlevel% == 4 (
+    call :savetoconfig
+    goto guimenu
+) 
 if %errorlevel% == 5 (
     choice /m "Are you sure you want to go back? all progress will be lost." 
     if !errorlevel! == 1 (
@@ -2522,7 +2531,28 @@ if %errorlevel% == 5 (
     )
     if %errorlevel% == 2 goto guimenu
 )
-if %errorlevel% == 6 goto afterquestions
+if %errorlevel% == 6 (
+    if %distortaudio% == n (
+        if not %audiospeedq% == 1 (
+        set "audiofilters=-af atempo=%audiospeedq%"
+        ) else (
+            set "audiofilters="
+        )
+    ) else (
+        if %method% == classic (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+            )
+        ) else (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            )
+        )
+    )
+    goto afterquestions
+)
 goto guimenu
 
 :guivideooptions
