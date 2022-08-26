@@ -88,13 +88,8 @@ set /p vstream=<%temp%\vstream.txt
 if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
 if 1%vstream% == 1 goto novideostream
 :: if the video is an image, ask specific image questions instead
-if "%~x1" == ".png" goto imagemunch
-if "%~x1" == ".jpg" goto imagemunch
-if "%~x1" == ".jpeg" goto imagemunch
-if "%~x1" == ".jfif" goto imagemunch
-if "%~x1" == ".pjpeg" goto imagemunch
-if "%~x1" == ".pjp" goto imagemunch
-if "%~x1" == ".gif" goto imagemunch
+goto imagecheck
+:afterimagecheck
 :: intro, questions and defining variables
 :: asks advanced or simple version (defaults to simple)
 set complexity=s
@@ -102,7 +97,8 @@ set complexity=s
 :modeselect
 echo Press [S] for simple, [A] for advanced, [W] to open the website, [D] to join the discord server, [P] to make a
 echo suggestion or bug report, [U] to check for updates, [N] to view announcements, or [C] to close.
-choice /n /c SAWDCPGJMUN
+echo Or press [I] for the GUI.
+choice /n /c SAWDCPGJMUNI
 call :newline
 call :clearlastprompt
 if %errorlevel% == 1 (
@@ -130,6 +126,10 @@ if %errorlevel% == 11 (
     call :announcement
     goto afterstartup
 )
+if %errorlevel% == 12 (
+    call :guitoggles
+    goto guimenu
+)
 if %complexity% == s (
     echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
     choice /n /c 1234CR
@@ -139,7 +139,8 @@ if %complexity% == s (
     choice /n /c 1234CRF
     if !errorlevel! == 7 (
         call :clearlastprompt
-        goto customconfig
+        call :customconfig
+        goto afterquestions
     )
 )
 call :clearlastprompt
@@ -298,7 +299,7 @@ if not exist %configfile% (
     goto :customconfig
 )
 call %configfile%
-goto afterquestions
+goto :eof
 
 :videospecificstuff
 :: video filters
@@ -972,13 +973,15 @@ goto :eof
 choice /m "Do you want to save these settings to a config file?"
 call :clearlastprompt
 if %errorlevel% == 2 goto :eof
+:savetoconfig
+set /p "configname=Enter a name for the config file: "
 :: have to escape parentheses because they're nested and this is how i have to do it
 set textoneposesc=%textonepos:(=^^^^^^^^^^(%
 set textoneposesc=%textoneposesc:)=^^^^^^)%
 set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
 set texttwoposesc=%texttwoposesc:)=^^^^^^)%
-echo :: Configuration file for Quality Muncher v%version% > "QM Config.bat"
-echo :: Created at %time% on %date% >> "QM Config.bat"
+echo :: Configuration file for Quality Muncher v%version% > "%configname%.bat"
+echo :: Created at %time% on %date% >> "%configname%.bat"
 (
     echo set endingmsg=%endingmsg%
     echo set outputfps=%outputfps%
@@ -1041,8 +1044,8 @@ echo :: Created at %time% on %date% >> "QM Config.bat"
     echo set replaceaudio=%replaceaudio%
     echo set lowqualmusic=%lowqualmusic%
     echo exit /b
-) >> "QM Config.bat"
-echo You config file is located at "%cd%\QM Config.bat"
+) >> "%configname%.bat"
+echo You config file is located at "%cd%\%configname%.bat"
 pause
 call :clearlastprompt
 call :newline
@@ -1189,8 +1192,8 @@ echo  %tcl1% [1] Erosion - makes the edges of objects appear darker[90m
 echo  %tcl2% [2] Lagfun - makes darker pixels update slower[90m
 echo  %tcl3% [3] Negate - inverts colors[90m
 echo  %tcl4% [4] Interlace - combines frames together using interlacing[90m
-echo  %tcl5% [5] Edgedetect - inverts colors[90m
-echo  %tcl6% [6] Shufflepixels - Reorder pixels in video frames[90m
+echo  %tcl5% [5] Edgedetect - detect and draw edges[90m
+echo  %tcl6% [6] Shufflepixels - reorder pixels in video frames[90m
 echo  %tcl7% [7] Guided - apply guided filter for edge-preserving smoothing, dehazing, etc[0m
 choice /c 1234567D /n /m "Select one or more options: "
 if %errorlevel% == 8 (
@@ -1959,6 +1962,53 @@ powershell -noprofile -command [console]::beep(440,500);[console]::beep(440,500)
 call :clearlastprompt
 goto afterstartup
 
+:imagecheck
+if "%~x1" == ".png" goto imagemunch
+if "%~x1" == ".jpg" goto imagemunch
+if "%~x1" == ".jpeg" goto imagemunch
+if "%~x1" == ".jfif" goto imagemunch
+if "%~x1" == ".jpe" goto imagemunch
+if "%~x1" == ".jif" goto imagemunch
+if "%~x1" == ".jfi" goto imagemunch
+if "%~x1" == ".pjpeg" goto imagemunch
+if "%~x1" == ".bmp" goto imagemunch
+if "%~x1" == ".tiff" goto imagemunch
+if "%~x1" == ".tif" goto imagemunch
+if "%~x1" == ".raw" goto imagemunch
+if "%~x1" == ".heif" goto imagemunch
+if "%~x1" == ".heic" goto imagemunch
+if "%~x1" == ".webp" goto imagemunch
+if "%~x1" == ".jp2" goto imagemunch
+if "%~x1" == ".j2k" goto imagemunch
+if "%~x1" == ".jpx" goto imagemunch
+if "%~x1" == ".jpm" goto imagemunch
+if "%~x1" == ".jpm" goto imagemunch
+if "%~x1" == ".mj2" goto imagemunch
+if "%~x1" == ".gif" goto imagemunch
+if "%~x1" == ".PNG" goto imagemunch
+if "%~x1" == ".JPG" goto imagemunch
+if "%~x1" == ".JPEG" goto imagemunch
+if "%~x1" == ".JFIF" goto imagemunch
+if "%~x1" == ".JPE" goto imagemunch
+if "%~x1" == ".JIF" goto imagemunch
+if "%~x1" == ".JFI" goto imagemunch
+if "%~x1" == ".PJPEG" goto imagemunch
+if "%~x1" == ".BMP" goto imagemunch
+if "%~x1" == ".TIFF" goto imagemunch
+if "%~x1" == ".TIF" goto imagemunch
+if "%~x1" == ".RAW" goto imagemunch
+if "%~x1" == ".HEIF" goto imagemunch
+if "%~x1" == ".HEIC" goto imagemunch
+if "%~x1" == ".WEBP" goto imagemunch
+if "%~x1" == ".JP2" goto imagemunch
+if "%~x1" == ".J2K" goto imagemunch
+if "%~x1" == ".JPX" goto imagemunch
+if "%~x1" == ".JPM" goto imagemunch
+if "%~x1" == ".JPM" goto imagemunch
+if "%~x1" == ".MJ2" goto imagemunch
+if "%~x1" == ".GIF" goto imagemunch
+goto afterimagecheck
+
 :: used to munch images/gifs
 :imagemunch
 set isimage=y
@@ -2394,6 +2444,148 @@ echo [38;2;48;178;205m^^!@7           ~@7  Y#Y^^^^.    :7GB^^^^ .^&P         ~G
 echo [38;2;49;185;204m^^^^#^^!           ^^^^^&~   :JPPP5PPPY^^!    BY           7#Y    .^^!YPPP55PPPJ~  7#:           ^^!#:^^^^^&G55555555555J ?#:        :JB?
 echo [38;2;49;191;204m .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .[0m
 echo.[s
+goto :eof
+
+:guimenu
+cls
+echo.
+echo                                                             [94mOptions[0m
+echo.
+echo.
+echo                                                             [38;2;254;165;0m[B]ack[0m
+echo.
+echo                             [V]ideo                                                          [A]udio
+echo.
+echo                          [O]pen Config                                                    [S]ave Config
+echo.
+echo.
+echo.
+choice /c VAOSB /n 
+if %errorlevel% == 1 goto guivideooptions
+if %errorlevel% == 2 goto guiaudiooptions
+if %errorlevel% == 3 (
+    call :customconfig
+    goto guimenu
+)
+if %errorlevel% == 4 goto savetoconfig
+if %errorlevel% == 5 (
+    choice /m "Are you sure you want to go back? all progress will be lost." 
+    if %errorlevel% == 1 goto main
+    if %errorlevel% == 2 goto guimenu
+)
+goto guimenu
+                [1] Quality                       [2] Start Time and Duration
+:guivideooptions
+cls
+echo.
+echo                                                          [94mVideo Options[0m
+echo.
+echo.
+echo                                                             [38;2;254;165;0m[B]ack[0m
+echo.
+echo                %gui_video_quality%                      %gui_video_starttimeandduration%                     %gui_video_speed%
+echo.
+echo                  %gui_video_text%                                  %gui_video_color%                            %gui_video_stretch%
+echo.
+echo               %gui_video_corruption%                           %gui_video_durationspoof%                     %gui_video_bouncywebm%
+echo.
+echo         %gui_video_resamplinginterpolation%                       %gui_video_frying%                        %gui_video_framestutter%
+echo.
+echo                                                        %gui_video_framestutter%
+echo.
+echo.
+echo.
+choice /c 123456789RFSMB /n
+:: quality
+if %errorlevel% == 1 goto guimenu
+:: start time and duration
+if %errorlevel% == 2 goto guimenu
+:: speed
+if %errorlevel% == 3 goto guimenu
+:: text
+if %errorlevel% == 4 goto guimenu
+:: color
+if %errorlevel% == 5 goto guimenu
+:: stretch
+if %errorlevel% == 6 goto guimenu
+:: corruption
+if %errorlevel% == 7 goto guimenu
+:: duration spoof
+if %errorlevel% == 8 goto guimenu
+:: bouncy webm
+if %errorlevel% == 9 goto guimenu
+:: resampling/interpolation
+if %errorlevel% == 10 goto guimenu
+:: frying
+if %errorlevel% == 11 goto guimenu
+:: frame stutter
+if %errorlevel% == 12 goto guimenu
+:: miscillaneous filters
+if %errorlevel% == 13 goto guimenu
+:: back
+if %errorlevel% == 14 goto guimenu
+
+:guiaudiooptions
+cls
+echo.
+echo                                                          [94mAudio Options[0m
+echo.
+echo.
+echo                                                             [38;2;254;165;0m[B]ack[0m
+echo.
+echo                 %gui_audio_quality%                       %gui_audio_starttimeandduration%                     %gui_audio_speed%
+echo.
+echo               %gui_audio_distortion%                           %gui_audio_texttospeech%                        %gui_audio_replacing%
+echo.
+echo.
+echo.
+choice /c 123456B /n
+:: quality
+if %errorlevel% == 1 goto guimenu
+:: start time and duration
+if %errorlevel% == 2 goto guimenu
+:: speed
+if %errorlevel% == 3 goto guimenu
+:: distortion
+if %errorlevel% == 4 goto guimenu
+:: text to speech
+if %errorlevel% == 5 goto guimenu
+:: replacing
+if %errorlevel% == 6 goto guimenu
+:: back
+if %errorlevel% == 7 goto guimenu
+
+:guitoggles
+set gui_video_quality=[1] Quality
+set gui_video_starttimeandduration=[2] Start Time and Duration
+set gui_video_speed=[3] Speed
+set gui_video_text=[4] Text
+set gui_video_color=[5] Color
+set gui_video_stretch=[6] Stretch
+set gui_video_corruption=[7] Corruption
+set gui_video_durationspoof=[8] Duration Spoof
+set gui_video_bouncywebm=[9] Bouncy WebM
+set gui_video_resamplinginterpolation=[R] Resampling/Interpolation
+set gui_video_frying=[F] Frying
+set gui_video_framestutter=[S] Frame Stutter
+set gui_video_miscillaneousfilters=[M] Miscillaneous Filters
+set gui_audio_quality=[1] Quality
+set gui_audio_starttimeandduration=[2] Start Time and Duration
+set gui_audio_speed=[3] Speed
+set gui_audio_distortion=[4] Distortion
+set gui_audio_texttospeech=[5] Text to Speech
+set gui_audio_replacing=[6] Replacing
+set gui_audio_miscillaneousfilters=[7] Miscillaneous Filters
+goto :eof
+
+:togglethis
+set "temptogglevar=!%1!"
+if "%temptogglevar:~0,5%" == "[92m" (
+    set %1=[0m%temptogglevar:[92m=%
+) else (
+    set %1=[92m%temptogglevar%[0m
+)
+set "temptogglevar"
 goto :eof
 
 :ending
