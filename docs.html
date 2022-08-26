@@ -14,7 +14,16 @@
   border: 3px solid white;
   margin: 0px 0px;
   padding: 3px max(3vw, 3px);
+  transition-duration: 250ms;
 }
+
+@media screen and (max-width: 1000px) {
+  .box {
+    width: 95vw;
+    border: 0px solid white;
+  }
+}
+
 .seperator {
   height: 3vh;
 }
@@ -264,40 +273,61 @@ These are settings that can be modified to alter the appearance of a video. Some
 
 ### 5.1.1 Basic Quality Presets
 These are presets that help set the framerate, video and audio bitrate, and resolution. They have 4 values:
+
 `framerate`
-	The framerate of the video
+
+&nbsp;&nbsp;&nbsp;&nbsp;The framerate of the video
+
 `videobr`
-	How visually bad the video bitrate should be, higher is worse
+
+&nbsp;&nbsp;&nbsp;&nbsp;How visually bad the video bitrate should be, higher is worse
+
 `audiobr`
-	How bad the audio bitrate should sound, higher is worse
+
+&nbsp;&nbsp;&nbsp;&nbsp;How bad the audio bitrate should sound, higher is worse
+
 `scale`
-	The amount to divide the original resolution by
+
+&nbsp;&nbsp;&nbsp;&nbsp;The amount to divide the original resolution by
 
 The options for quality are as follows:
+
 `decent`
+
 	framerate: 24
 	videobr: 3
 	audiobr: 3
 	scale: 2
+
 `bad`
+
 	framerate: 12
 	videobr: 5
 	audiobr: 5
 	scale: 4
+
 `terrible`
+
 	framerate: 6
 	videobr: 8
 	audiobr: 8
 	scale: 8
+
 `unbearable`
+
 	framerate: 1
 	videobr: 16
 	audiobr: 9
 	scale: 12
+
 `decent`
+
 	*All values are chosen by user*
+
 `random`
+
 	*All values are randomly chosen*
+
 
 ### 5.1.2 Advanced
 These are more advanced and specific options that the user can choose to unlock through the main menu.
@@ -365,42 +395,53 @@ This effect is akin to what is commonly referred to as "deep frying". This effec
 
 #### 5.1.2.11 Frame Stutter
 Randomizes the order of frames of a video from an internal cache (group).
+
 `stutteramount`
-	A number 2-512 that dictates the frames in the internal cache
-![Frame Stutter Visualisation][https://qualitymuncher.lgbt/images/framestutter.png]
+
+&nbsp;&nbsp;&nbsp;&nbsp;A number 2-512 that dictates the frames in the internal cache
+
+![Frame Stutter Visualisation](https://qualitymuncher.lgbt/images/framestutter.png)
 
 #### 5.1.2.12 Misc. Filters
 These are miscellaneous filters that don't have any options besides a toggle. The description for these are all paraphrased from FFmpeg's [filter documentation](https://ffmpeg.org/ffmpeg-filters.html), so go there if you want a more in-depth explanation.
-Each filter has an image at the end of the description showing its effects. Here is the original image for reference.
-![Original][https://qualitymuncher.lgbt/images/original.png]
+Each filter has an image at the end of the description showing its effects. Here is the original image for reference:
+
+![Original](https://qualitymuncher.lgbt/images/original.png)
 
 ##### 5.1.2.12.1 Erosion
 Replaces the pixel by the local(3x3) minimum.
-![Erosion][https://qualitymuncher.lgbt/images/erosion.png]
+
+![Erosion](https://qualitymuncher.lgbt/images/erosion.png)
 
 ##### 5.1.2.12.2 Lagfun
 This filter makes short flashes of light appear longer.
-![Lagfun][https://qualitymuncher.lgbt/images/lagfun.png]
+
+![Lagfun](https://qualitymuncher.lgbt/images/lagfun.png)
 
 ##### 5.1.2.12.3 Negate
 Negate (invert) the input video.
-![Negate][https://qualitymuncher.lgbt/images/negate.png]
+
+![Negate](https://qualitymuncher.lgbt/images/negate.png)
 
 ##### 5.1.2.12.4 Interlace
 Simple interlacing filter from progressive contents. This interleaves upper (or lower) lines from odd frames with lower (or upper) lines from even frames, halving the frame rate and preserving image height.
-![Interlace][https://qualitymuncher.lgbt/images/interlace.png]
+
+![Interlace](https://qualitymuncher.lgbt/images/interlace.png)
 
 ##### 5.1.2.12.5 Edgedetect
 Detect and draw edges. The filter uses the Canny Edge Detection algorithm.
-![Edgedetect][https://qualitymuncher.lgbt/images/edgedetect.png]
+
+![Edgedetect](https://qualitymuncher.lgbt/images/edgedetect.png)
 
 ##### 5.1.2.12.6 Shufflepixels
 Reorder pixels in video frames.
-![Shufflepixels][https://qualitymuncher.lgbt/images/shufflepixels.png]
+
+![Shufflepixels](https://qualitymuncher.lgbt/images/shufflepixels.png)
 
 ##### 5.1.2.12.7 Guided
 Apply guided filter for edge-preserving smoothing, dehazing and so on.
-![Guided][https://qualitymuncher.lgbt/images/guided.png]
+
+![Guided](https://qualitymuncher.lgbt/images/guided.png)
 
 ## 5.2 Audio (With Video)
 
@@ -518,5 +559,21 @@ Quality Muncher is developer by [Frost](https://github.com/Thqrn), or Frost#5872
 You can contact us in our [Discord Server](https://discord.qualitymuncher.lgbt), or by emailing us at qualitymuncher@gmail.com.
 	</div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.4.0/showdown.min.js"></script>
 </body>
+<script>
+  var conv = new showdown.Converter();
+  var txt = document.getElementById('content').innerHTML;
+  console.log(txt);
+  document.getElementById('content').innerHTML = conv.makeHtml(txt);
+  
+  function myFunction() {
+    var x = document.getElementById("myTopnav");
+    if (x.className === "topnav") {
+      x.className += " responsive";
+    } else {
+      x.className = "topnav";
+    }
+  }
+</script>
 </html>

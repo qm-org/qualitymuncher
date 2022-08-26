@@ -261,6 +261,10 @@ p {
   margin-right: auto;
 }
 
+img {
+  max-width: 95vw;
+}
+
 .image {
   max-width: 768px;
 }
