@@ -70,84 +70,84 @@ a:-webkit-any-link {
 </head>
 <body class="noscrollbar">
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
-  <div class="header centertext fadein divtext center textboxwide" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(60px, 6vw), 110px); max-width: 1300px; line-height: 1.2;">
+  <div class="header centertext divtext center textboxwide" style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 2s; font-size: min(max(60px, 6vw), 110px); max-width: 1300px; line-height: 1.2;">
     <strong>
       Quality Muncher Documentation (Batch)
     </strong>
-    <p class="centertext fadein subtitle" style="animation-duration: 2.5s;">Written by Frost</p>
+    <p class="centertext subtitle" style="animation-duration: 2.5s;">Written by Frost</p>
   </div>
-  <div class="box moveup center">
-	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;" class="fadein">
+  <div class="box center">
+	<div id="content" style="font-size: 24px; margin: 7px 7px; text-align: justify; color: white;">
 ## Table of Contents
-- [1 Description](#1-Description)
-- [2 Requirements](#2%20Requirements)
-- [3 Inputs](#3%20Inputs)
-	- [3.1 Video](#3.1%20Video)
-	- [3.2 Audio](#3.2%20Audio)
-	- [3.3 Image](#3.3%20Image)
-	- [3.4 GIF](#3.4%20GIF)
-- [4 Options](#4%20Options)
-	- [4.1 Miscellaneous](#4.1%20Miscellaneous)
-	- [4.2 Aesthetic](#4.2%20Aesthetic)
-	- [4.3 Encoding](#4.3%20Encoding)
-	- [4.4 Containers](#4.4%20Containers)
-- [5 Output Settings](#5%20Output%20Settings)
-	- [5.1 Video](#5.1%20Video)
-		- [5.1.1 Basic Quality Presets](#5.1.1%20Basic%20Quality%20Presets)
-		- [5.1.2 Advanced](#5.1.2%20Advanced)
-			- [5.1.2.1 Start Time and Duration](#5.1.2.1%20Start%20Time%20and%20Duration)
-			- [5.1.2.2 Speed](#5.1.2.2%20Speed)
-			- [5.1.2.3 Text](#5.1.2.3%20Text)
-			- [5.1.2.4 Color](#5.1.2.4%20Color)
-			- [5.1.2.5 Stretch](#5.1.2.5%20Stretch)
-			- [5.1.2.6 Corruption](#5.1.2.6%20Corruption)
-			- [5.1.2.7 Duration Spoofing](#5.1.2.7%20Duration%20Spoofing)
-			- [5.1.2.8 Variable Resolution / "Bouncy WebM"](#5.1.2.8%20Variable%20Resolution%20/%20%22Bouncy%20WebM%22)
-			- [5.1.2.9 Resampling/Interpolation](#5.1.2.9%20Resampling/Interpolation)
-			- [5.1.2.10 Frying](#5.1.2.10%20Frying)
-			- [5.1.2.11 Frame Stutter](#5.1.2.11%20Frame%20Stutter)
-			- [5.1.2.12 Misc. Filters](#5.1.2.12%20Misc.%20Filters)
-				- [5.1.2.12.1 Erosion](#5.1.2.12.1%20Erosion)
-				- [5.1.2.12.2 Lagfun](#5.1.2.12.2%20Lagfun)
-				- [5.1.2.12.3 Negate](#5.1.2.12.3%20Negate)
-				- [5.1.2.12.4 Interlace](#5.1.2.12.4%20Interlace)
-				- [5.1.2.12.5 Edgedetect](#5.1.2.12.5%20Edgedetect)
-				- [5.1.2.12.6 Shufflepixels](#5.1.2.12.6%20Shufflepixels)
-				- [5.1.2.12.7 Guided](#5.1.2.12.7%20Guided)
-	- [5.2 Audio (With Video)](#5.2%20Audio%20(With%20Video))
-		- [5.2.1 Basic Quality Presets](#5.2.1%20Basic%20Quality%20Presets)
-		- [5.2.2 Advanced](#5.2.2%20Advanced)
-			- [5.2.2.1 Start Time and Duration](#5.2.2.1%20Start%20Time%20and%20Duration)
-			- [5.2.2.2 Speed](#5.2.2.2%20Speed)
-			- [5.2.2.3 Distortion / "Earrape"](#5.2.2.3%20Distortion%20/%20%22Earrape%22)
-				- [5.2.2.3.1 Simple Distortion](#5.2.2.3.1%20Simple%20Distortion)
-				- [5.2.2.3.2 Advanced Distortion](#5.2.2.3.2%20Advanced%20Distortion)
-			- [5.2.2.4 Text to Speech](#5.2.2.4%20Text%20to%20Speech)
-			- [5.2.2.5 Replacing](#5.2.2.5%20Replacing)
-	- [5.3 Audio (Without Video)](#5.3%20Audio%20(Without%20Video))
-		- [5.3.1 Bitrate](#5.3.1%20Bitrate)
-		- [5.3.2 Start Time and Duration](#5.3.2%20Start%20Time%20and%20Duration)
-		- [5.3.3 Speed](#5.3.3%20Speed)
-		- [5.3.4 Distortion](#5.3.4%20Distortion)
-			- [5.3.4.1 Simple Distortion](#5.3.4.1%20Simple%20Distortion)
-			- [5.3.4.2 Advanced Distortion](#5.3.4.2%20Advanced%20Distortion)
-		- [5.3.5 Text to Speech](#5.3.5%20Text%20to%20Speech)
-	- [5.4 Images and GIFS](#5.4%20Images%20and%20GIFs)
-		- [5.4.1 Old](#5.4.1%20Old)
-			- [5.4.1.1 Quality](#5.4.1.1%20Quality)
-			- [5.4.1.2 Scale](#5.4.1.2%20Scale)
-			- [5.4.1.3 Frying](#5.4.1.3%20Frying)
-		- [5.4.2 New](#5.4.2%20New)
-			- [5.4.2.1 Times to Compress](#5.4.2.1%20Times%20to%20Compress)
-			- [5.4.2.2 Quality](#5.4.2.2%20Quality)
-			- [5.4.2.3 Scale](#5.4.2.3%20Scale)
-- [6 Multiqueue](#6%20Multiqueue)
-- [7 Config Files](#7%20Config%20Files)
-- [8 Updating](#8%20Updating)
-	- [8.1 Auto-Update Check](#8.1%20Auto-Update%20Check)
-	- [8.2 Force Update / Repair](#8.2%20Force%20Update%20/%20Repair)
-- [9 Developers](#9%20Developers)
-- [10 Contact](#10%20Contact)
+- [1 Description](#1description)
+- [2 Requirements](#2requirements)
+- [3 Inputs](#3Inputs)
+	- [3.1 Video](#3.1Video)
+	- [3.2 Audio](#3.2Audio)
+	- [3.3 Image](#3.3Image)
+	- [3.4 GIF](#3.4GIF)
+- [4 Options](#4Options)
+	- [4.1 Miscellaneous](#4.1Miscellaneous)
+	- [4.2 Aesthetic](#4.2Aesthetic)
+	- [4.3 Encoding](#43encoding)
+	- [4.4 Containers](#4.4Containers)
+- [5 Output Settings](#5OutputSettings)
+	- [5.1 Video](#5.1Video)
+		- [5.1.1 Basic Quality Presets](#511basicqualitypresets)
+		- [5.1.2 Advanced](#512advanced)
+			- [5.1.2.1 Start Time and Duration](#5121starttimeandduration)
+			- [5.1.2.2 Speed](#5.1.2.2speed)
+			- [5.1.2.3 Text](#5.1.2.3text)
+			- [5.1.2.4 Color](#5.1.2.4color)
+			- [5.1.2.5 Stretch](#5.1.2.5stretch)
+			- [5.1.2.6 Corruption](#5126corruption)
+			- [5.1.2.7 Duration Spoofing](#5127durationspoofing)
+			- [5.1.2.8 Variable Resolution / "Bouncy WebM"](#5128variableresolutionbouncywebm)
+			- [5.1.2.9 Resampling/Interpolation](#5129resamplinginterpolation)
+			- [5.1.2.10 Frying](#51210frying)
+			- [5.1.2.11 Frame Stutter](#51211framestutter)
+			- [5.1.2.12 Misc. Filters](#51212miscfilters)
+				- [5.1.2.12.1 Erosion](#512121erosion)
+				- [5.1.2.12.2 Lagfun](#512122lagfun)
+				- [5.1.2.12.3 Negate](#512123negate)
+				- [5.1.2.12.4 Interlace](#512124interlace)
+				- [5.1.2.12.5 Edgedetect](#512125edgedetect)
+				- [5.1.2.12.6 Shufflepixels](#512126shufflepixels)
+				- [5.1.2.12.7 Guided](#512127guided)
+	- [5.2 Audio (With Video)](#52audiowithvideo)
+		- [5.2.1 Basic Quality Presets](#521basicqualitypresets)
+		- [5.2.2 Advanced](#522advanced)
+			- [5.2.2.1 Start Time and Duration](#5221starttimeandduration)
+			- [5.2.2.2 Speed](#5222speed)
+			- [5.2.2.3 Distortion / "Earrape"](#5223distortionearrape)
+				- [5.2.2.3.1 Simple Distortion](#52231simpledistortion)
+				- [5.2.2.3.2 Advanced Distortion](#52232advanceddistortion)
+			- [5.2.2.4 Text to Speech](#5224texttospeech)
+			- [5.2.2.5 Replacing](#5225replacing)
+	- [5.3 Audio (Without Video)](#53audiowithoutvideo)
+		- [5.3.1 Bitrate](#531bitrate)
+		- [5.3.2 Start Time and Duration](#532starttimeandduration)
+		- [5.3.3 Speed](#533speed)
+		- [5.3.4 Distortion / "Earrape"](#534distortionearrape)
+			- [5.3.4.1 Simple Distortion](#5341simpledistortion)
+			- [5.3.4.2 Advanced Distortion](#5342advanceddistortion)
+		- [5.3.5 Text to Speech](#535texttospeech)
+	- [5.4 Images and GIFS](#54imagesandgifs)
+		- [5.4.1 Old](#541old)
+			- [5.4.1.1 Quality](#5411quality)
+			- [5.4.1.2 Scale](#5412scale)
+			- [5.4.1.3 Frying](#5413frying)
+		- [5.4.2 New](#542new)
+			- [5.4.2.1 Times to Compress](#5421timestocompress)
+			- [5.4.2.2 Quality](#5422quality)
+			- [5.4.2.3 Scale](#5423scale)
+- [6 Multiqueue](#6multiqueue)
+- [7 Config Files](#7configfiles)
+- [8 Updating](#8updating)
+	- [8.1 Auto-Updating](#81autoupdating)
+	- [8.2 Force Update / Repair](#82forceupdaterepair)
+- [9 Developers](#9developers)
+- [10 Contact](#10contact)
 
 # 1 Description
 This is the documentation for Quality Muncher. This documentation is **not** for the [Python version of Quality Muncher](https://github.com/qm-org/qm-py).
@@ -446,7 +446,7 @@ Apply guided filter for edge-preserving smoothing, dehazing and so on.
 ## 5.2 Audio (With Video)
 
 ### 5.2.1 Basic Quality Presets
-See [5.1.1 Basic Quality Presets](#5.1.1%20Basic%20Quality%20Presets).
+See [5.1.1 Basic Quality Presets](#511basicqualitypresets).
 
 ### 5.2.2 Advanced
 Advanced options for audio.
@@ -491,19 +491,19 @@ A value from 1-10 that dictates the bitrate of the audio, 10 being worse.
 The start time and duration of the audio.
 
 ### 5.3.3 Speed
-See [5.2.2.2 Speed](#5.2.2.2%20Speed).
+See [5.2.2.2 Speed](#5222speed).
 
 ### 5.3.4 Distortion
-See [5.2.2.3 Distortion / "Earrape"](#5.2.2.3%20Distortion%20/%20%22Earrape%22).
+See [5.2.2.3 Distortion / "Earrape"](#5223Distortion/%22earrape%22).
 
 #### 5.3.4.1 Simple Distortion
-See [5.2.2.3.1 Simple Distortion](#5.2.2.3.1%20Simple%20Distortion).
+See [5.2.2.3.1 Simple Distortion](#52231simpledistortion).
 
 #### 5.3.4.2 Advanced Distortion
-See [5.2.2.3.2 Advanced Distortion](#5.2.2.3.2%20Advanced%20Distortion).
+See [5.2.2.3.2 Advanced Distortion](#52232advanceddistortion).
 
 ### 5.3.5 Text to Speech
-See [5.2.2.4 Text to Speech](#5.2.2.4%20Text%20to%20Speech).
+See [5.2.2.4 Text to Speech](#5224texttospeech).
 
 ## 5.4 Images and GIFs
 
@@ -519,7 +519,7 @@ The older, faster way to munch images.
 	The amount to divide the image/GIF by.
 
 #### 5.4.1.3 Frying
-See [5.1.2.10 Frying](#5.1.2.10%20Frying).
+See [5.1.2.10 Frying](#51210frying).
 
 ### 5.4.2 New
 The newer method to munch images. It is slower yet more effective at reducing quality.
@@ -528,10 +528,10 @@ The newer method to munch images. It is slower yet more effective at reducing qu
 The amount of times to compress the image, which can be anywhere from 1 to 32767.
 
 #### 5.4.2.2 Quality
-See [5.4.1.1 Quality](#5.4.1.1%20Quality).
+See [5.4.1.1 Quality](#5411quality).
 
 #### 5.4.2.3 Scale
-See [5.4.1.2 Scale](#5.4.1.2%20Scale).
+See [5.4.1.2 Scale](#5412scale).
 
 # 6 Multiqueue
 Multiqueue is supported for all input types, but all inputs must be the same type, except for images and GIFs, which can be queued together.
