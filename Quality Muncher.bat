@@ -128,110 +128,16 @@ if %errorlevel% == 11 (
 )
 if %errorlevel% == 12 (
     call :guitoggles
+    set usinggui=y
+    set complexity=a
+    set cleanmodeog=%cleanmode%
+    set showtitleog=%showtitle%
+    set cleanmode=n
+    set showtitle=n
     goto guimenu
 )
-if %complexity% == s (
-    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
-    choice /n /c 1234CR
-) else (
-    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
-    echo You can also press [F] to use a custom config file.
-    choice /n /c 1234CRF
-    if !errorlevel! == 7 (
-        call :clearlastprompt
-        call :customconfig
-        goto afterquestions
-    )
-)
-call :clearlastprompt
-:: set quality
-set "customizationquestion=%errorlevel%"
-:: custom quality
-if %customizationquestion% == 5 set customizationquestion=c
-:: random quality
-if %customizationquestion% == 6 (
-    set customizationquestion=r
-    call :random
-    goto aftercheck
-)
-:: defines a few variables that will be replaced later; used to check for valid user inputs
-set outputfps=a
-set videobr=a
-set audiobr=a
-set scaleq=a
-set details=n
-:: sets the quality based on customizationquestion
-:: endingmsg is added to the end of the video for the output name
-if "%customizationquestion%" == "c" echo Custom %qs%
-:customquestioncheckpoint
-:: custom quality
-if "%customizationquestion%" == "c" (
-    set /p "outputfps=What fps do you want it to be rendered at: "
-    set /p "videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: "
-    set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
-    set /p "scaleq=[93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot: "
-    choice /m "Do you want a detailed file name for the output?"
-    if !errorlevel! == 1 set details=y
-    set endingmsg=Custom Quality
-)
-:: decent quality
-if %customizationquestion% == 1 (
-    call :newline
-    echo [96mDecent %qs%[0m
-    set outputfps=24
-    set videobr=3
-    set scaleq=2
-    set audiobr=3
-    set endingmsg=Decent Quality
-)
-:: bad quality
-if %customizationquestion% == 2 (
-    call :newline
-    echo [96mBad %qs%[0m
-    set outputfps=12
-    set videobr=5
-    set scaleq=4
-    set audiobr=5
-    set endingmsg=Bad Quality
-)
-:: terrible quality
-if %customizationquestion% == 3 (
-    call :newline
-    echo [96mTerrible %qs%[0m
-    set outputfps=6
-    set videobr=8
-    set scaleq=8
-    set audiobr=8
-    set endingmsg=Terrible Quality
-)
-:: unbearable quality
-if %customizationquestion% == 4 (
-    call :newline
-    echo [96mUnbearable %qs%[0m
-    set outputfps=1
-    set videobr=16
-    set scaleq=12
-    set audiobr=9
-    set endingmsg=Unbearable Quality
-)
-:: if custom quality is selected, check if the variables are all whole numbers
-:: if they aren't it'll ask again for their values
-set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
-set /a "testforfps=%outputfps%"
-set /a "testforvideobr=%videobr%"
-set /a "testforaudiobr=%audiobr%"
-set /a "testforscaleq=%scaleq%"
-if %customizationquestion% == c (
-    if not "%outputfps%"=="%outputfps: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%videobr%"=="%videobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%scaleq%"=="%scaleq: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforfps% == %outputfps% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforvideobr% == %videobr% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforscaleq% == %scaleq% (echo %errormsg% & goto customquestioncheckpoint)
-)
-:aftercheck
+:: quality questions
+call :qualityselect
 :: ask if the user wants to trim the video if in advanced mode
 if %complexity% == a call :durationquestions
 :: makes the endingmsg more detailed if it's been selected (only available in the custom preset)
@@ -481,6 +387,7 @@ choice /n
 if %errorlevel% == 1 (
     set corrupt=y
 ) else (
+    set corrupt=n
     call :newline
     call :clearlastprompt
     goto :eof
@@ -521,6 +428,7 @@ choice /n
 if %errorlevel% == 1 (
     set spoofduration=y
 ) else (
+    set spooofduration=n
     call :clearlastprompt
     goto :eof
 )
@@ -743,6 +651,7 @@ if %spoofduration% == y echo [91mThis setting does not work with duration spoof
 if %errorlevel% == 1 (
     set "bouncy=y"
 ) else (
+    set bouncy=n
     call :clearlastprompt
     goto :eof
 )
@@ -830,6 +739,7 @@ choice /c YN /m "Do you want to add text to the video?"
 if %errorlevel% == 1 (
     set addedtextq=y
 ) else (
+    set addedtextq=n
     call :clearlastprompt
     goto :eof
 )
@@ -926,6 +836,7 @@ choice /c YN /m "Do you want to customize saturation, contrast, and brightness?"
 if %errorlevel% == 1 (
     set colorq=y
 ) else (
+    set colorq=n
     goto :eof
 )
 :: prompts for specific values
@@ -950,6 +861,7 @@ choice /c YN /m "Do you want to stretch the video?"
 if %errorlevel% == 1 (
     set stretchres=y
 ) else (
+    set stretchres=n
     call :clearlastprompt
     goto :eof
 )
@@ -1007,6 +919,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set bottomtext=%bottomtext%
     echo set texttwopos=%texttwoposesc%
 
+    echo set colorq=%colorq%
     echo set colorfilter=%colorfilter%
 
     echo set stretchres=%stretchres%
@@ -1055,6 +968,7 @@ goto :eof
 call :newline
 choice /c YN /m "Do you want to replace the audio?"
 if %errorlevel% == 2 (
+    set replaceaudio=n
     call :clearlastprompt
     goto :eof
 )
@@ -1098,6 +1012,119 @@ if %tmixcheck% gtr 128 set tmixframes=128
 set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
 goto :eof
 
+:qualityselect
+if %complexity% == s (
+    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+    choice /n /c 1234CR
+) else (
+    if %usinggui% == y (
+    echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+    choice /n /c 1234CR
+    ) else (
+        echo Your options for quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+        echo You can also press [F] to use a custom config file.
+        choice /n /c 1234CRF
+        if !errorlevel! == 7 (
+            call :clearlastprompt
+            call :customconfig
+            goto afterquestions
+        )
+    )
+)
+call :clearlastprompt
+:: set quality
+set "customizationquestion=%errorlevel%"
+:: custom quality
+if %customizationquestion% == 5 set customizationquestion=c
+:: random quality
+if %customizationquestion% == 6 (
+    set customizationquestion=r
+    call :random
+    goto aftercheck
+)
+:: defines a few variables that will be replaced later; used to check for valid user inputs
+set outputfps=a
+set videobr=a
+set audiobr=a
+set scaleq=a
+set details=n
+:: sets the quality based on customizationquestion
+:: endingmsg is added to the end of the video for the output name
+if "%customizationquestion%" == "c" echo Custom %qs%
+:customquestioncheckpoint
+:: custom quality
+if "%customizationquestion%" == "c" (
+    set /p "outputfps=What fps do you want it to be rendered at: "
+    set /p "videobr=[93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad: "
+    set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
+    set /p "scaleq=[93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot: "
+    choice /m "Do you want a detailed file name for the output?"
+    if !errorlevel! == 1 (
+        set details=y
+    ) else (
+        set details=n
+    )
+    set endingmsg=Custom Quality
+)
+:: decent quality
+if %customizationquestion% == 1 (
+    call :newline
+    echo [96mDecent %qs%[0m
+    set outputfps=24
+    set videobr=3
+    set scaleq=2
+    set audiobr=3
+    set endingmsg=Decent Quality
+)
+:: bad quality
+if %customizationquestion% == 2 (
+    call :newline
+    echo [96mBad %qs%[0m
+    set outputfps=12
+    set videobr=5
+    set scaleq=4
+    set audiobr=5
+    set endingmsg=Bad Quality
+)
+:: terrible quality
+if %customizationquestion% == 3 (
+    call :newline
+    echo [96mTerrible %qs%[0m
+    set outputfps=6
+    set videobr=8
+    set scaleq=8
+    set audiobr=8
+    set endingmsg=Terrible Quality
+)
+:: unbearable quality
+if %customizationquestion% == 4 (
+    call :newline
+    echo [96mUnbearable %qs%[0m
+    set outputfps=1
+    set videobr=16
+    set scaleq=12
+    set audiobr=9
+    set endingmsg=Unbearable Quality
+)
+:: if custom quality is selected, check if the variables are all whole numbers
+:: if they aren't it'll ask again for their values
+set /a "testforfps=%outputfps%"
+set /a "testforvideobr=%videobr%"
+set /a "testforaudiobr=%audiobr%"
+set /a "testforscaleq=%scaleq%"
+if %customizationquestion% == c (
+    if not "%outputfps%"=="%outputfps: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%videobr%"=="%videobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%scaleq%"=="%scaleq: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforfps% == %outputfps% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforvideobr% == %videobr% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforscaleq% == %scaleq% (echo %errormsg% & goto customquestioncheckpoint)
+)
+:aftercheck
+goto :eof
+
 :: the start of advanced mode
 :durationquestions
 call :clearlastprompt
@@ -1106,6 +1133,7 @@ choice /m "Do you want to trim the video?"
 if %errorlevel% == 1 (
     set trimmed=y
 ) else (
+    set trimmed=n
     call :newline
     call :clearlastprompt
     goto :eof
@@ -1129,6 +1157,7 @@ goto :eof
 choice /m "Do you want to add text-to-speech?"
 if %errorlevel% == 1 set tts=y
 if %errorlevel% == 2 (
+    set tts=n
     call :clearlastprompt
     goto :eof
 )
@@ -2143,8 +2172,11 @@ goto endgifmoment1
 :: asks if user wants to fry the video
 :videofrying
 choice /m "Do you want to fry the video? (will cause extreme distortion)"
-if %errorlevel% == 2 call :clearlastprompt
-if %errorlevel% == 2 goto :eof
+if %errorlevel% == 2 (
+    set frying=n
+    call :clearlastprompt
+    goto :eof
+)
 set frying=y
 set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
 choice /m "Do you want the built-in color changes that come with frying?"
@@ -2241,6 +2273,7 @@ set stutteramount=2
 choice /m "Do you want to add stutter to the video?"
 :: if no, exit the function, if yes, set the variable to y (the variable is only used for error logs)
 if %errorlevel% == 2 (
+    set stutter=n
     call :clearlastprompt
     goto :eof
 ) else (
@@ -2371,6 +2404,7 @@ goto :eof
 :setdefaults
 :: default values for variables
 set isimage=n
+set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
 set isupdate=n
 set cols=15
 set lines=8
@@ -2412,8 +2446,15 @@ set "tcl4= "
 set "tcl5= "
 set "tcl6= "
 set "tcl7= "
+set outputfps=a
+set videobr=a
+set audiobr=a
+set scaleq=a
+set details=n
 set "qs=Quality Selected^^!"
 set "colorfilter="
+set usinggui=n
+set readytorender=n
 goto :eof
 
 :titledisplay
@@ -2449,18 +2490,22 @@ goto :eof
 :guimenu
 cls
 echo.
-echo                                                             [94mOptions[0m
+echo                                                         [94mOptions[0m
 echo.
 echo.
-echo                                                             [38;2;254;165;0m[B]ack[0m
+echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                             [V]ideo                                                          [A]udio
+echo                                     [V]ideo                                  [A]udio
 echo.
-echo                          [O]pen Config                                                    [S]ave Config
+echo                                  [O]pen Config                            [S]ave Config
 echo.
+if not %videobr% == a (
+    echo                                                        [92m[R]ender[0m
+) else (
+    echo.
+)
 echo.
-echo.
-choice /c VAOSB /n 
+choice /c VAOSBR /n 
 if %errorlevel% == 1 goto guivideooptions
 if %errorlevel% == 2 goto guiaudiooptions
 if %errorlevel% == 3 (
@@ -2470,90 +2515,256 @@ if %errorlevel% == 3 (
 if %errorlevel% == 4 goto savetoconfig
 if %errorlevel% == 5 (
     choice /m "Are you sure you want to go back? all progress will be lost." 
-    if %errorlevel% == 1 goto main
+    if !errorlevel! == 1 (
+        set showtitle=%cleanmodeog%
+        set cleanmode=%cleanmodeog%
+        goto main
+    )
     if %errorlevel% == 2 goto guimenu
 )
+if %errorlevel% == 6 goto afterquestions
 goto guimenu
-                [1] Quality                       [2] Start Time and Duration
+
 :guivideooptions
+call :checktogglesvideo
 cls
 echo.
-echo                                                          [94mVideo Options[0m
+echo                                                       [94mVideo Options[0m
 echo.
 echo.
-echo                                                             [38;2;254;165;0m[B]ack[0m
+echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                %gui_video_quality%                      %gui_video_starttimeandduration%                     %gui_video_speed%
+echo                %gui_video_quality%                    %gui_video_starttimeandduration%                       %gui_video_speed%
 echo.
-echo                  %gui_video_text%                                  %gui_video_color%                            %gui_video_stretch%
+echo                 %gui_video_text%                                %gui_video_color%                              %gui_video_stretch%
 echo.
-echo               %gui_video_corruption%                           %gui_video_durationspoof%                     %gui_video_bouncywebm%
+echo              %gui_video_corruption%                        %gui_video_durationspoof%                        %gui_video_bouncywebm%
 echo.
-echo         %gui_video_resamplinginterpolation%                       %gui_video_frying%                        %gui_video_framestutter%
+echo       %gui_video_resamplinginterpolation%                     %gui_video_frying%                           %gui_video_framestutter%
 echo.
-echo                                                        %gui_video_framestutter%
+echo                                                     %gui_video_framestutter%
 echo.
 echo.
 echo.
 choice /c 123456789RFSMB /n
+set /a gui_video_var=%errorlevel%
 :: quality
-if %errorlevel% == 1 goto guimenu
+if %gui_video_var% == 1 call :qualityselect
 :: start time and duration
-if %errorlevel% == 2 goto guimenu
+if %gui_video_var% == 2 call :durationquestions
 :: speed
-if %errorlevel% == 3 goto guimenu
+if %gui_video_var% == 3 call :speedquestions
 :: text
-if %errorlevel% == 4 goto guimenu
+if %gui_video_var% == 4 call :addtext
 :: color
-if %errorlevel% == 5 goto guimenu
+if %gui_video_var% == 5 call :colorquestions
 :: stretch
-if %errorlevel% == 6 goto guimenu
+if %gui_video_var% == 6 call :stretch
 :: corruption
-if %errorlevel% == 7 goto guimenu
+if %gui_video_var% == 7 call :corruption
 :: duration spoof
-if %errorlevel% == 8 goto guimenu
+if %gui_video_var% == 8 call :durationspoof
 :: bouncy webm
-if %errorlevel% == 9 goto guimenu
+if %gui_video_var% == 9 call :webmstretch
 :: resampling/interpolation
-if %errorlevel% == 10 goto guimenu
+if %gui_video_var% == 10 call :interpolationandresampling
 :: frying
-if %errorlevel% == 11 goto guimenu
+if %gui_video_var% == 11 call :videofrying
 :: frame stutter
-if %errorlevel% == 12 goto guimenu
+if %gui_video_var% == 12 call :stutter
 :: miscillaneous filters
-if %errorlevel% == 13 goto guimenu
+if %gui_video_var% == 13 call :filterlist
 :: back
-if %errorlevel% == 14 goto guimenu
+if %gui_video_var% == 14 goto guimenu
+goto guivideooptions
 
 :guiaudiooptions
+call :checktogglesaudio
 cls
 echo.
-echo                                                          [94mAudio Options[0m
+echo                                                       [94mAudio Options[0m
 echo.
 echo.
-echo                                                             [38;2;254;165;0m[B]ack[0m
+echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                 %gui_audio_quality%                       %gui_audio_starttimeandduration%                     %gui_audio_speed%
+echo                %gui_audio_quality%                     %gui_audio_starttimeandduration%                      %gui_audio_speed%
 echo.
-echo               %gui_audio_distortion%                           %gui_audio_texttospeech%                        %gui_audio_replacing%
+echo               %gui_audio_distortion%                       %gui_audio_texttospeech%                         %gui_audio_replacing%
 echo.
 echo.
 echo.
 choice /c 123456B /n
+set /a gui_audio_var=%errorlevel%
 :: quality
-if %errorlevel% == 1 goto guimenu
+if %gui_audio_var% == 1 call :qualityjustudio
 :: start time and duration
-if %errorlevel% == 2 goto guimenu
+if %gui_audio_var% == 2 goto guimenu
 :: speed
-if %errorlevel% == 3 goto guimenu
+if %gui_audio_var% == 3 (
+    set hasvideo=n
+    call :speedquestions
+    set hasvideo=y
+)
 :: distortion
-if %errorlevel% == 4 goto guimenu
+if %gui_audio_var% == 4 call :audiodistortion
 :: text to speech
-if %errorlevel% == 5 goto guimenu
+if %gui_audio_var% == 5 call :voicesynth
 :: replacing
-if %errorlevel% == 6 goto guimenu
+if %gui_audio_var% == 6 call :replaceaudioquestion
 :: back
-if %errorlevel% == 7 goto guimenu
+if %gui_audio_var% == 7 goto guimenu
+goto guiaudiooptions
+
+:qualityjustudio
+echo Your options for audio quality are decent [1], bad [2], terrible [3], unbearable [4], custom [C], or random [R].
+choice /n /c 1234CR
+:: set quality
+set "audiocustomizationquestion=%errorlevel%"
+:: custom quality
+if %audiocustomizationquestion% == 5 set audiocustomizationquestion=c
+:: random quality
+if %audiocustomizationquestion% == 6 (
+    set audiocustomizationquestion=r
+    set /a audiobr=%random% * 15 / 32768 + 1
+    goto :eof
+)
+:: defines a few variables that will be replaced later; used to check for valid user inputs
+set audiobr=a
+:: sets the quality based on audiocustomizationquestion
+:: endingmsg is added to the end of the video for the output name
+:customquestioncheckpoint
+:: custom quality
+if "%audiocustomizationquestion%" == "c" (
+    set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
+)
+:: decent quality
+if %audiocustomizationquestion% == 1 (
+    set audiobr=3
+)
+:: bad quality
+if %audiocustomizationquestion% == 2 (
+    set audiobr=5
+)
+:: terrible quality
+if %audiocustomizationquestion% == 3 (
+    set audiobr=8
+)
+:: unbearable quality
+if %audiocustomizationquestion% == 4 (
+    set audiobr=9
+)
+:: if custom quality is selected, check if the variables are all whole numbers
+:: if they aren't it'll ask again for their values
+set /a "testforfps=%outputfps%"
+set /a "testforvideobr=%videobr%"
+set /a "testforaudiobr=%audiobr%"
+set /a "testforscaleq=%scaleq%"
+if %audiocustomizationquestion% == c (
+    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
+)
+goto :eof
+
+:checktogglesvideo
+if not %outputfps% == a (
+    call :togglethis gui_video_quality on
+) else (
+    call :togglethis gui_video_quality off
+)
+if %trimmed% == y (
+    call :togglethis gui_video_starttimeandduration on
+) else (
+    call :togglethis gui_video_starttimeandduration off
+)
+if not %speedq% == 1 (
+    call :togglethis gui_video_speed on
+) else (
+    call :togglethis gui_video_speed off
+)
+if %addedtextq% == y (
+    call :togglethis gui_video_text on
+) else (
+    call :togglethis gui_video_text off
+)
+if not "a%colorfilter%" == "a" (
+    call :togglethis gui_video_color on
+) else (
+    call :togglethis gui_video_color off
+)
+if %stretchres% == y (
+    call :togglethis gui_video_stretch on
+) else (
+    call :togglethis gui_video_stretch off
+)
+if %corrupt% == y (
+    call :togglethis gui_video_corruption on
+) else (
+    call :togglethis gui_video_corruption off
+)
+if %spoofduration% == y (
+    call :togglethis gui_video_durationspoof on
+) else (
+    call :togglethis gui_video_durationspoof off
+)
+if %bouncy% == y (
+    call :togglethis gui_video_bouncywebm on
+) else (
+    call :togglethis gui_video_bouncywebm off
+)
+if %resample% == y (
+    call :togglethis gui_video_resamplinginterpolation on
+) else (
+    call :togglethis gui_video_resamplinginterpolation off
+)
+if %frying% == y (
+    call :togglethis gui_video_frying on
+) else (
+    call :togglethis gui_video_frying off
+)
+if %stutter% == y (
+    call :togglethis gui_video_framestutter on
+) else (
+    call :togglethis gui_video_framestutter off
+)
+if not "a%filtercl%" == "a" (
+    call :togglethis gui_video_miscillaneousfilters on
+) else (
+    call :togglethis gui_video_miscillaneousfilters off
+)
+goto :eof
+
+:checktogglesaudio
+if not %audiobr% == a (
+    call :togglethis gui_audio_bitrate on
+) else (
+    call :togglethis gui_audio_bitrate off
+)
+if %trimmed% == y (
+    call :togglethis gui_audio_starttimeandduration on
+) else (
+    call :togglethis gui_audio_starttimeandduration off
+)
+if not %audiospeedq% == 1 (
+    call :togglethis gui_audio_speed on
+) else (
+    call :togglethis gui_audio_speed off
+)
+if %distortaudio% == y (
+    call :togglethis gui_audio_distortion on
+) else (
+    call :togglethis gui_audio_distortion off
+)
+if %tts% == y (
+    call :togglethis gui_audio_texttospeech on
+) else (
+    call :togglethis gui_audio_texttospeech off
+)
+if %replaceaudio% == y (
+    call :togglethis gui_audio_replacing on
+) else (
+    call :togglethis gui_audio_replacing off
+)
+goto :eof
 
 :guitoggles
 set gui_video_quality=[1] Quality
@@ -2575,11 +2786,18 @@ set gui_audio_speed=[3] Speed
 set gui_audio_distortion=[4] Distortion
 set gui_audio_texttospeech=[5] Text to Speech
 set gui_audio_replacing=[6] Replacing
-set gui_audio_miscillaneousfilters=[7] Miscillaneous Filters
 goto :eof
 
 :togglethis
 set "temptogglevar=!%1!"
+if a%2 == aon (
+    set "%1=[92m%temptogglevar:[0m=%[0m"
+    goto :eof
+)
+if a%2 == aoff (
+    set "%1=[0m%temptogglevar:[92m=%"
+    goto :eof
+)
 if "%temptogglevar:~0,5%" == "[92m" (
     set %1=[0m%temptogglevar:[92m=%
 ) else (
