@@ -80,13 +80,27 @@ set /a wb5=7+1-4+5/6+11-5+1*51/7*2-4+94*14/(14+22)*3/57-6
 set wbh2=Zh9-TL8nNTP%wb5%c1PwW
 set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
 if %1check == check goto noinput
+if not exist "%~1" goto noinput
 :: checks if the input has a video stream (i.e. if the input is an audio file)
 :: and if there isn't a video stream, ask audio questions instead
 set inputvideo=%1
+ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %temp%\astream.txt
+set /p astream=<%temp%\astream.txt
+if exist "%temp%\astream.txt" (del "%temp%\astream.txt")
+if 1%astream% == 1 (
+    set hasaudio=n
+) else (
+    set hasaudio=y
+)
 ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
 set /p vstream=<%temp%\vstream.txt
 if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
-if 1%vstream% == 1 goto novideostream
+if 1%vstream% == 1 (
+    set hasvideo=n
+    goto novideostream
+) else (
+    set hasvideo=y
+)
 :: if the video is an image, ask specific image questions instead
 goto imagecheck
 :afterimagecheck
@@ -178,7 +192,7 @@ if not %complexity% == s call :savetoconfigquestion
 :afterquestions
 :: encoding all files
 set totalfiles=0
-for %%x in (%*) do Set /A totalfiles+=1
+for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 for %%a in (%*) do (
     if not %complexity% == s set videoinp=%%a
@@ -1919,15 +1933,27 @@ goto :eof
 
 :: audio questions - ran when the user uses an audio file as an input
 :novideostream
-:: AAC has weird issues with mp3 - sometimes this causes issue but really i don't know for sure and i can't consistently reproduce them so this tries to fix that but using a different codec
+echo [38;2;254;165;0mInput is an audio file.[0m
+echo.
 if %audiocontainer% == .mp3 (
     set audioencoder=libmp3lame
 ) else (
     set audioencoder=aac
 )
-set hasvideo=n
-echo [38;2;254;165;0mInput is an audio file.[0m
-echo.
+choice /m "Do you want to try the GUI?" 
+if %errorlevel% == 1 (
+    call :guitoggles
+    set usinggui=y
+    set complexity=a
+    set cleanmodeog=%cleanmode%
+    set showtitleog=%showtitle%
+    set cleanmode=n
+    set showtitle=n
+    goto guimenu
+) else (
+    call :clearlastprompt
+)
+:: AAC has weird issues with mp3 - sometimes this causes issue but really i don't know for sure and i can't consistently reproduce them so this tries to fix that but using a different codec
 set /p "audiobr=[93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad: "
 set /a badaudiobitrate=80/%audiobr%
 call :durationquestions
@@ -1935,8 +1961,9 @@ call :speedquestions
 call :newline
 call :audiodistortion
 call :voicesynth
+:afterquestionsaudio
 set totalfiles=0
-for %%x in (%*) do Set /A totalfiles+=1
+for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
@@ -1945,7 +1972,7 @@ for %%a in (%*) do (
     call :audioencode %%a
 )
 title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
-goto :end
+goto end
 
 :audioencode
 set "filename=%~n1 (Quality Munched)"
@@ -2076,7 +2103,7 @@ call :newline
 set originalimagecontainer=%imagecontainer%
 if not "%fryfilter%1" == "1" call :fried
 set totalfiles=0
-for %%x in (%*) do Set /A totalfiles+=1
+for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
@@ -2300,7 +2327,7 @@ set /a qv=(%qv%*3)+1
 :: new munching
 set originalimagecontainer=%imagecontainer%
 set totalfiles=0
-for %%x in (%*) do Set /A totalfiles+=1
+for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
@@ -2409,6 +2436,7 @@ goto :eof
 
 :setdefaults
 :: default values for variables
+set hasaudio=n
 set isimage=n
 set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
 set isupdate=n
@@ -2494,6 +2522,16 @@ echo.[s
 goto :eof
 
 :guimenu
+if %hasvideo% == y (
+    set videogui=[V]ideo
+) else (
+    set videogui=[31m[V]ideo[0m
+)
+if %hasaudio% == y (
+    set audiogui=[A]udio
+) else (
+    set audiogui=[31m[A]udio[0m
+)
 cls
 echo.
 echo                                                         [94mOptions[0m
@@ -2501,19 +2539,39 @@ echo.
 echo.
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                                     [V]ideo                                  [A]udio
+echo                                     %videogui%                                  %audiogui%
 echo.
 echo                                  [L]oad Config                            [S]ave Config
 echo.
 if not %videobr% == a (
     echo                                                        [92m[R]ender[0m
-) else (
     echo.
+    choice /c VALSBR /n
+) else (
+    if not %audiobr% == a (
+        echo                                                        [92m[R]ender[0m
+        echo.
+        choice /c VALSBR /n
+    ) else (
+        echo                                                        [31m[R]ender[0m
+        echo                                      [31mYou must set the quality before you can render^^^![0m
+        choice /c VALSB /n
+    )
 )
-echo.
-choice /c VALSBR /n 
-if %errorlevel% == 1 goto guivideooptions
-if %errorlevel% == 2 goto guiaudiooptions
+if %errorlevel% == 1 (
+    if %hasvideo% == y (
+        goto guivideooptions
+    ) else (
+        echo 
+    )
+)
+if %errorlevel% == 2 (
+    if %hasaudio% == y (
+        goto guiaudiooptions
+    ) else (
+        echo 
+    )
+)
 if %errorlevel% == 3 (
     call :customconfig
     goto guimenu
@@ -2528,10 +2586,12 @@ if %errorlevel% == 5 (
         set showtitle=%cleanmodeog%
         set cleanmode=%cleanmodeog%
         goto main
+    ) else (
+        goto guimenu
     )
-    if %errorlevel% == 2 goto guimenu
 )
 if %errorlevel% == 6 (
+    set /a badaudiobitrate=80/%audiobr%
     if %distortaudio% == n (
         if not %audiospeedq% == 1 (
         set "audiofilters=-af atempo=%audiospeedq%"
@@ -2551,7 +2611,11 @@ if %errorlevel% == 6 (
             )
         )
     )
-    goto afterquestions
+    if %hasvideo% == y (
+        goto afterquestions
+    ) else (
+        goto afterquestionsaudio
+    )
 )
 goto guimenu
 
@@ -2628,12 +2692,13 @@ set /a gui_audio_var=%errorlevel%
 :: quality
 if %gui_audio_var% == 1 call :qualityjustudio
 :: start time and duration
-if %gui_audio_var% == 2 goto guimenu
+if %gui_audio_var% == 2 call :durationquestions
 :: speed
 if %gui_audio_var% == 3 (
+    set hasvideoog=%hasvideo%
     set hasvideo=n
     call :speedquestions
-    set hasvideo=y
+    set hasvideo=!hasvideoog!
 )
 :: distortion
 if %gui_audio_var% == 4 call :audiodistortion
@@ -2765,9 +2830,9 @@ goto :eof
 
 :checktogglesaudio
 if not %audiobr% == a (
-    call :togglethis gui_audio_bitrate on
+    call :togglethis gui_audio_quality on
 ) else (
-    call :togglethis gui_audio_bitrate off
+    call :togglethis gui_audio_quality off
 )
 if %trimmed% == y (
     call :togglethis gui_audio_starttimeandduration on
