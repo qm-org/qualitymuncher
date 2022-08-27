@@ -63,12 +63,11 @@ if %1p == qmloop goto colorstart
 if %animate% == y call :loadingbar
 call :titledisplay
 :: checks for updates
-if %autoupdatecheck% == y goto updatecheck
+if %autoupdatecheck% == y call :updatecheck
 :: afterstartup is everything that happens after the main "startup" - setting constants, defaults, options, doing animations, checking updates, etc
 :afterstartup
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
-where /q ffmpeg
-if %errorlevel% == 1 (
+where /q ffmpeg.exe || (
     echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
     echo Please install it as it's needed for this program to work.
     choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
@@ -97,7 +96,12 @@ set /p vstream=<%temp%\vstream.txt
 if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
 if 1%vstream% == 1 (
     set hasvideo=n
-    goto novideostream
+    if %hasaudio% == y (
+        goto novideostream
+    ) else (
+        echo [91mYour input has no video nor audio stream.[0m
+        goto noinput
+    )
 ) else (
     set hasvideo=y
 )
@@ -123,10 +127,10 @@ if %errorlevel% == 2 (
     set complexity=a
     echo [96mAdvanced mode selected^^![0m
 )
-if %errorlevel% == 3 goto website
-if %errorlevel% == 4 goto discord
+if %errorlevel% == 3 call :website & goto afterstartup
+if %errorlevel% == 4 call :discord & goto afterstartup
 if %errorlevel% == 5 goto closingbar
-if %errorlevel% == 6 goto suggestion
+if %errorlevel% == 6 call :suggestion & goto afterstartup
 :: things 1, 2, and 3 are easter eggs, and play no role in any main part of the program
 if %errorlevel% == 7 goto thing1
 if %errorlevel% == 8 goto thing2
@@ -134,7 +138,8 @@ if %errorlevel% == 9 goto thing3
 :: adds the option to force an update
 if %errorlevel% == 10 (
     set forceupdate=y
-    goto updatecheck
+    call :updatecheck
+    goto afterstartup
 )
 if %errorlevel% == 11 (
     call :announcement
@@ -692,7 +697,7 @@ set /p framecount=<"%temp%\framecount.txt"
 set /a framecount=%framecount%
 del "%temp%\framecount.txt"
 :: remove old directory just in case
-rmdir "%temp%\qmframes" /s /q >nul 2>nul
+rmdir "%temp%\qmframes" /s /q > nul 2> nul
 :: make the directory
 mkdir "%temp%\qmframes"
 :: looping through all of the frames
@@ -1180,8 +1185,8 @@ if %errorlevel% == 2 (
     goto :eof
 )
 :: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
-ffmpeg>nul 2>>"%temp%\ffmpegQM.txt"
->nul find "libflite" "%temp%\ffmpegQM.txt" || (
+ffmpeg > nul 2>>"%temp%\ffmpegQM.txt"
+> nul find "libflite" "%temp%\ffmpegQM.txt" || (
     del "%temp%\ffmpegQM.txt"
     echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
     set tts=n
@@ -1338,14 +1343,14 @@ goto :eof
 echo [96mSending to Discord^^![0m
 start "" https://discord.com/invite/9tRZ6C7tYz
 call :clearlastprompt
-goto afterstartup
+goto :eof
 
 :: if the website is selected from the menu, it sends the user to the website, clears the console, and goes back to start
 :website
 echo [96mSending to website^^![0m
 start "" https://qualitymuncher.lgbt/
 call :clearlastprompt
-goto afterstartup
+goto :eof
 
 :: suggestions
 :suggestion
@@ -1359,11 +1364,12 @@ if %errorlevel% == 1 (
     echo.
     pause
     call :clearlastprompt
-    goto afterstartup
+    goto :eof
 )
 :: asks information about the suggestion for details
 choice /c SB /m "Would you like to make a suggestion or report a bug?"
 if %errorlevel% == 2 goto bugreport
+:suggestionactual
 set /p "mainsuggestion=What's your suggestion? "
 set /p "suggestionbody=If needed, please elaborate further here: "
 set "author=NO INPUT FOR AUTHOR"
@@ -1381,7 +1387,7 @@ if %errorlevel% == 2 (
     echo.
     pause
     call :clearlastprompt
-    goto afterstartup
+    goto :eof
 )
 :continuesuggest
 :: please do not abuse this webhook it would make me very sad
@@ -1391,7 +1397,7 @@ echo [92mYour suggestion has been successfully sent to the developers^^![0m
 echo.
 pause
 call :clearlastprompt
-goto afterstartup
+goto :eof
 
 :: lets users report bugs
 :bugreport
@@ -1410,11 +1416,11 @@ choice /m "Are you sure you would like to submit this bug report?"
 :: if the user does not want to submit the bug report, it goes back to the start
 if %errorlevel% == 2 (
     call :clearlastprompt
-    echo [91mOkay, your suggestion has been cancelled.[0m
+    echo [91mOkay, your bug report has been cancelled.[0m
     echo.
     pause
     call :clearlastprompt
-    goto afterstartup
+    goto :eof
 )
 :: sends the bug report to the webhook
 :: please do not abuse this webhook it would make me very sad
@@ -1424,7 +1430,7 @@ echo [92mYour bug report has been successfully sent to the developers^^![0m
 echo.
 pause
 call :clearlastprompt
-goto afterstartup
+goto :eof
 
 :: easter egg that makes customizable rainbow text
 :thing3
@@ -1494,29 +1500,41 @@ goto colorpart
 echo [91mERROR: no input file^^![0m
 echo Press [W] to open the website, [D] to join the discord server, [P] to make a suggestion or bug report, or [C] to close.
 echo You can also press [F] to input a file manually, [N] to view announcements, or [U] to check for updates.
-choice /n /c WDCFPGJMUN
+echo Or press [I] for the GUI.
+choice /n /c WDCFPGJMUNI
 call :clearlastprompt
-if %errorlevel% == 1 goto website
-if %errorlevel% == 2 goto discord
+if %errorlevel% == 1 call :website & goto afterstartup
+if %errorlevel% == 2 call :discord & goto afterstartup
 if %errorlevel% == 4 goto manualfile
-if %errorlevel% == 5 goto suggestion
+if %errorlevel% == 5 call :suggestion & goto afterstartup
 if %errorlevel% == 6 goto thing1
 if %errorlevel% == 7 goto thing2
 if %errorlevel% == 8 goto thing3
 if %errorlevel% == 9 (
     set forceupdate=y
-    goto updatecheck
+    call :updatecheck
+    goto afterstartup
 )
 if %errorlevel% == 10 (
     call :announcement
     goto afterstartup
+)
+if %errorlevel% == 11 (
+    call :guitoggles
+    set usinggui=y
+    set complexity=a
+    set cleanmodeog=%cleanmode%
+    set showtitleog=%showtitle%
+    set cleanmode=n
+    set showtitle=n
+    goto guimenu
 )
 goto closingbar
 
 :: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for some input
 :exiting
 echo.
-where /q ffplay || goto aftersound
+where /q ffplay.exe || goto aftersound
 if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound
 if not b%2 == b goto nopipingforyou
@@ -1632,7 +1650,7 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo FFMPEG DETAILS
 )>>"Quality Muncher Log.txt"
 :: add ffmpeg to the log
-ffmpeg>nul 2>>"Quality Muncher Log.txt"
+ffmpeg > nul 2>>"Quality Muncher Log.txt"
 :: prompt to upload to the webhook for the devs
 call :titledisplay
 choice /m "Log has been made. Upload and send to developers?"
@@ -1709,7 +1727,7 @@ set done=y
 echo.
 echo [92mDone^^![0m
 echo.
-where /q ffplay || goto aftersound2
+where /q ffplay.exe || goto aftersound2
 if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound2
 pause
@@ -1737,7 +1755,7 @@ if exist "%temp%\QMnewversion.txt" del "%temp%\QMnewversion.txt"
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 (
     call :nointernet
-    goto afterstartup
+    goto :eof
 )
 set internet=y
 :: grabs the version of the latest public release from the github
@@ -1749,12 +1767,12 @@ if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
 if "%version%" == "%newversion%" (
     set isupdate=n
     if %forceupdate% == n (
-        goto afterstartup
+        goto :eof
     ) else (
         echo Your version of Quality Muncher is up to date^^! Press [C] to continue
         choice /c CF /n /m "Alternatively, you can forcibly update/repair Quality Muncher by pressing [F]."
         if %errorlevel% == 1 (
-            goto afterstartup
+            goto :eof
         ) else (
             call :clearlastprompt
             goto updatescript
@@ -1772,7 +1790,7 @@ echo.
 set isupdate=n
 if %errorlevel% == 2 (
     call :clearlastprompt
-    goto afterstartup
+    goto :eof
 )
 :updatescript
 :: gives the user some choices when updating
@@ -1783,25 +1801,25 @@ if %errorlevel% == 2 (
     copy %0 "%~dpn0 (OLD).bat" || (
         echo [91mError copying the file^^! Updating has been aborted.[0m
         echo Press any key to go to the menu
-        pause>nul
+        pause > nul
         call :titledisplay
-        goto afterstartup
+        goto :eof
     )
     echo Okay, this file has been saved as a copy in the same directory. Press any key to continue updating.
-    pause>nul
+    pause > nul
 )
 if %errorlevel% == 3 (
     call :titledisplay
-    goto afterstartup
+    goto :eof
 )
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20Muncher.bat" --output %0 || (
     echo [91mecho Downloading the update failed^^! Please try again later.[0m
     echo Press any key to go to the menu
-    pause>nul
+    pause > nul
     call :titledisplay
-    goto afterstartup
+    goto :eof
 )
 cls
 :: runs the (updated) script
@@ -2273,7 +2291,7 @@ set internet=y
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
     echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
     echo Press any key to go to the menu
-    pause>nul
+    pause > nul
     call :titledisplay
     goto :eof
 )
@@ -2436,7 +2454,6 @@ goto :eof
 
 :setdefaults
 :: default values for variables
-set hasaudio=n
 set isimage=n
 set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
 set isupdate=n
@@ -2444,7 +2461,8 @@ set cols=15
 set lines=8
 set replaceaudio=n
 set done=n
-set hasvideo=y
+set hasvideo=n
+set hasaudio=n
 set distortaudio=n
 set tts=n
 set frying=n
@@ -2521,41 +2539,59 @@ echo [38;2;49;191;204m .             .       ..::.                             
 echo.[s
 goto :eof
 
+:: unused title
+echo                                          [38;2;39;55;210m____          _    _
+echo                                         [38;2;0;87;228m/ __ \        ^| ^|  ^(_^)
+echo                                        [38;2;0;111;235m^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___ 
+echo                                        [38;2;0;130;235m^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                                        [38;2;0;148;230m^| ^|__^| ^|^| ^|_^} ^|^| ^|_ ^| ^|^| ^(_^) ^|^| ^| ^| ^|\__ \
+echo                                         [38;2;0;163;221m\____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                [38;2;0;178;211m^| ^|
+echo                                                [38;2;49;191;204m^|_^|[0m
+
 :guimenu
 if %hasvideo% == y (
     set videogui=[V]ideo
 ) else (
-    set videogui=[31m[V]ideo[0m
+    set videogui=[38;2;100;100;100m[V]ideo[0m
 )
 if %hasaudio% == y (
     set audiogui=[A]udio
 ) else (
-    set audiogui=[31m[A]udio[0m
+    set audiogui=[38;2;100;100;100m[A]udio[0m
 )
 cls
-echo.
-echo                                                         [94mOptions[0m
+echo                 [38;2;39;55;210m____                 _  _  _              __  __                      _
+echo                [38;2;0;87;228m/ __ \               ^| ^|(_)^| ^|            ^|  \/  ^|                    ^| ^|
+echo               [38;2;0;111;235m^| ^|  ^| ^| _   _   __ _ ^| ^| _ ^| ^|_  _   _    ^| \  / ^| _   _  _ __    ___ ^| ^|__    ___  _ __
+echo               [38;2;0;130;235m^| ^|  ^| ^|^| ^| ^| ^| / _` ^|^| ^|^| ^|^| __^|^| ^| ^| ^|   ^| ^|\/^| ^|^| ^| ^| ^|^| '_ \  / __^|^| '_ \  / _ \^| '__^|
+echo               [38;2;0;148;230m^| ^|__^| ^|^| ^|_^| ^|^| {_^| ^|^| ^|^| ^|^| ^|_ ^| ^|_^| ^|   ^| ^|  ^| ^|^| ^|_^| ^|^| ^| ^| ^|^| {__ ^| ^| ^| ^|^|  __/^| ^|
+echo                [38;2;0;163;221m\___\_\ \__,_^| \__,_^|^|_^|^|_^| \__^| \__, ^|   ^|_^|  ^|_^| \__,_^|^|_^| ^|_^| \___^|^|_^| ^|_^| \___^|^|_^|
+echo                                                  [38;2;0;178;211m__/ ^|
+echo                                                 [38;2;49;191;204m^|___/[0m
 echo.
 echo.
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
 echo                                     %videogui%                                  %audiogui%
 echo.
+echo                                                         [E]xtra
+echo.
 echo                                  [L]oad Config                            [S]ave Config
 echo.
 if not %videobr% == a (
-    echo                                                        [92m[R]ender[0m
+    echo                                                         [92m[R]ender[0m
     echo.
-    choice /c VALSBR /n
+    choice /c VALSBER /n
 ) else (
     if not %audiobr% == a (
-        echo                                                        [92m[R]ender[0m
+        echo                                                         [92m[R]ender[0m
         echo.
-        choice /c VALSBR /n
+        choice /c VALSBER /n
     ) else (
-        echo                                                        [31m[R]ender[0m
-        echo                                      [31mYou must set the quality before you can render^^^![0m
-        choice /c VALSB /n
+        echo                                                         [38;2;100;100;100m[R]ender[0m
+        echo                                      You must set the quality before you can render.
+        choice /c VALSBE /n
     )
 )
 if %errorlevel% == 1 (
@@ -2591,6 +2627,9 @@ if %errorlevel% == 5 (
     )
 )
 if %errorlevel% == 6 (
+    goto guiextra
+)
+if %errorlevel% == 7 (
     set /a badaudiobitrate=80/%audiobr%
     if %distortaudio% == n (
         if not %audiospeedq% == 1 (
@@ -2622,8 +2661,14 @@ goto guimenu
 :guivideooptions
 call :checktogglesvideo
 cls
-echo.
-echo                                                       [94mVideo Options[0m
+echo                      [38;2;39;55;210m__      __ _      _                   ____          _    _
+echo                      [38;2;0;87;228m\ \    / /(_)    ^| ^|                 / __ \        ^| ^|  (_)
+echo                       [38;2;0;111;235m\ \  / /  _   __^| ^|  ___   ___     ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
+echo                        [38;2;0;130;235m\ \/ /  ^| ^| / _` ^| / _ \ / _ \    ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                         [38;2;0;148;230m\  /   ^| ^|^| (_^| ^|^|  __/^| (_) ^|   ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
+echo                          [38;2;0;163;221m\/    ^|_^| \__,_^| \___^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                                  [38;2;0;178;211m^| ^|
+echo                                                                  [38;2;49;191;204m^|_^|[0m
 echo.
 echo.
 echo                                                          [38;2;254;165;0m[B]ack[0m
@@ -2675,8 +2720,14 @@ goto guivideooptions
 :guiaudiooptions
 call :checktogglesaudio
 cls
-echo.
-echo                                                       [94mAudio Options[0m
+echo                                           [38;2;39;55;210m_  _             ____          _    _
+echo                          [38;2;0;87;228m/\              ^| ^|(_)           / __ \        ^| ^|  (_)
+echo                         [38;2;0;111;235m/  \   _   _   __^| ^| _   ___     ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
+echo                        [38;2;0;130;235m/ /\ \ ^| ^| ^| ^| / _` ^|^| ^| / _ \    ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                       [38;2;0;148;230m/ ____ \^| ^|_^| ^|^| (_^| ^|^| ^|^| (_) ^|   ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
+echo                      [38;2;0;163;221m/_/    \_\\__,_^| \__,_^|^|_^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                                  [38;2;0;178;211m^| ^|
+echo                                                                  [38;2;49;191;204m^|_^|[0m
 echo.
 echo.
 echo                                                          [38;2;254;165;0m[B]ack[0m
@@ -2759,6 +2810,33 @@ if %audiocustomizationquestion% == c (
     if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
 )
 goto :eof
+
+:guiextra
+cls
+echo                                            [38;2;39;55;210m______        _
+echo                                           [38;2;0;87;228m^|  ____^|      ^| ^|
+echo                                           [38;2;0;111;235m^| ^|__   __  __^| ^|_  _ __  __ _  ___
+echo                                           [38;2;0;130;235m^|  __^|  \ \/ /^| __^|^| '__^|/ _` ^|/ __^|
+echo                                           [38;2;0;148;230m^| ^|____  ^>  ^< ^| ^|_ ^| ^|  ^| {_^| ^|\__ \
+echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/
+echo.
+echo.
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo                [W]ebsite                            [A]nnouncements                           [R]eport Bug
+echo.
+echo                [D]iscord                                [U]pdate                              [S]uggestion
+echo.
+echo.
+choice /n /c BWARDUS
+if %errorlevel% == 1 goto guimenu
+if %errorlevel% == 2 call :website & goto guiextra
+if %errorlevel% == 3 call :announcement & goto guiextra
+if %errorlevel% == 4 call :bugreport & goto guiextra
+if %errorlevel% == 5 call :discord & goto guiextra
+if %errorlevel% == 6 call :updatecheck & goto guiextra
+if %errorlevel% == 7 call :suggestionactual & goto guiextra
+goto guimenu
 
 :checktogglesvideo
 if not %outputfps% == a (
