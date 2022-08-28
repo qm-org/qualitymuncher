@@ -38,9 +38,9 @@ setlocal enabledelayedexpansion
     set imagecontainer=.jpg
 :: END OF OPTIONS
 
-:: ##############################################################################################################################
+:: ################################################################################################################################
 :: #####################    WARNING: modifying any lines past here might result in the program breaking^^!    #####################
-:: ##############################################################################################################################
+:: ################################################################################################################################
 
 :: code page, version, and title
 chcp 437 > nul
@@ -978,6 +978,11 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
 
     echo set replaceaudio=%replaceaudio%
     echo set lowqualmusic=%lowqualmusic%
+
+    echo set loopn=%loopn%
+    echo set qv=%qv%
+    echo set imagesc=%imagesc%
+
     echo exit /b
 ) >> "%configname%.bat"
 echo You config file is located at "%cd%\%configname%.bat"
@@ -2096,9 +2101,10 @@ set "fryfilter="
 echo [38;2;254;165;0mInput is an image or gif.[0m
 echo.
 :: asks questions for quality and size (skipped if using multiqueue)
-choice /c ON /m "Would you like the old or new image munching method?"
+choice /c ONG /m "Would you like the GUI, the old munching method, or the new munching method?"
 call :clearlastprompt
 if %errorlevel% == 2 goto newmunch
+if %errorlevel% == 3 goto guimenu
 :: skip questions if in multiqueue and set the variables
 set /p "imageq=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
 set /a badimagebitrate=(%imageq%*3)+1
@@ -2341,8 +2347,9 @@ goto :eof
 set /p "loopn=Number of times to compress the image [93m(recommended to be at least 10)[0m: "
 set /p "qv=[93mOn a scale from 1 to 10[0m, how bad should the quality be? "
 set /p "imagesc=[93mOn a scale from 1 to 10[0m, how much should the image be shrunk by? "
-set /a qv=(%qv%*3)+1
+set /a qvnew=(%qv%*3)+1
 :: new munching
+:newmunchmultiqloop
 set originalimagecontainer=%imagecontainer%
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
@@ -2351,7 +2358,7 @@ for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
     set /a filesdone=!filesdone!+1
-    call :newmunchworking %%a %loopn% %qv% %imagesc%
+    call :newmunchworking %%a %loopn% %qvnew% %imagesc%
 )
 title [%totalfiles%/%totalfiles%] Quality Muncher v%version%
 echo.
@@ -2373,9 +2380,9 @@ if %multiqueuef% == y (
     echo [38;2;254;165;0mEncoding...[0m
 )
 set loopn=%2
-set qv=%3
-:: qv*3 is used for webp/vp9, qv is used for -q:v in mjpeg
-set /a qv3=%qv%*3
+set imagequal=%3
+:: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
+set /a imagequal3=%imagequal%*3
 set /a imagesc=%4
 set "tempfolder=%temp%\processingvideo"
 if exist "%tempfolder%" (rmdir "%tempfolder%" /q /s)
@@ -2403,7 +2410,7 @@ if %imagecontainer% == .gif (
     set webp=webm
     set weblib=libvpx
 )
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
 set /a loopnreal=%loopn%-1
 :: loop through a few encoders until the loop is over
 echo 0/%loopn%
@@ -2412,19 +2419,19 @@ set /a i=0
 set /a i+=1
 set /a i1=%i%+1
 echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %qv% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
 echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %qv% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
 echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %qv3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 goto startmunch
@@ -2443,10 +2450,10 @@ set "filename=%filename% (%f%)"
 :: if it's a gif, encode it as a video then reencode it to a gif
 :: otherwisem encode it as a picture
 if %imagecontainerbackup% == .gif (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %qv% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
     ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%"
 ) else (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %qv% -f mjpeg "%filename%%imagecontainerbackup%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %imagequal% -f mjpeg "%filename%%imagecontainerbackup%"
 )
 rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"
@@ -2454,8 +2461,10 @@ goto :eof
 
 :setdefaults
 :: default values for variables
-set isimage=n
-set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
+set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"]
+set qv=5
+set loopn=25
+set imagesc=2
 set isupdate=n
 set cols=15
 set lines=8
@@ -2463,6 +2472,7 @@ set replaceaudio=n
 set done=n
 set hasvideo=n
 set hasaudio=n
+set isimage=n
 set distortaudio=n
 set tts=n
 set frying=n
@@ -2552,8 +2562,10 @@ echo                                                [38;2;49;191;204m^|_^|[0m
 :guimenu
 if %hasvideo% == y (
     set videogui=[V]ideo
+    if %isimage% == y set videogui=[I]mage
 ) else (
     set videogui=[38;2;100;100;100m[V]ideo[0m
+    if %isimage% == y set videogui=[38;2;100;100;100m[I]mage[0m
 )
 if %hasaudio% == y (
     set audiogui=[A]udio
@@ -2579,24 +2591,40 @@ echo                                                         [E]xtra
 echo.
 echo                                  [L]oad Config                            [S]ave Config
 echo.
-if not %videobr% == a (
-    echo                                                         [92m[R]ender[0m
-    echo.
-    choice /c VALSBER /n
+if %hasvideo% == y (
+    if %isimage% == y (
+        echo                                                         [92m[R]ender[0m
+        echo.
+        choice /c VALSBEIR /n
+    ) else (
+        if not %videobr% == a (
+            echo                                                         [92m[R]ender[0m
+            echo.
+            choice /c VALSBEIR /n
+        ) else (
+            echo                                                         [38;2;100;100;100m[R]ender[0m
+            echo                                      You must set the quality before you can render.
+            choice /c VALSBEI /n
+        )
+    )
 ) else (
     if not %audiobr% == a (
         echo                                                         [92m[R]ender[0m
         echo.
-        choice /c VALSBER /n
+        choice /c VALSBEIR /n
     ) else (
         echo                                                         [38;2;100;100;100m[R]ender[0m
         echo                                      You must set the quality before you can render.
-        choice /c VALSBE /n
+        choice /c VALSBEI /n
     )
 )
 if %errorlevel% == 1 (
     if %hasvideo% == y (
-        goto guivideooptions
+        if %isimage% == y (
+            echo 
+        ) else (
+            goto guivideooptions
+        )
     ) else (
         echo 
     )
@@ -2630,28 +2658,42 @@ if %errorlevel% == 6 (
     goto guiextra
 )
 if %errorlevel% == 7 (
-    set /a badaudiobitrate=80/%audiobr%
-    if %distortaudio% == n (
-        if not %audiospeedq% == 1 (
-        set "audiofilters=-af atempo=%audiospeedq%"
-        ) else (
-            set "audiofilters="
-        )
+    if %isimage% == y (
+        goto guiimageoptions
     ) else (
-        if %method% == classic (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+        echo 
+    )
+)
+if %errorlevel% == 8 (
+    if not %isimage% == y (
+        set /a badaudiobitrate=80/%audiobr%
+        if %distortaudio% == n (
             if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-            )
+                set "audiofilters=-af atempo=%audiospeedq%"
+                ) else (
+                    set "audiofilters="
+                )
         ) else (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if %method% == classic (
+                set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+                if not %audiospeedq% == 1 (
+                    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+                )
+            ) else (
+                set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+                if not %audiospeedq% == 1 (
+                    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+                )
             )
         )
     )
     if %hasvideo% == y (
-        goto afterquestions
+        if %isimage% == y (
+            set /a qvnew=^(%qv%*3^)+1
+            goto newmunchmultiqloop
+        ) else (
+            goto afterquestions
+        )
     ) else (
         goto afterquestionsaudio
     )
@@ -2837,6 +2879,46 @@ if %errorlevel% == 5 call :discord & goto guiextra
 if %errorlevel% == 6 call :updatecheck & goto guiextra
 if %errorlevel% == 7 call :suggestionactual & goto guiextra
 goto guimenu
+
+:guiimageoptions
+cls
+echo                      [38;2;39;55;210m_____                                   ____          _    _
+echo                     [38;2;0;87;228m^|_   _^|                                 / __ \        ^| ^|  (_)
+echo                       [38;2;0;111;235m^| ^|   _ __ ___    __ _   __ _   ___  ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
+echo                       [38;2;0;130;235m^| ^|  ^| '_ ` _ \  / _` ^| / _` ^| / _ \ ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                      [38;2;0;148;230m_^| ^|_ ^| ^| ^| ^| ^| ^|^| {_^| ^|^| (_^| ^|^|  __/ ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
+echo                     [38;2;0;163;221m^|_____^|^|_^| ^|_^| ^|_^| \__,_^| \__, ^| \___^|  \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                [38;2;0;178;211m__/ ^|               ^| ^|
+echo                                               [38;2;49;191;204m^|___/                ^|_^|[0m
+echo.
+echo.
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo                [Q]uality                            [T]imes to Compress                          [S]cale
+echo.
+echo.
+choice /n /c BQTS
+:: back
+if %errorlevel% == 1 goto guimenu
+:: quality
+if %errorlevel% == 2 (
+    echo [93mOn a scale from 1 to 10[0m, how bad should the quality be?
+    echo ^(Current value: %qv%^)
+    set /p "qv="
+)
+:: times to compress
+if %errorlevel% == 3 (
+    echo How many times do you want to compress the image [93m^(recommended to be at least 10^)[0m?
+    echo ^(Current value: %loopn%^)
+    set /p "loopn="
+)
+:: scale
+if %errorlevel% == 4 (
+    echo [93mOn a scale from 1 to 10[0m, how much should the image be shrunk by?
+    echo ^(Current value: %imagesc%^)
+    set /p "imagesc="
+)
+goto guiimageoptions
 
 :checktogglesvideo
 if not %outputfps% == a (
