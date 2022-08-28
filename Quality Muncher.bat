@@ -217,9 +217,31 @@ if %stayopen% == n goto ending
 goto exiting
 
 :customconfig
-echo Please enter the path of your config file, or type [38;2;254;165;0mB[0m to go back.
+echo Please enter either:
+echo  - the path of your config file
+echo  - [38;2;254;165;0mB[0m to go back
+echo  - or [38;2;254;165;0mR[0m to use your last used settings
 set /p "configfile="
 if %configfile% == b goto :eof
+if %configfile% == B goto :eof
+if %configfile% == R (
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+if %configfile% == r (
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
 if not exist %configfile% (
     call :clearlastprompt
     echo [91mFile not found.[0m
@@ -909,11 +931,13 @@ call :clearlastprompt
 if %errorlevel% == 2 goto :eof
 :savetoconfig
 set /p "configname=Enter a name for the config file: "
+:savetoconfigbypassname
+if "%~1" == "temp" (set "configname=%temp%\qualitymuncherconfig_autosave")
 :: have to escape parentheses because they're nested and this is how i have to do it
-set textoneposesc=%textonepos:(=^^^^^^^^^^(%
-set textoneposesc=%textoneposesc:)=^^^^^^)%
-set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
-set texttwoposesc=%texttwoposesc:)=^^^^^^)%
+if defined textonepos set textoneposesc=%textonepos:(=^^^^^^^^^^(%
+if defined textonepos set textoneposesc=%textoneposesc:)=^^^^^^)%
+if defined texttwopos set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
+if defined texttwopos set texttwoposesc=%texttwoposesc:)=^^^^^^)%
 echo :: Configuration file for Quality Muncher v%version% > "%configname%.bat"
 echo :: Created at %time% on %date% >> "%configname%.bat"
 (
@@ -985,6 +1009,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
 
     echo exit /b
 ) >> "%configname%.bat"
+if "%~1" == "temp" goto :eof
 echo You config file is located at "%cd%\%configname%.bat"
 pause
 call :clearlastprompt
@@ -2608,10 +2633,16 @@ if %hasvideo% == y (
         )
     )
 ) else (
-    if not %audiobr% == a (
-        echo                                                         [92m[R]ender[0m
-        echo.
-        choice /c VALSBEIR /n
+    if %hasaudio% == y (
+            if not %audiobr% == a (
+            echo                                                         [92m[R]ender[0m
+            echo.
+            choice /c VALSBEIR /n
+        ) else (
+            echo                                                         [38;2;100;100;100m[R]ender[0m
+            echo                                      You must set the quality before you can render.
+            choice /c VALSBEI /n
+        )
     ) else (
         echo                                                         [38;2;100;100;100m[R]ender[0m
         echo                                      You must set the quality before you can render.
@@ -2700,7 +2731,12 @@ if %errorlevel% == 8 (
 )
 goto guimenu
 
+:autosaveconfig
+call :savetoconfigbypassname temp
+goto :eof
+
 :guivideooptions
+call :autosaveconfig
 call :checktogglesvideo
 cls
 echo                      [38;2;39;55;210m__      __ _      _                   ____          _    _
@@ -2760,6 +2796,7 @@ if %gui_video_var% == 14 goto guimenu
 goto guivideooptions
 
 :guiaudiooptions
+call :autosaveconfig
 call :checktogglesaudio
 cls
 echo                                           [38;2;39;55;210m_  _             ____          _    _
@@ -2881,6 +2918,7 @@ if %errorlevel% == 7 call :suggestionactual & goto guiextra
 goto guimenu
 
 :guiimageoptions
+call :autosaveconfig
 cls
 echo                      [38;2;39;55;210m_____                                   ____          _    _
 echo                     [38;2;0;87;228m^|_   _^|                                 / __ \        ^| ^|  (_)
@@ -2986,6 +3024,7 @@ if not "a%filtercl%" == "a" (
 ) else (
     call :togglethis gui_video_miscillaneousfilters off
 )
+call :autosaveconfig
 goto :eof
 
 :checktogglesaudio
