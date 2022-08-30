@@ -1,5 +1,1 @@
-1.4.5 has been released, with a ton of new features such as
-- corruption
-- spoofing duration
-- variable resolution videos
-- and more^!
+1.4.6 has been released, which includes a new GUI that you can use, as well as a few smaller features.
