@@ -18,6 +18,8 @@ setlocal enabledelayedexpansion
     set stayopen=y
     :: shows title
     set showtitle=y
+    :: shows messages beneath titles
+    set displaymessages=y
     :: cool animations (slows startup speed by a few seconds)
     set animate=n
     :: animation speed (default is 5)
@@ -122,7 +124,7 @@ echo                [38;2;0;148;230m^| ^|__^| ^|^| ^|_^| ^|^| {_^| ^|^| ^|^| ^|
 echo                 [38;2;0;163;221m\___\_\ \__,_^| \__,_^|^|_^|^|_^| \__^| \__, ^|   ^|_^|  ^|_^| \__,_^|^|_^| ^|_^| \___^|^|_^| ^|_^| \___^|^|_^|
 echo                                                   [38;2;0;178;211m__/ ^|
 echo                                                  [38;2;49;191;204m^|___/[0m
-echo.
+call :quotedisplay
 echo.[s
 goto :eof
 
@@ -217,6 +219,7 @@ if %errorlevel% == 2 (
     )
 )
 if %errorlevel% == 3 (
+    call :clearlastprompt
     call :customconfig
     goto guimenurefresh
 )
@@ -268,7 +271,7 @@ echo                         [38;2;0;148;230m\  /   ^| ^|^| (_^| ^|^|  __/^| (_
 echo                          [38;2;0;163;221m\/    ^|_^| \__,_^| \___^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                                  [38;2;0;178;211m^| ^|
 echo                                                                  [38;2;49;191;204m^|_^|[0m
-echo.
+call :quotedisplay
 echo.[s
 goto :eof
 
@@ -346,7 +349,7 @@ echo                       [38;2;0;148;230m/ ____ \^| ^|_^| ^|^| (_^| ^|^| ^|^|
 echo                      [38;2;0;163;221m/_/    \_\\__,_^| \__,_^|^|_^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                                  [38;2;0;178;211m^| ^|
 echo                                                                  [38;2;49;191;204m^|_^|[0m
-echo.
+call :quotedisplay
 echo.[s
 goto :eof
 
@@ -406,10 +409,8 @@ echo                                           [38;2;0;87;228m^|  ____^|      ^
 echo                                           [38;2;0;111;235m^| ^|__   __  __^| ^|_  _ __  __ _  ___
 echo                                           [38;2;0;130;235m^|  __^|  \ \/ /^| __^|^| '__^|/ _` ^|/ __^|
 echo                                           [38;2;0;148;230m^| ^|____  ^>  ^< ^| ^|_ ^| ^|  ^| {_^| ^|\__ \
-echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/
-echo.
-echo.
-echo.
+echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/[0m
+call :quotedisplay
 echo.[s
 goto :eof
 
@@ -459,7 +460,7 @@ echo                      [38;2;0;148;230m_^| ^|_ ^| ^| ^| ^| ^| ^|^| {_^| ^|^|
 echo                     [38;2;0;163;221m^|_____^|^|_^| ^|_^| ^|_^| \__,_^| \__, ^| \___^|  \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                [38;2;0;178;211m__/ ^|               ^| ^|
 echo                                               [38;2;49;191;204m^|___/                ^|_^|[0m
-echo.
+call :quotedisplay
 echo.[s
 goto :eof
 
@@ -2462,6 +2463,7 @@ goto :eof
 
 :setdefaults
 :: default values for variables
+call :setquotes
 set guimenutitleisshowing=y
 set guivideotitleisshowing=y
 set guiaudiotitleisshowing=y
@@ -2806,6 +2808,46 @@ if "%temptogglevar:~0,5%" == "[92m" (
     set %1=[92m%temptogglevar%[0m
 )
 set "temptogglevar"
+goto :eof
+
+:setquotes
+set quotecount=25
+set quoteindex=0
+:: quotes and sayings
+set messages1=                                       There is something addictive about secrets.
+set messages2=                                               The stereo sounds strange.
+set messages3=                                                   .bind flight none
+set messages4=                                          +5 extra gigashits compared to vegas^^^!
+set messages5=                                     The power of the sun... in the palm of my hand.
+set messages6=                                         Sometimes the silence guides our minds.
+set messages7=                     I am not the villain in this story. I do what I do because there is no choice.
+set messages8=                        Don't call it a god complex, there's nothing complex about it. I am God.
+set messages9=                                     I was a god, Valeria. I found it... beneath me.
+set messages10=                                       Madness to magnet keeps attracting me, me.
+set messages11=                                     Heart plays in ways the mind can't figure out.
+set messages12=                                   The laws of the land or the heart, what's greater?
+set messages13=                                                      Full of soup.
+set messages14=                        I once broke the entire script for almost a month and didn't realize it.
+set messages15=                                                   There is no spork.
+set messages16=                               The eyes see only what the mind is prepared to comprehend.
+set messages17=                          If I have seen further, it is by standing on the shoulders of giants.
+set messages18=  [38;2;24;24;24mWake up. [38;2;36;36;36mWake up. [38;2;48;48;48mWake up. [38;2;60;60;60mWake up. [38;2;72;72;72mWake up. [38;2;84;84;84mWake up. [38;2;96;96;96mWake up. [38;2;84;84;84mWake up. [38;2;72;72;72mWake up. [38;2;60;60;60mWake up. [38;2;48;48;48mWake up. [38;2;36;36;36mWake up. [38;2;24;24;24mWake up. [0m
+set messages19=                       The mystery of life isn't a problem to solve, but a reality to experience.
+set messages20=                                           Simulating hone renders since 2022.
+set messages21=                                               Sanity check not mandatory.
+set messages22=                                           Fatal error occurred. Just kidding.
+set messages23=                                                    Missing Operand.
+set messages24=                                     Statements dreamed up by the utterly deranged.
+set messages25=                                                Hold gently like burger.
+goto :eof
+
+:quotedisplay
+if %displaymessages% == n goto :eof
+set /a "quoteindex=%random% * %quotecount% / 32768 + 1"
+set /a "quoteindex=%random% * %quotecount% / 32768 + 1"
+echo.
+echo [38;2;123;169;181m!messages%quoteindex%![0m
+echo.
 goto :eof
 
 :ending
