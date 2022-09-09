@@ -5,11 +5,12 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 # Current New Features
 
  - TUI by default
+ - splash text
+ - big improvements to debug logs
 
 # Planned
 
- - centering all TUI elements
- - a more universal layout
+ - more debug log improvements
 
 # Bugs
 

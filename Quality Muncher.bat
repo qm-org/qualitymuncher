@@ -7,6 +7,7 @@
 
 :main
 @echo off
+echo Log made > "%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
@@ -45,8 +46,12 @@ setlocal enabledelayedexpansion
 :: code page, version, and title
 chcp 437 > nul
 set version=1.5.0
+echo Quality Muncher v%version% successfully started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
 set multiqueuef=n
-if not check%2 == check set multiqueuef=y
+if not check%2 == check (
+    set multiqueuef=y
+    echo More than one parameter is being used to run the file>>"%temp%\qualitymuncherdebuglog.txt"
+)
 :: if there is an input file, check the current directory and fix it if needed
 if not check%1 == check (
     set inpath=%~dp1
@@ -58,6 +63,7 @@ title Quality Muncher v%version%
 set inpcontain=%~x1
 :: default values for variables
 call :setdefaults
+echo Default variables set>>"%temp%\qualitymuncherdebuglog.txt"
 :: plays an animation is the first parameter is qmloo
 if %animate% == y call :loadingbar
 call :titledisplay
@@ -67,6 +73,7 @@ if %autoupdatecheck% == y call :updatecheck
 :afterstartup
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg.exe || (
+    echo FFmpeg not found, sending error, pausing, then exiting>>"%temp%\qualitymuncherdebuglog.txt"
     echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
     echo Please install it as it's needed for this program to work.
     choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
@@ -79,30 +86,41 @@ set wbh2=Zh9-TL8nNTP%wb5%c1PwW
 set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
 :: checks if the input has a video stream (i.e. if the input is an audio file)
 :: and if there isn't a video stream, ask audio questions instead
-call :imagecheck
-if %1check == check goto guimenurefresh
-if not exist "%~1" goto guimenurefresh
+call :imagecheck %1
+if %1check == check (
+    echo File was ran without parameters ^(no input^)>>"%temp%\qualitymuncherdebuglog.txt"
+    goto guimenurefresh
+)
+if not exist "%~1" (
+    goto guimenurefresh
+    echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
+)
 set inputvideo=%1
 ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %temp%\astream.txt
 set /p astream=<%temp%\astream.txt
 if exist "%temp%\astream.txt" (del "%temp%\astream.txt")
 if 1%astream% == 1 (
+    echo Input does not have an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=n
 ) else (
+    echo Input has an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=y
 )
 ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
 set /p vstream=<%temp%\vstream.txt
 if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
 if 1%vstream% == 1 (
+    echo Input does not have a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=n
     if %hasaudio% == y (
         goto novideostream
     ) else (
+        echo Video has neither audio nor video streams, assumed to be an invalid input and going to noinput in the TUI>>"%temp%\qualitymuncherdebuglog.txt"
         set noinput=y
         goto guimenurefresh
     )
 ) else (
+    echo Input has a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=y
 )
 :: if the video is an image, ask specific image questions instead
@@ -513,6 +531,7 @@ for %%a in (%*) do (
     if not %complexity% == s set videoinp=%%a
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
+    echo Rendering video !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
     call :videospecificstuff %%a
 )
@@ -1260,6 +1279,7 @@ if defined texttwopos set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
 if defined texttwopos set texttwoposesc=%texttwoposesc:)=^^^^^^)%
 if defined audiofilters set audiofiltersesc=%audiofilters:(=^^^^^^^^^^(%
 if defined audiofilters set audiofiltersesc=%audiofiltersesc:)=^^^^^^)%
+echo Saving settings to a config file>>"%temp%\qualitymuncherdebuglog.txt"
 echo :: Configuration file for Quality Muncher v%version% > "%configname%.bat"
 echo :: Created at %time% on %date% >> "%configname%.bat"
 (
@@ -1330,6 +1350,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
 
     echo exit /b
 ) >> "%configname%.bat"
+echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
 if "%~1" == "temp" goto :eof
 echo You config file is located at "%cd%\%configname%.bat"
 pause
@@ -1388,12 +1409,14 @@ set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
 goto :eof
 
 :qualityselect
+echo Selecting video quality>>"%temp%\qualitymuncherdebuglog.txt"
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
 echo      %dc_s%[1] Decent[0m           %bc_s%[2] Bad[0m           %tc_s%[3] Terrible[0m       %uc_s%[4] Unbearable[0m        %cc_s%[C] Custom[0m          %rc_s%[R] Random[0m
 choice /n /c 1234CRB
 :: set quality
 set "customizationquestion=%errorlevel%"
+echo Selected %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
 :: custom quality
 if %customizationquestion% == 7 goto :eof
 set "dc_s="
@@ -1434,6 +1457,7 @@ if "%customizationquestion%" == "c" (
     set /p "audiobr="
     echo                     [93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot:
     set /p "scaleq="
+    echo Custom selected, chose !outputfps! outputfps, !videobr! videobr, %audiobr% audiobr, %scaleq% scaleq>>"%temp%\qualitymuncherdebuglog.txt"
     set endingmsg=Custom Quality
 )
 :: decent quality
@@ -1516,6 +1540,7 @@ if "%starttime%" == " " set starttime=0
 set vidtime=262144
 set /p "vidtime=[93mIn seconds[0m, how long do you want the video to be: "
 if "%vidtime%" == " " set vidtime=262144
+echo Start time %starttime%, Duration %vidtime%>>"%temp%\qualitymuncherdebuglog.txt"
 call :clearlastprompt
 goto :eof
 
@@ -1532,6 +1557,7 @@ if %errorlevel% == 2 (
 :: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
 ffmpeg > nul 2>>"%temp%\ffmpegQM.txt"
 > nul find "libflite" "%temp%\ffmpegQM.txt" || (
+    echo USER DOES NOT HAVE FLITE INSTALLED>>"%temp%\qualitymuncherdebuglog.txt"
     del "%temp%\ffmpegQM.txt"
     echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
     set tts=n
@@ -1577,6 +1603,7 @@ echo.
 :filterlistloop
 if "%tcly%" == "n" (
     if %errorlevel% == 2 (
+        echo Misc. Filters selected: %filtercl%>>"%temp%\qualitymuncherdebuglog.txt"
         call :clearlastprompt
         goto :eof
     )
@@ -1776,6 +1803,7 @@ goto :eof
 
 :: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for some input
 :exiting
+echo Made it to exit>>"%temp%\qualitymuncherdebuglog.txt"
 echo.
 where /q ffplay.exe || goto aftersound
 if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
@@ -1812,6 +1840,7 @@ if not 1%loggingdir% == 1 cd /d %loggingdir%
 del "Quality Muncher Log.txt"
 :: stuff to log (anything and everything possible for batch to get that might be responsible for issues)
 :: filename and outputvar are seperate from the rest because filesnames can have weird characters that might cause the entire log to fail if it's not seperated
+echo Making log...>>"%temp%\qualitymuncherdebuglog.txt"
 echo filename: %filename% > "Quality Muncher Log.txt"
 echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
 (
@@ -1890,6 +1919,8 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo     imagecontainer: %imagecontainer%
     echo FFMPEG DETAILS
 )>>"Quality Muncher Log.txt"
+echo Log made>>"%temp%\qualitymuncherdebuglog.txt"
+if %fromrender% == y goto :eof
 :: add ffmpeg to the log
 ffmpeg > nul 2>>"Quality Muncher Log.txt"
 :: prompt to upload to the webhook for the devs
@@ -1926,6 +1957,7 @@ goto :eof
 
 :: pipes the output to another script of the user's choosing
 :piped
+echo Piping output>>"%temp%\qualitymuncherdebuglog.txt"
 call :titledisplay
 echo Scripts found:
 :: add scripts here, if you want
@@ -1984,6 +2016,7 @@ goto closingbar
 :: if the user inputs a file manually instead of with send to or drag and drop
 :manualfile
 set /p file=Please drag your input here: 
+echo User is using %file% as a manual file input>>"%temp%\qualitymuncherdebuglog.txt"
 cls
 call %0 %file%
 exit
@@ -1994,6 +2027,7 @@ if exist "%temp%\QMnewversion.txt" del "%temp%\QMnewversion.txt"
 :: checks if github is able to be accessed
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 (
+    echo Pinging GitHub failed>>"%temp%\qualitymuncherdebuglog.txt"
     call :nointernet
     goto :eof
 )
@@ -2021,6 +2055,7 @@ if "%version%" == "%newversion%" (
     set isupdate=y
 )
 :: tells the user a new update is out and asks if they want to update
+echo New version found during update check (%newversion%)>>"%temp%\qualitymuncherdebuglog.txt"
 echo [96mThere is a new version (%newversion%) of Quality Muncher available^^!
 echo Press [U] to update or [S] to skip.
 echo [90mTo hide this message in the future, set the variable "autoupdatecheck" in the script options to n.[0m
@@ -2054,6 +2089,7 @@ if %errorlevel% == 3 (
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20Muncher.bat" --output %0 || (
+    echo Error whe downloading the update>>"%temp%\qualitymuncherdebuglog.txt"
     echo [91mecho Downloading the update failed^^! Please try again later.[0m
     echo Press any key to go to the menu
     pause > nul
@@ -2147,6 +2183,7 @@ set filesdone=1
 for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
+    echo Rendering audio !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
     call :audioencode %%a
 )
@@ -2197,6 +2234,8 @@ set "filename=%filename% (%i%)"
 goto :eof
 
 :imagecheck
+echo "%~x1" >>"%temp%\qualitymuncherdebuglog.txt"
+echo "%~1" >>"%temp%\qualitymuncherdebuglog.txt"
 if "%~x1" == ".png" set isimage=y
 if "%~x1" == ".jpg" set isimage=y
 if "%~x1" == ".jpeg" set isimage=y
@@ -2241,6 +2280,7 @@ if "%~x1" == ".JPM" set isimage=y
 if "%~x1" == ".JPM" set isimage=y
 if "%~x1" == ".MJ2" set isimage=y
 if "%~x1" == ".GIF" set isimage=y
+echo Image check succeded, image status: %isimage%>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
 :: asks if user wants to fry the video
@@ -2281,6 +2321,7 @@ goto :eof
 :: some extra steps for encoding a fried video, in order:
 :: generate noise map at 1/10 resolution, scale the map to final resolution, scale the input to the final resolution, add the input and noise together with displacement, and shift it back into place with rgbashift
 :encodefried
+echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
 echo Frying video...
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%"
@@ -2291,6 +2332,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: 
 set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
 if exist "%temp%\noisemapscaled%container%" (del "%temp%\noisemapscaled%container%")
 if exist "%temp%\scaledinput%container%" (del "%temp%\scaledinput%container%")
+echo Done frying video>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
 :: clears the screen up until the title, preventing flashing but keeping the terminal clean
@@ -2326,6 +2368,7 @@ goto :eof
 :: fails to access github
 :fetchannouncementfail
 set internet=n
+echo Failed to fetch announcements>>"%temp%\qualitymuncherdebuglog.txt"
 echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
 pause
 echo [H[u[0J
@@ -2359,6 +2402,7 @@ set filesdone=1
 for %%a in (%*) do (
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
+    echo Rendering image !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
     call :newmunchworking %%a %loopn% %qvnew% %imagesc%
 )
@@ -2464,6 +2508,7 @@ goto :eof
 :setdefaults
 :: default values for variables
 call :setquotes
+set fromrender=n
 set guimenutitleisshowing=y
 set guivideotitleisshowing=y
 set guiaudiotitleisshowing=y
@@ -2546,6 +2591,7 @@ set method=classic
 goto :eof
 
 :render
+echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
 if not %isimage% == y (
     set /a badaudiobitrate=80/%audiobr%
     if %distortaudio% == n (
@@ -2568,14 +2614,27 @@ if not %isimage% == y (
         )
     )
 )
+set fromrender=y
+call :makelog
+set fromrender=n
+echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
+type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
+call :savetoconfigbypassname temp
+type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
 if %hasvideo% == y (
     if %isimage% == y (
         set /a qvnew=^(%qv%*3^)+1
+        echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
         goto newmunchmultiq
     ) else (
+        echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
         goto encodevideomultiq
     )
 ) else (
+    echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
     goto encodeaudiomultiqueue
 )
 echo how did you get here
