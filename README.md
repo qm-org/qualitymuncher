@@ -7,6 +7,8 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - TUI by default
  - splash text
  - big improvements to debug logs
+ - export a video as a GIF
+ - don't render video stream
 
 # Planned
 
