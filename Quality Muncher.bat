@@ -7,7 +7,7 @@
 
 :main
 @echo off
-echo Log made > "%temp%\qualitymuncherdebuglog.txt"
+echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
@@ -47,9 +47,12 @@ setlocal enabledelayedexpansion
 chcp 437 > nul
 set version=1.5.0
 echo Quality Muncher v%version% successfully started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
-set multiqueuef=n
+echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
+echo %*>>"%temp%\qualitymuncherdebuglog.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+set ismultiqueue=n
 if not check%2 == check (
-    set multiqueuef=y
+    set ismultiqueue=y
     echo More than one parameter is being used to run the file>>"%temp%\qualitymuncherdebuglog.txt"
 )
 :: if there is an input file, check the current directory and fix it if needed
@@ -142,19 +145,9 @@ echo                [38;2;0;148;230m^| ^|__^| ^|^| ^|_^| ^|^| {_^| ^|^| ^|^| ^|
 echo                 [38;2;0;163;221m\___\_\ \__,_^| \__,_^|^|_^|^|_^| \__^| \__, ^|   ^|_^|  ^|_^| \__,_^|^|_^| ^|_^| \___^|^|_^| ^|_^| \___^|^|_^|
 echo                                                   [38;2;0;178;211m__/ ^|
 echo                                                  [38;2;49;191;204m^|___/[0m
-call :quotedisplay
+call :messagedisplay
 echo.[s
 goto :eof
-
-:: unused title
-echo                                          [38;2;39;55;210m____          _    _
-echo                                         [38;2;0;87;228m/ __ \        ^| ^|  ^(_^)
-echo                                        [38;2;0;111;235m^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___ 
-echo                                        [38;2;0;130;235m^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
-echo                                        [38;2;0;148;230m^| ^|__^| ^|^| ^|_^} ^|^| ^|_ ^| ^|^| ^(_^) ^|^| ^| ^| ^|\__ \
-echo                                         [38;2;0;163;221m\____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
-echo                                                [38;2;0;178;211m^| ^|
-echo                                                [38;2;49;191;204m^|_^|[0m
 
 :guimenu
 set guimenutitleisshowing=y
@@ -289,7 +282,7 @@ echo                         [38;2;0;148;230m\  /   ^| ^|^| (_^| ^|^|  __/^| (_
 echo                          [38;2;0;163;221m\/    ^|_^| \__,_^| \___^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                                  [38;2;0;178;211m^| ^|
 echo                                                                  [38;2;49;191;204m^|_^|[0m
-call :quotedisplay
+call :messagedisplay
 echo.[s
 goto :eof
 
@@ -314,11 +307,11 @@ echo              %gui_video_corruption%                        %gui_video_durat
 echo.
 echo       %gui_video_resamplinginterpolation%                     %gui_video_frying%                           %gui_video_framestutter%
 echo.
-echo                                                %gui_video_miscillaneousfilters%                                                                                  
+echo             %gui_video_outputasgif%                  %gui_video_miscillaneousfilters%                      %gui_video_novideo%
 echo.
 echo.
 echo.
-choice /c 123456789RFSMB /n
+choice /c 123456789RFSGMBN /n
 call :clearlastprompt
 set /a gui_video_var=%errorlevel%
 :: quality
@@ -345,10 +338,18 @@ if %gui_video_var% == 10 call :interpolationandresampling
 if %gui_video_var% == 11 call :videofrying
 :: frame stutter
 if %gui_video_var% == 12 call :stutter
+:: output as gif
+if %gui_video_var% == 13 if %outputasgif% == y (set outputasgif=n) else set outputasgif=y
 :: miscillaneous filters
-if %gui_video_var% == 13 call :filterlist
+if %gui_video_var% == 14 call :filterlist
 :: back
-if %gui_video_var% == 14 goto guimenu
+if %gui_video_var% == 15 goto guimenu
+:: no video
+if %gui_video_var% == 16 if %novideo% == y (
+    set novideo=n
+) else (
+    set novideo=y
+)
 goto guivideooptionsrefresh
 
 :titledisplayaudio
@@ -367,7 +368,7 @@ echo                       [38;2;0;148;230m/ ____ \^| ^|_^| ^|^| (_^| ^|^| ^|^|
 echo                      [38;2;0;163;221m/_/    \_\\__,_^| \__,_^|^|_^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                                  [38;2;0;178;211m^| ^|
 echo                                                                  [38;2;49;191;204m^|_^|[0m
-call :quotedisplay
+call :messagedisplay
 echo.[s
 goto :eof
 
@@ -394,7 +395,7 @@ choice /c 123456B /n
 call :clearlastprompt
 set /a gui_audio_var=%errorlevel%
 :: quality
-if %gui_audio_var% == 1 call :qualityjustaudio
+if %gui_audio_var% == 1 call :audioqualityselect
 :: start time and duration
 if %gui_audio_var% == 2 call :durationquestions
 :: speed
@@ -428,7 +429,7 @@ echo                                           [38;2;0;111;235m^| ^|__   __  __
 echo                                           [38;2;0;130;235m^|  __^|  \ \/ /^| __^|^| '__^|/ _` ^|/ __^|
 echo                                           [38;2;0;148;230m^| ^|____  ^>  ^< ^| ^|_ ^| ^|  ^| {_^| ^|\__ \
 echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/[0m
-call :quotedisplay
+call :messagedisplay
 echo.[s
 goto :eof
 
@@ -478,7 +479,7 @@ echo                      [38;2;0;148;230m_^| ^|_ ^| ^| ^| ^| ^| ^|^| {_^| ^|^|
 echo                     [38;2;0;163;221m^|_____^|^|_^| ^|_^| ^|_^| \__,_^| \__, ^| \___^|  \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
 echo                                                [38;2;0;178;211m__/ ^|               ^| ^|
 echo                                               [38;2;49;191;204m^|___/                ^|_^|[0m
-call :quotedisplay
+call :messagedisplay
 echo.[s
 goto :eof
 
@@ -627,20 +628,24 @@ if %complexity% == s set filters=-vf "%fpsfilter%scale=%desiredwidth%:%desiredhe
 :: add the suffix to the output name
 set "filename=%~n1 (%endingmsg%)"
 :: asks if the user wants a custom output name (advanced only)
-if %multiqueuef% == n (
+if %ismultiqueue% == n (
     if not %complexity% == s call :outputquestion
 )
 :: if the file already exists, append a (1), and if that exists, append a (2) instead, etc
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
 :: let the user know encoding is happening
-if %multiqueuef% == y (
+if %ismultiqueue% == y (
     if not %filesdone% == 1 echo.
     echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
 ) else (
     echo [38;2;254;165;0mEncoding...[0m
 )
 echo.
+if %novideo% == y (
+    set filters=-vn
+    set frying=n
+)
 :: if simple, go to encoding option 3 (avoids any variables that might be missing in simple mode)
 if %complexity% == s goto encodesimple
 :: if the user selected to fry the video, encode all of the needed parts
@@ -690,6 +695,11 @@ if %bouncy% == y call :encodebouncy
 :donewithdurationspoof
 if "%corrupt%"=="y" call :corruptoutput
 :skipvideoencodingoptions
+if %outputasgif% == y (
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -f gif -an "%filename%.gif"
+    del %outputvar%
+    set outputvar="%cd%\%filename%.gif"
+)
 goto :eof
 
 :: advanced parts - most of the following code isn't read when using simple mode
@@ -1149,6 +1159,7 @@ call :clearlastprompt
 goto :eof
 
 :textmath
+echo Doing text math>>"%temp%\qualitymuncherdebuglog.txt"
 :: remove spaces and count the characters in the text
 set toptextnospace=%toptext: =_%
 echo "%toptextnospace%" > %temp%\toptext.txt
@@ -1268,6 +1279,7 @@ choice /m "Do you want to save these settings to a config file?"
 call :clearlastprompt
 if %errorlevel% == 2 goto :eof
 :savetoconfig
+call :clearlastprompt
 echo                                            Enter a name for the config file:
 set /p "configname="
 :savetoconfigbypassname
@@ -1434,10 +1446,10 @@ if %customizationquestion% == 6 (
     goto :eof
 )
 :: defines a few variables that will be replaced later; used to check for valid user inputs
-set outputfps=a
-set videobr=a
-set audiobr=a
-set scaleq=a
+set outputfps=24
+set videobr=3
+set audiobr=3
+set scaleq=2
 :: sets the quality based on customizationquestion
 :: endingmsg is added to the end of the video for the output name
 if "%customizationquestion%" == "c" (
@@ -1837,7 +1849,7 @@ call :clearlastprompt
 set pastdir=%cd%
 if not 1%loggingdir% == 1 cd /d %loggingdir%
 :: delete old log
-del "Quality Muncher Log.txt"
+if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
 :: stuff to log (anything and everything possible for batch to get that might be responsible for issues)
 :: filename and outputvar are seperate from the rest because filesnames can have weird characters that might cause the entire log to fail if it's not seperated
 echo Making log...>>"%temp%\qualitymuncherdebuglog.txt"
@@ -1920,9 +1932,9 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo FFMPEG DETAILS
 )>>"Quality Muncher Log.txt"
 echo Log made>>"%temp%\qualitymuncherdebuglog.txt"
-if %fromrender% == y goto :eof
 :: add ffmpeg to the log
 ffmpeg > nul 2>>"Quality Muncher Log.txt"
+if %fromrender% == y goto :eof
 :: prompt to upload to the webhook for the devs
 call :titledisplay
 choice /m "Log has been made. Upload and send to developers?"
@@ -2162,7 +2174,8 @@ if %errorlevel% == 2 (
     call :clearlastprompt
     goto :eof
 )
-set /p "filenametemp=Enter your output name [93mwith no extension[0m: "
+echo                                         Enter your output name [93mwith no extension[0m:
+set /p "filenametemp="
 set "filename=%filenametemp%"
 call :clearlastprompt
 goto :eof
@@ -2193,7 +2206,7 @@ goto end
 :audioencode
 set "filename=%~n1 (Quality Munched)"
 if exist "%filename%%audiocontainer%" call :renamefile
-if %multiqueuef% == y (
+if %ismultiqueue% == y (
     if not %filesdone% == 1 echo.
     echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
 ) else (
@@ -2234,8 +2247,7 @@ set "filename=%filename% (%i%)"
 goto :eof
 
 :imagecheck
-echo "%~x1" >>"%temp%\qualitymuncherdebuglog.txt"
-echo "%~1" >>"%temp%\qualitymuncherdebuglog.txt"
+echo First file extension is "%~x1">>"%temp%\qualitymuncherdebuglog.txt"
 if "%~x1" == ".png" set isimage=y
 if "%~x1" == ".jpg" set isimage=y
 if "%~x1" == ".jpeg" set isimage=y
@@ -2419,7 +2431,7 @@ if "%~x1" == ".gif" (
     set imagecontainer=%originalimagecontainer%
 )
 call :clearlastprompt
-if %multiqueuef% == y (
+if %ismultiqueue% == y (
     if not %filesdone% == 1 echo.
     echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
 ) else (
@@ -2508,6 +2520,10 @@ goto :eof
 :setdefaults
 :: default values for variables
 call :setquotes
+set dc_s=[92m
+set dc_sa=[92m
+set outputasgif=n
+set novideo=n
 set fromrender=n
 set guimenutitleisshowing=y
 set guivideotitleisshowing=y
@@ -2527,7 +2543,9 @@ set gui_video_bouncywebm=[9] Bouncy WebM
 set gui_video_resamplinginterpolation=[R] Resampling/Interpolation
 set gui_video_frying=[F] Frying
 set gui_video_framestutter=[S] Frame Stutter
+set gui_video_outputasgif=[G] Output as GIF
 set gui_video_miscillaneousfilters=[M] Miscillaneous Filters
+set gui_video_novideo=[N] No Video
 set gui_audio_quality=[1] Quality
 set gui_audio_starttimeandduration=[2] Start Time and Duration
 set gui_audio_speed=[3] Speed
@@ -2581,19 +2599,21 @@ set "tcl4= "
 set "tcl5= "
 set "tcl6= "
 set "tcl7= "
-set outputfps=a
-set videobr=a
-set audiobr=a
-set scaleq=a
+set outputfps=24
+set videobr=3
+set audiobr=3
+set scaleq=2
 set "qs=Quality Selected^^^^^!"
 set "colorfilter="
 set method=classic
 goto :eof
 
+:: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
 :render
 echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
 if not %isimage% == y (
     set /a badaudiobitrate=80/%audiobr%
+    :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
     if %distortaudio% == n (
         if not %audiospeedq% == 1 (
                 set "audiofilters=-af atempo=%audiospeedq%"
@@ -2619,6 +2639,7 @@ call :makelog
 set fromrender=n
 echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
 type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
+if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
 echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
 call :savetoconfigbypassname temp
@@ -2637,50 +2658,9 @@ if %hasvideo% == y (
     echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
     goto encodeaudiomultiqueue
 )
-echo how did you get here
-pause
 goto guimenu
 
-:: archived title display for if i need it later
-cls
-echo [s
-cls
-if %showtitle% == n goto :eof
-echo [38;2;39;55;210m       :^^~~~^^.        ^^.            ^^.       :^^        .^^.           .^^ .~~~~~~~~~~~~~~~: :~            .~.
-echo [38;2;39;61;210m    ^^!5GP5YYY5PPY^^^^    :@?           :@J      :#@7       ~@^^!           Y^&..JYYYYYY@BJYYYYY^^! ^^!BG~        .?#P:
-echo [38;2;40;68;209m  ~BG7:       :?BG:  ^^^^@J           :@Y     .BB5@~      ^^!@^^!           Y@:       .@Y          7BG~    .?#G~
-echo [38;2;40;74;209m 7@J            .5^&^^^^ ^^^^@J           :@J     P^&: P^&:     ^^!@^^!           Y@:       :@Y            7BG~.?#G~
-echo [38;2;41;81;209m:^&5               BB :@J           :@J    Y@^^^^  .B#.    ^^!@^^!           Y@:       :@Y              7B^&G~
-echo [38;2;41;87;209m~@7               5@.:@J           :@Y   ?@^^!    :^&G    ^^!@^^!           Y@:       :@Y               ?@:
-echo [38;2;42;94;208m.#G              .^&P :@J           :@J  ^^!@?      ^^^^@5   ^^!@^^!           Y@:       :@Y               ?@^^^^
-echo [38;2;42;100;208m ^^^^^&P:           .B#.  5^&^^^^          P^&: ^^^^@Y        ^^!@J  ^^!@^^!           Y@:       :@Y               ?@^^^^
-echo [38;2;43;107;208m  .YB5^^!:.   . ^^!^^!:Y^&^^!   Y#5~.   .^^^^?BG^^^^ :^&P          ?@7 ^^!@7           Y@:       :@Y               ?@^^^^
-echo [38;2;43;113;207m    .7YPPPPPP*^^!YPP^&@7   :?5PPPPPPY~   5G.           YB.^^^^#GPPPPPPPPPJ ?B.       .B?               7#:
-echo [38;2;44;120;207m         ...     .^^^^?^^!       ....      .              .   ...........                              .
-echo [38;2;44;126;207m ^^.            ^^. :.            :. ::            :.       .:^^~~^^:     .:            .:     :~~~~~~~~~^^ .^^~~~~~~~~^^:
-echo [38;2;45;133;207m~@#^^!         ~B@^^!:@?           :^&J #^&J          .#5    :?PP5YYY5PG57. 7@^^^^           7@^^^^ .YGPYYYYYYYYY? J@5YYYYYYY5PG?.
-echo [38;2;45;139;206m~@P#P:     :P#5@^^!:@J           :@Y ^&BGB~        .^&P  .Y#Y~.      .^^!PY ?@^^^^           ?@^^^^.#B:            J@:         ^^^^BB.
-echo [38;2;46;146;206m~@^^!.5^&J  .J^&Y.~@^^!:@J           :@Y ^&5 ?#P:      .^&P .BB:              ?@^^^^           7@^^^^~@^^!             J@:          ?@^^^^
-echo [38;2;46;152;206m~@7  ~BB~JP^^^^  ~@^^!:@J           :@Y ^&P  .5^&J     .^&P 5@:               ?@~.:::::::::.J@^^^^~@7.::::::::.   J@:...:::::~J#Y
-echo [38;2;47;159;205m~@7    ?P:    ~@^^!:@J           :@Y ^&P    ~BB~   .^&P BB                ?@G5PPPPPPPPP5B@^^^^~@G55555555P?   J@^^^^Y^&^&G55555?:
-echo [38;2;47;165;205m~@7           ~@^^!:@J           :@J ^&P      ?#P: .^&P J@^^^^               ?@^^^^           ?@^^^^~@^^!             J@: ~5B5^^^^
-echo [38;2;48;172;205m~@7           ~@7 P^&^^^^          5@^^^^ ^&P       .5^&?.^&P  P^&~            . ?@^^^^           ?@^^^^~@^^!             J@:   :?BG7.
-echo [38;2;48;178;205m^^!@7           ~@7  Y#Y^^^^.    :7GB^^^^ .^&P         ~GB@P   ?BP7:.    .^^^^?G5 ?@^^^^           ?@^^^^~@^^!             J@:      ^^!PBY^^^^
-echo [38;2;49;185;204m^^^^#^^!           ^^^^^&~   :JPPP5PPPY^^!    BY           7#Y    .^^!YPPP55PPPJ~  7#:           ^^!#:^^^^^&G55555555555J ?#:        :JB?
-echo [38;2;49;191;204m .             .       ..::.                               .::::.      .             .  .::::::::::::.  .            .[0m
-echo.[s
-
-:: unused title
-echo                                          [38;2;39;55;210m____          _    _
-echo                                         [38;2;0;87;228m/ __ \        ^| ^|  ^(_^)
-echo                                        [38;2;0;111;235m^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___ 
-echo                                        [38;2;0;130;235m^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
-echo                                        [38;2;0;148;230m^| ^|__^| ^|^| ^|_^} ^|^| ^|_ ^| ^|^| ^(_^) ^|^| ^| ^| ^|\__ \
-echo                                         [38;2;0;163;221m\____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
-echo                                                [38;2;0;178;211m^| ^|
-echo                                                [38;2;49;191;204m^|_^|[0m
-
-:qualityjustaudio
+:audioqualityselect
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
 echo      %dc_sa%[1] Decent[0m           %bc_sa%[2] Bad[0m           %tc_sa%[3] Terrible[0m       %uc_sa%[4] Unbearable[0m        %cc_sa%[C] Custom[0m          %rc_sa%[R] Random[0m
@@ -2749,6 +2729,7 @@ if %audiocustomizationquestion% == c (
 )
 goto :eof
 
+:: makes the video options in the GUI either white or green (off and on respectively)
 :checktogglesvideo
 if not %outputfps% == a (
     call :togglethis gui_video_quality on
@@ -2810,14 +2791,25 @@ if %stutter% == y (
 ) else (
     call :togglethis gui_video_framestutter off
 )
+if %outputasgif% == y (
+    call :togglethis gui_video_outputasgif on
+) else (
+    call :togglethis gui_video_outputasgif off
+)
 if not "a%filtercl%" == "a" (
     call :togglethis gui_video_miscillaneousfilters on
 ) else (
     call :togglethis gui_video_miscillaneousfilters off
 )
+if %novideo% == y (
+    call :togglethis gui_video_novideo on
+) else (
+    call :togglethis gui_video_novideo off
+)
 call :autosaveconfig
 goto :eof
 
+:: makes the audio options in the GUI either white or green (off and on respectively)
 :checktogglesaudio
 if not %audiobr% == a (
     call :togglethis gui_audio_quality on
@@ -2870,7 +2862,7 @@ set "temptogglevar"
 goto :eof
 
 :setquotes
-set quotecount=25
+set quotecount=26
 set quoteindex=0
 :: quotes and sayings
 set messages1=                                       There is something addictive about secrets.
@@ -2898,9 +2890,10 @@ set messages22=                                           Fatal error occurred. 
 set messages23=                                                    Missing Operand.
 set messages24=                                     Statements dreamed up by the utterly deranged.
 set messages25=                                                Hold gently like burger.
+set messages26=                                                          Meow
 goto :eof
 
-:quotedisplay
+:messagedisplay
 if %displaymessages% == n goto :eof
 set /a "quoteindex=%random% * %quotecount% / 32768 + 1"
 set /a "quoteindex=%random% * %quotecount% / 32768 + 1"
