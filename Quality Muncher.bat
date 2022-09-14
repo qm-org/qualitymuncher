@@ -180,15 +180,18 @@ echo                                  [L]oad Config                            [
 echo.
 if %hasvideo% == y (
     if %isimage% == y (
+        echo Main GUI choices: VALSCEIR>>"%temp%\qualitymuncherdebuglog.txt"
         echo                                                         [92m[R]ender[0m
         echo.
         choice /c VALSCEIR /n
     ) else (
         if not %videobr% == a (
+            echo Main GUI choices: VALSCEIR>>"%temp%\qualitymuncherdebuglog.txt"
             echo                                                         [92m[R]ender[0m
             echo.
             choice /c VALSCEIR /n
         ) else (
+            echo Main GUI choices: VALSCEI>>"%temp%\qualitymuncherdebuglog.txt"
             echo                                                         [38;2;100;100;100m[R]ender[0m
             echo                                      You must set the quality before you can render.
             choice /c VALSCEI /n
@@ -196,21 +199,25 @@ if %hasvideo% == y (
     )
 ) else (
     if %hasaudio% == y (
-            if not %audiobr% == a (
+        if not %audiobr% == a (
+            echo Main GUI choices: VALSCEIR>>"%temp%\qualitymuncherdebuglog.txt"
             echo                                                         [92m[R]ender[0m
             echo.
             choice /c VALSCEIR /n
         ) else (
+            echo Main GUI choices: VALSCEI>>"%temp%\qualitymuncherdebuglog.txt"
             echo                                                         [38;2;100;100;100m[R]ender[0m
             echo                                      You must set the quality before you can render.
             choice /c VALSCEI /n
         )
     ) else (
+        echo Main GUI choices: VALSCEI>>"%temp%\qualitymuncherdebuglog.txt"
         echo                                                         [38;2;100;100;100m[R]ender[0m
         echo                                            You must have an input to render.
         choice /c VALSCEI /n
     )
 )
+echo Main GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
 if %errorlevel% == 1 (
     if %hasvideo% == y (
         if %isimage% == y (
@@ -266,6 +273,40 @@ goto guimenurefresh
 call :savetoconfigbypassname temp
 goto :eof
 
+:customconfig
+echo Please enter either:
+echo  - the path of your config file
+echo  - [38;2;254;165;0mB[0m to go back
+echo  - or [38;2;254;165;0mR[0m to use your last used settings
+set /p "configfile="
+if %configfile% == b goto :eof
+if %configfile% == B goto :eof
+if %configfile% == R (
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+if %configfile% == r (
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+if not exist %configfile% (
+    call :clearlastprompt
+    echo [91mFile not found.[0m
+    goto :customconfig
+)
+call %configfile%
+goto :eof
+
 :titledisplayvideo
 cls
 if %showtitle% == n (
@@ -313,6 +354,7 @@ echo.
 echo.
 choice /c 123456789RFSGMBN /n
 call :clearlastprompt
+echo Video GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_video_var=%errorlevel%
 :: quality
 if %gui_video_var% == 1 call :qualityselect
@@ -333,13 +375,21 @@ if %gui_video_var% == 8 call :durationspoof
 :: bouncy webm
 if %gui_video_var% == 9 call :webmstretch
 :: resampling/interpolation
-if %gui_video_var% == 10 call :interpolationandresampling
+if %gui_video_var% == 10 if %resample% == y (
+    set resample=n
+) else (
+    set resample=y
+)
 :: frying
 if %gui_video_var% == 11 call :videofrying
 :: frame stutter
 if %gui_video_var% == 12 call :stutter
 :: output as gif
-if %gui_video_var% == 13 if %outputasgif% == y (set outputasgif=n) else set outputasgif=y
+if %gui_video_var% == 13 if %outputasgif% == y (
+    set outputasgif=n
+) else (
+    set outputasgif=y
+)
 :: miscillaneous filters
 if %gui_video_var% == 14 call :filterlist
 :: back
@@ -389,10 +439,13 @@ echo                %gui_audio_quality%                     %gui_audio_starttime
 echo.
 echo               %gui_audio_distortion%                       %gui_audio_texttospeech%                         %gui_audio_replacing%
 echo.
+echo                                                       %gui_audio_noaudio%
 echo.
 echo.
-choice /c 123456B /n
+echo.
+choice /c 123456BN /n
 call :clearlastprompt
+echo Audio GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_audio_var=%errorlevel%
 :: quality
 if %gui_audio_var% == 1 call :audioqualityselect
@@ -413,6 +466,12 @@ if %gui_audio_var% == 5 call :voicesynth
 if %gui_audio_var% == 6 call :replaceaudioquestion
 :: back
 if %gui_audio_var% == 7 goto guimenu
+:: no audio
+if %gui_audio_var% == 8 if %noaudio% == y (
+    set noaudio=n
+) else (
+    set noaudio=y
+)
 goto guiaudiooptionsrefresh
 
 :titledisplayextra
@@ -452,6 +511,7 @@ echo                [D]iscord                                [U]pdate           
 echo.
 echo.
 choice /n /c BWARDUS
+echo Extra GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_extra_var=%errorlevel%
 call :clearlastprompt
 if %gui_extra_var% == 1 goto guimenu
@@ -501,6 +561,7 @@ echo.
 echo.
 choice /n /c BQTS
 call :clearlastprompt
+echo Extra GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
 :: back
 if %errorlevel% == 1 goto guimenu
 :: quality
@@ -545,40 +606,6 @@ set done=y
 if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
 if %stayopen% == n goto ending
 goto exiting
-
-:customconfig
-echo Please enter either:
-echo  - the path of your config file
-echo  - [38;2;254;165;0mB[0m to go back
-echo  - or [38;2;254;165;0mR[0m to use your last used settings
-set /p "configfile="
-if %configfile% == b goto :eof
-if %configfile% == B goto :eof
-if %configfile% == R (
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-if %configfile% == r (
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-if not exist %configfile% (
-    call :clearlastprompt
-    echo [91mFile not found.[0m
-    goto :customconfig
-)
-call %configfile%
-goto :eof
 
 :videospecificstuff
 :: video filters
@@ -646,6 +673,10 @@ if %novideo% == y (
     set filters=-vn
     set frying=n
 )
+set audiofiltersnormal=%audiofilters%
+if %noaudio% == y (
+    set audiofiltersnormal=-an
+)
 :: if simple, go to encoding option 3 (avoids any variables that might be missing in simple mode)
 if %complexity% == s goto encodesimple
 :: if the user selected to fry the video, encode all of the needed parts
@@ -657,23 +688,23 @@ if %replaceaudio% == y goto encodereplacedaudio
 :encodewithnormalaudio
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %videoinp% ^
-%filters% %audiofilters% ^
+%filters% %audiofiltersnormal% ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%container%"
 goto endofthis
 :: option two, audio was replaced
 :encodereplacedaudio
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% ^
-%filters% %audiofilters% ^
+%filters% %audiofiltersnormal ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%container%"
 goto endofthis
 :: option three, simple mode only, no audio filters
@@ -684,7 +715,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%"
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 3 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 3 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%container%"
 :endofthis
 :: if text to speech, encode the voice and merge outputs
@@ -696,7 +727,7 @@ if %bouncy% == y call :encodebouncy
 if "%corrupt%"=="y" call :corruptoutput
 :skipvideoencodingoptions
 if %outputasgif% == y (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -f gif -an "%filename%.gif"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -f gif -an "%filename%.gif" && echo FFmpeg call 4 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 4 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     del %outputvar%
     set outputvar="%cd%\%filename%.gif"
 )
@@ -794,7 +825,7 @@ if exist "%filename%%cuffix%%container%" (
     goto cexist
 )
 :startcorruptencode
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i %outputvar% -c copy -bsf noise=((%desiredwidth%*%desiredheight%)/2073600*1000000/(%corruptsev%*10)) "%filename%%cuffix%%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i %outputvar% -c copy -bsf noise=((%desiredwidth%*%desiredheight%)/2073600*1000000/(%corruptsev%*10)) "%filename%%cuffix%%container%" && echo FFmpeg call 5 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 5 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: delete the old output
 if exist %outputvar% (del %outputvar%)
 :: set the needed variables for piping and such
@@ -802,7 +833,6 @@ set outputvar="%cd%\%filename%%cuffix%%container%"
 set "filename=%filename%%cuffix%"
 goto :eof
 
-   Do you want the video to have a super long duration [1], a super long negative duration [2], or an ever-increasing   
 :durationspoof
 echo                                      Do you want to spoof the duration of the video?
 echo                    [91mWarning^^! This is an EXTREMELY expiramental feature and might not work as intended^^![0m
@@ -827,7 +857,7 @@ goto :eof
 :outputdurationspoof
 :: text to speech doesn't have duration in metadata or something so reencode it
 if %tts% == y (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -c:v libx264 -preset %encodingspeed% -b:v %badvideobitrate% -c:a copy -shortest ^-vsync vfr -movflags +use_metadata_tags+faststart "%filename%2.mp4"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -c:v libx264 -preset %encodingspeed% -b:v %badvideobitrate% -c:a copy -shortest ^-vsync vfr -movflags +use_metadata_tags+faststart "%filename%2.mp4" && echo FFmpeg call 6 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 6 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     del %outputvar%
     set outputvar="%cd%\%filename%2.mp4"
 )
@@ -1056,7 +1086,7 @@ goto :eof
 :: encoding bouncy webm
 :encodebouncy
 :: remencode to webm so the codecs can be copied
-ffmpeg -hide_banner -stats_period 0.05 -loglevel warning -stats -i %outputvar% -c:a libopus -b:a %badaudiobitrate%k -c:v libvpx "%temp%\%filename% webmifed.webm"
+ffmpeg -hide_banner -stats_period 0.05 -loglevel warning -stats -i %outputvar% -c:a libopus -b:a %badaudiobitrate%k -c:v libvpx "%temp%\%filename% webmifed.webm" && echo FFmpeg call 7 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 7 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: get the frame count so we know how many times to loop
 ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -i "%temp%\%filename% webmifed.webm" -of csv=p=0 > "%temp%\framecount.txt"
 set /p framecount=<"%temp%\framecount.txt"
@@ -1073,17 +1103,17 @@ set /a "loopcount+=1"
 echo [1A[2KEncoding WebM Frame %loopcount% of %framecount%
 set /a "frametograb=%loopcount%-1"
 if %bouncetype% == width (
-    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%temp%\qmframes\framenum%loopcount%.webm"
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 8 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 8 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ) else (
     if %bouncetype% == height (
-    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm"
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 9 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 9 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     ) else (
-        ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm"
+        ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 10 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 10 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     )
 )
 echo file '%temp%\qmframes\framenum%loopcount%.webm' >> "%temp%\qmframes\filelist.txt"
 if %loopcount% lss %framecount% goto loopframes
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel warning -stats -f concat -safe 0 -i %temp%\qmframes\filelist.txt -i "%temp%\%filename% webmifed.webm" -map 1:a -map 0:v -c copy "%filename%.webm"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel warning -stats -f concat -safe 0 -i %temp%\qmframes\filelist.txt -i "%temp%\%filename% webmifed.webm" -map 1:a -map 0:v -c copy "%filename%.webm" && echo FFmpeg call 11 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 11 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 del "%temp%\%filename% webmifed.webm"
 set container=.webm
 del %outputvar%
@@ -1302,6 +1332,9 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set /a badaudiobitrate=80/%audiobr%
     echo set scaleq=%scaleq%
 
+    echo set novideo=%novideo%
+    echo set noaudio=%noaudio%
+
     echo set trimmed=%trimmed%
     echo set starttime=%starttime%
     echo set vidtime=%vidtime%
@@ -1395,14 +1428,6 @@ set /p "musicstarttime="
 call :clearlastprompt
 goto :eof
 
-:: asks about resampling (skips if in simple mode or input fps is less than output)
-:interpolationandresampling
-echo                        Do you want to interpolate/resample the video, depending on the framerate?
-choice /n
-if %errorlevel% == 1 set "resample=y"
-call :clearlastprompt
-goto :eof
-
 :resamplemath
 :: do nothing if the input fps is equal to the output fps
 if %outputfps% == %intputfps% goto :eof
@@ -1421,6 +1446,37 @@ set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
 goto :eof
 
 :qualityselect
+set "dc_s="
+set "bc_s="
+set "tc_s="
+set "uc_s="
+set "cc_s="
+set "rc_s="
+if %videocustom% == y (
+    set cc_s=[92m
+) else (
+    if %videobr% == 3 (
+        set dc_s=[92m
+    ) else (
+        if %videobr% == 5 (
+            set bc_s=[92m
+        ) else (
+            if %videobr% == 8 (
+                set tc_s=[92m
+            ) else (
+                if %videobr% == 9 (
+                    set uc_s=[92m
+                ) else (
+                    if %videorandom% == y (
+                        set rc_s=[92m
+                    ) else (
+                        set cc_s=[92m
+                    )
+                )
+            )
+        )
+    )
+)
 echo Selecting video quality>>"%temp%\qualitymuncherdebuglog.txt"
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
@@ -1428,22 +1484,18 @@ echo      %dc_s%[1] Decent[0m           %bc_s%[2] Bad[0m           %tc_s%[3] T
 choice /n /c 1234CRB
 :: set quality
 set "customizationquestion=%errorlevel%"
-echo Selected %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
-:: custom quality
 if %customizationquestion% == 7 goto :eof
-set "dc_s="
-set "bc_s="
-set "tc_s="
-set "uc_s="
-set "cc_s="
-set "rc_s="
+echo Quality Selected: %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
+:: custom quality
 if %customizationquestion% == 5 set customizationquestion=c
 :: random quality
 if %customizationquestion% == 6 (
-    set rc_s=[92m
+    set videorandom=y
     set customizationquestion=r
     call :randomvideoquality
     goto :eof
+) else (
+    set videorandom=n
 )
 :: defines a few variables that will be replaced later; used to check for valid user inputs
 set outputfps=24
@@ -1453,14 +1505,16 @@ set scaleq=2
 :: sets the quality based on customizationquestion
 :: endingmsg is added to the end of the video for the output name
 if "%customizationquestion%" == "c" (
+    set videocustom=y
     call :clearlastprompt
     echo                                                 Custom %qs%
     echo.
+) else (
+    set videocustom=n
 )
 :customquestioncheckpoint
 :: custom quality
 if "%customizationquestion%" == "c" (
-    set cc_s=[92m
     echo                                        What fps do you want it to be rendered at:
     set /p "outputfps="
     echo                   [93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad:
@@ -1474,7 +1528,6 @@ if "%customizationquestion%" == "c" (
 )
 :: decent quality
 if %customizationquestion% == 1 (
-    set dc_s=[92m
     echo [96mDecent %qs%[0m
     set outputfps=24
     set videobr=3
@@ -1484,7 +1537,6 @@ if %customizationquestion% == 1 (
 )
 :: bad quality
 if %customizationquestion% == 2 (
-    set bc_s=[92m
     echo [96mBad %qs%[0m
     set outputfps=12
     set videobr=5
@@ -1494,7 +1546,6 @@ if %customizationquestion% == 2 (
 )
 :: terrible quality
 if %customizationquestion% == 3 (
-    set tc_s=[92m
     echo [96mTerrible %qs%[0m
     set outputfps=6
     set videobr=8
@@ -1504,7 +1555,6 @@ if %customizationquestion% == 3 (
 )
 :: unbearable quality
 if %customizationquestion% == 4 (
-    set uc_s=[92m
     echo [96mUnbearable %qs%[0m
     set outputfps=1
     set videobr=16
@@ -1601,7 +1651,7 @@ if exist "%cd%\%filename% %ttsuffix%%container%" (
 )
 echo Encoding and merging text-to-speech...
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 if exist "%filename%%container%" (del "%filename%%container%")
 set outputvar="%cd%\%filename%%ttsuffix%%container%"
 set "filename=%filename%%ttsuffix%"
@@ -1830,7 +1880,10 @@ if %errorlevel% == 5 (
 if %errorlevel% == 4 goto piped
 if %errorlevel% == 2 %outputvar%
 if %errorlevel% == 3 explorer /select, %outputvar%
-if %errorlevel% == 6 call :savetoconfig
+if %errorlevel% == 6 (
+    call :titledisplay
+    call :savetoconfig
+)
 goto closingbar
 
 :nopipingforyou
@@ -1917,6 +1970,8 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         tcly {at least one effect is enabled}: %tcly%
     echo     stutter: %stutter%
     echo         stutteramount: %stutteramount%
+    echo     novideo: %novideo%
+    echo     noaudio: %noaudio%
     echo.
     echo USER OPTIONS
     echo     autoupdatecheck: %autoupdatecheck%
@@ -2003,11 +2058,12 @@ if %errorlevel% == 2 call :ffmpegpipe
 goto closingbar
 
 :ffmpegpipe
+echo Piping to FFmpeg>>"%temp%\qualitymuncherdebuglog.txt"
 set /p "ffmpeginput=ffmpeg -i %outputvar% "
 echo.
 echo [38;2;254;165;0mEncoding...[0m
 echo.
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% %ffmpeginput%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% %ffmpeginput% && echo FFmpeg call 13 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 13 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 set done=y
 echo.
 echo [92mDone^^![0m
@@ -2218,7 +2274,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -vn %metadata% -preset %encodingspeed% ^
 -c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%"
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%audiocontainer%
 if %tts% == y call :encodevoiceNV
 goto :eof
@@ -2229,7 +2285,7 @@ goto :eof
 set "af2="
 if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 if exist "%filename%%audiocontainer%" (del "%filename%%audiocontainer%")
 set outputvar="%cd%\%filename% tts%audiocontainer%"
 goto :eof
@@ -2336,10 +2392,10 @@ goto :eof
 echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
 echo Frying video...
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: use the output of the 5th ffmpeg call as the input for the final encoding
 set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
 if exist "%temp%\noisemapscaled%container%" (del "%temp%\noisemapscaled%container%")
@@ -2468,6 +2524,7 @@ if %imagecontainer% == .gif (
     set webp=webm
     set weblib=libvpx
 )
+echo Beginning image munch loop>>"%temp%\qualitymuncherdebuglog.txt"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
 set /a loopnreal=%loopn%-1
 :: loop through a few encoders until the loop is over
@@ -2508,10 +2565,10 @@ set "filename=%filename% (%f%)"
 :: if it's a gif, encode it as a video then reencode it to a gif
 :: otherwisem encode it as a picture
 if %imagecontainerbackup% == .gif (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%"
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%" && echo FFmpeg call 18 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 18 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%" && echo FFmpeg call 19 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 19 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ) else (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %imagequal% -f mjpeg "%filename%%imagecontainerbackup%"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %imagequal% -f mjpeg "%filename%%imagecontainerbackup%" && echo FFmpeg call 20 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 20 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 )
 rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"
@@ -2520,10 +2577,13 @@ goto :eof
 :setdefaults
 :: default values for variables
 call :setquotes
-set dc_s=[92m
-set dc_sa=[92m
+set videocustom=n
+set audiocustom=n
+set videorandom=n
+set audiorandom=n
 set outputasgif=n
 set novideo=n
+set noaudio=n
 set fromrender=n
 set guimenutitleisshowing=y
 set guivideotitleisshowing=y
@@ -2552,6 +2612,7 @@ set gui_audio_speed=[3] Speed
 set gui_audio_distortion=[4] Distortion
 set gui_audio_texttospeech=[5] Text to Speech
 set gui_audio_replacing=[6] Replacing
+set gui_audio_noaudio=[N] No Audio
 set "errormsg=[91mOne or more of your inputs for custom quality was invalid^^! Please use only numbers^^![0m"
 set qv=5
 set loopn=25
@@ -2661,6 +2722,37 @@ if %hasvideo% == y (
 goto guimenu
 
 :audioqualityselect
+set "dc_sa="
+set "bc_sa="
+set "tc_sa="
+set "uc_sa="
+set "cc_sa="
+set "rc_sa="
+if %audiocustom% == y (
+    set cc_sa=[92m
+) else (
+    if %audiobr% == 3 (
+        set dc_sa=[92m
+    ) else (
+        if %audiobr% == 5 (
+            set bc_sa=[92m
+        ) else (
+            if %audiobr% == 8 (
+                set tc_sa=[92m
+            ) else (
+                if %audiobr% == 9 (
+                    set uc_sa=[92m
+                ) else (
+                    if %audiorandom% == y (
+                        set rc_sa=[92m
+                    ) else (
+                        set cc_sa=[92m
+                    )
+                )
+            )
+        )
+    )
+)
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
 echo      %dc_sa%[1] Decent[0m           %bc_sa%[2] Bad[0m           %tc_sa%[3] Terrible[0m       %uc_sa%[4] Unbearable[0m        %cc_sa%[C] Custom[0m          %rc_sa%[R] Random[0m
@@ -2669,19 +2761,15 @@ choice /n /c 1234CRB
 set "audiocustomizationquestion=%errorlevel%"
 :: custom quality
 if %audiocustomizationquestion% == 7 goto :eof
-set "dc_sa="
-set "bc_sa="
-set "tc_sa="
-set "uc_sa="
-set "cc_sa="
-set "rc_sa="
 if %audiocustomizationquestion% == 5 set audiocustomizationquestion=c
 :: random quality
 if %audiocustomizationquestion% == 6 (
-    set rc_sa=[92m
+    set audiorandom=y
     set audiocustomizationquestion=r
     set /a audiobr=%random% * 15 / 32768 + 1
     goto :eof
+) else (
+    set audiorandom=n
 )
 :: defines a few variables that will be replaced later; used to check for valid user inputs
 set audiobr=a
@@ -2690,31 +2778,29 @@ set audiobr=a
 :customquestioncheckpoint
 :: custom quality
 if "%audiocustomizationquestion%" == "c" (
+    set audiocustom=y
     call :clearlastprompt
     echo                                                 Custom %qs%
     echo.
-    set cc_sa=[92m
     echo                  [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
     set /p "audiobr="
+) else (
+    set audiocustom=n
 )
 :: decent quality
 if %audiocustomizationquestion% == 1 (
-    set dc_sa=[92m
     set audiobr=3
 )
 :: bad quality
 if %audiocustomizationquestion% == 2 (
-    set bc_sa=[92m
     set audiobr=5
 )
 :: terrible quality
 if %audiocustomizationquestion% == 3 (
-    set tc_sa=[92m
     set audiobr=8
 )
 :: unbearable quality
 if %audiocustomizationquestion% == 4 (
-    set uc_sa=[92m
     set audiobr=9
 )
 :: if custom quality is selected, check if the variables are all whole numbers
@@ -2841,6 +2927,12 @@ if %replaceaudio% == y (
 ) else (
     call :togglethis gui_audio_replacing off
 )
+if %noaudio% == y (
+    call :togglethis gui_audio_noaudio on
+) else (
+    call :togglethis gui_audio_noaudio off
+)
+call :autosaveconfig
 goto :eof
 
 :togglethis
