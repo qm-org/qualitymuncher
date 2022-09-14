@@ -1,1 +1,1 @@
-1.4.6 has been released, which includes a new GUI that you can use, as well as a few smaller features.
+1.5.0 has been released, which adds the fully functional GUI^! We now support multiqueue for all file types.

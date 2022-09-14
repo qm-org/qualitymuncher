@@ -1,6 +1,6 @@
 # Quality Muncher
 ## About
-Quality Muncher is a batch script designed for making extremely customizable low quality videos, audios, images, and gifs, with [tons of features](https://github.com/qm-org/qualitymuncher#features). If you have any bugs, issues, questions, or suggestions, feel free to make an issue here or [join the discord server](https://discord.gg/9tRZ6C7tYz).
+Quality Muncher is a batch script designed for making extremely customizable low quality videos, audios, images, and GIFs, with [tons of features](https://github.com/qm-org/qualitymuncher#features). If you have any bugs, issues, questions, or suggestions, feel free to make an issue here or [join the discord server](https://discord.gg/9tRZ6C7tYz).
 
 # Installation
 Press WIN + R and paste in the following command:
@@ -22,8 +22,7 @@ Right click on your video, hover over "Send to" and select `Quality Muncher.bat`
 Please answer the prompts correctly and read carefully, as answering incorrectly may cause errors or crashes.
 
 # Features
- - compatability with images, videos, gifs, and audios
- - advanced and simple modes
+ - compatability with images, videos, GIFs, and audios
  - presets and custom options for quality
  - audio and video speed
  - corruption
