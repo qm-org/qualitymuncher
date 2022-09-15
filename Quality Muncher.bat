@@ -5,10 +5,22 @@
 :: made by Frost#5872
 :: https://github.com/qm-org/qualitymuncher
 
+:: ik this shitty code is really fucked up rn with the comments and stuff all over the place
+:: so if you need help figuring out what anything does shoot me a message or ask in the server
+:: and i'll explain whatever you need me to
+
+:: TODO - frost
+:: - add a backup update option using the powershell script in case i am a dumbass again
+:: - information/credits/disclaimers etc page in the menu or maybe extras
+:: - more comments on code (maybe needed? idk how complex this seems to someone who didn't write it)
+:: - sort the functions better (very disorganized)
+:: - ???
+
 :main
 @echo off
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
+set me=%0
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
     :: automatic update checks, highly recommended to keep this enabled
@@ -45,7 +57,7 @@ setlocal enabledelayedexpansion
 
 :: code page, version, and title
 chcp 437 > nul
-set version=1.5.0
+set version=1.5.1
 echo Quality Muncher v%version% successfully started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo %*>>"%temp%\qualitymuncherdebuglog.txt"
@@ -519,7 +531,7 @@ if %gui_extra_var% == 2 call :website
 if %gui_extra_var% == 3 call :announcement
 if %gui_extra_var% == 4 call :bugreport
 if %gui_extra_var% == 5 call :discord
-if %gui_extra_var% == 6 call :updatecheck
+if %gui_extra_var% == 6 set "forceupdate=y"&call :updatecheck
 if %gui_extra_var% == 7 call :suggestionactual
 goto guiextrarefresh
 
@@ -2111,7 +2123,7 @@ if "%version%" == "%newversion%" (
     if %forceupdate% == n (
         goto :eof
     ) else (
-        echo Your version of Quality Muncher is up to date^^! Press [C] to continue
+        echo Your version of Quality Muncher is up to date^^! Press [C] to continue.
         choice /c CF /n /m "Alternatively, you can forcibly update/repair Quality Muncher by pressing [F]."
         if %errorlevel% == 1 (
             goto :eof
@@ -2140,7 +2152,7 @@ echo Are you sure you want to update? This will overwrite the current file^^!
 echo [92m[Y] Yes, update and overwrite.[0m [93m[C] Yes, BUT save a copy of the current file.[0m [91m[N] No, take me back.[0m
 choice /c YCN /n
 if %errorlevel% == 2 (
-    copy %0 "%~dpn0 (OLD).bat" || (
+    copy %me% "Quality Muncher (OLD).bat" || (
         echo [91mError copying the file^^! Updating has been aborted.[0m
         echo Press any key to go to the menu
         pause > nul
@@ -2156,7 +2168,7 @@ if %errorlevel% == 3 (
 )
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20Muncher.bat" --output %0 || (
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20Muncher.bat" --output %me% || (
     echo Error whe downloading the update>>"%temp%\qualitymuncherdebuglog.txt"
     echo [91mecho Downloading the update failed^^! Please try again later.[0m
     echo Press any key to go to the menu
@@ -2166,7 +2178,7 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20M
 )
 cls
 :: runs the (updated) script
-%0 %1
+%me% %1
 exit
 
 :: runs if there isn't internet (comes from update check)

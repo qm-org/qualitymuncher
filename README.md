@@ -4,15 +4,15 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
- - TUI by default
- - splash text
- - big improvements to debug logs
- - export a video as a GIF
- - don't render video stream
+none since i justed updated the main branch with this
 
 # Planned
 
- - more debug log improvements
+ - a backup update option using the powershell script in case i am a dumbass again
+ - information/credits/disclaimers etc page in the menu or maybe extras
+ - more comments on code (maybe needed? idk how complex this seems to someone who didn't write it)
+ - sort the functions better (very disorganized)
+ - ???
 
 # Bugs
 
