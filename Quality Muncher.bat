@@ -229,7 +229,7 @@ if %hasvideo% == y (
         choice /c VALSCEI /n
     )
 )
-echo Main GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Main GUI option is %errorlevel%  >>"%temp%\qualitymuncherdebuglog.txt"
 if %errorlevel% == 1 (
     if %hasvideo% == y (
         if %isimage% == y (
@@ -366,7 +366,7 @@ echo.
 echo.
 choice /c 123456789RFSGMBN /n
 call :clearlastprompt
-echo Video GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_video_var=%errorlevel%
 :: quality
 if %gui_video_var% == 1 call :qualityselect
@@ -457,7 +457,7 @@ echo.
 echo.
 choice /c 123456BN /n
 call :clearlastprompt
-echo Audio GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Audio GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_audio_var=%errorlevel%
 :: quality
 if %gui_audio_var% == 1 call :audioqualityselect
@@ -523,7 +523,7 @@ echo                [D]iscord                                [U]pdate           
 echo.
 echo.
 choice /n /c BWARDUS
-echo Extra GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_extra_var=%errorlevel%
 call :clearlastprompt
 if %gui_extra_var% == 1 goto guimenu
@@ -573,7 +573,7 @@ echo.
 echo.
 choice /n /c BQTS
 call :clearlastprompt
-echo Extra GUI option is %errorlevel%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 :: back
 if %errorlevel% == 1 goto guimenu
 :: quality
