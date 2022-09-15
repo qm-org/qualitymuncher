@@ -9,6 +9,7 @@
 @echo off
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
+set me=%0
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
     :: automatic update checks, highly recommended to keep this enabled
@@ -2140,7 +2141,7 @@ echo Are you sure you want to update? This will overwrite the current file^^!
 echo [92m[Y] Yes, update and overwrite.[0m [93m[C] Yes, BUT save a copy of the current file.[0m [91m[N] No, take me back.[0m
 choice /c YCN /n
 if %errorlevel% == 2 (
-    copy %0 "%~dpn0 (OLD).bat" || (
+    copy %me% "Quality Muncher (OLD).bat" || (
         echo [91mError copying the file^^! Updating has been aborted.[0m
         echo Press any key to go to the menu
         pause > nul
@@ -2156,7 +2157,7 @@ if %errorlevel% == 3 (
 )
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20Muncher.bat" --output %0 || (
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20Muncher.bat" --output %me% || (
     echo Error whe downloading the update>>"%temp%\qualitymuncherdebuglog.txt"
     echo [91mecho Downloading the update failed^^! Please try again later.[0m
     echo Press any key to go to the menu
@@ -2166,7 +2167,7 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%20M
 )
 cls
 :: runs the (updated) script
-%0 %1
+%me% %1
 exit
 
 :: runs if there isn't internet (comes from update check)
