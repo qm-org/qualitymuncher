@@ -520,7 +520,7 @@ if %gui_extra_var% == 2 call :website
 if %gui_extra_var% == 3 call :announcement
 if %gui_extra_var% == 4 call :bugreport
 if %gui_extra_var% == 5 call :discord
-if %gui_extra_var% == 6 call :updatecheck
+if %gui_extra_var% == 6 set "forceupdate=y"&call :updatecheck
 if %gui_extra_var% == 7 call :suggestionactual
 goto guiextrarefresh
 
@@ -2112,7 +2112,7 @@ if "%version%" == "%newversion%" (
     if %forceupdate% == n (
         goto :eof
     ) else (
-        echo Your version of Quality Muncher is up to date^^! Press [C] to continue
+        echo Your version of Quality Muncher is up to date^^! Press [C] to continue.
         choice /c CF /n /m "Alternatively, you can forcibly update/repair Quality Muncher by pressing [F]."
         if %errorlevel% == 1 (
             goto :eof
