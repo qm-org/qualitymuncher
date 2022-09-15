@@ -10,7 +10,6 @@
 :: and i'll explain whatever you need me to
 
 :: TODO - frost
-:: - add a backup update option using the powershell script in case i am a dumbass again
 :: - information/credits/disclaimers etc page in the menu or maybe extras
 :: - more comments on code (maybe needed? idk how complex this seems to someone who didn't write it)
 :: - sort the functions better (very disorganized)
@@ -2169,16 +2168,19 @@ if %errorlevel% == 3 (
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
 curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20Muncher.bat" --output %me% || (
-    echo Error whe downloading the update>>"%temp%\qualitymuncherdebuglog.txt"
-    echo [91mecho Downloading the update failed^^! Please try again later.[0m
-    echo Press any key to go to the menu
-    pause > nul
-    call :titledisplay
-    goto :eof
+    echo Error whe downloading the update, trying fallback>>"%temp%\qualitymuncherdebuglog.txt"
+    echo [38;2;254;165;0mPrimary update method failed. Trying fallback script now.[0m
+    echo When prompted, please press O, then press enter to update the script.
+    powershell -noprofile "iex(iwr -useb install.qualitymuncher.lgbt)"
+    echo Exiting in 10 seconds...
+    timeout /t 10
+    exit
 )
 cls
 :: runs the (updated) script
-%me% %1
+echo %me%
+pause
+%me% %*
 exit
 
 :: runs if there isn't internet (comes from update check)
