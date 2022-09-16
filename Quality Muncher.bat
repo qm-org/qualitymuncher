@@ -50,7 +50,7 @@ set me=%0
 :: END OF OPTIONS
 
 :: ################################################################################################################################
-:: #####################    WARNING: modifying any lines past here might result in the program breaking^^!    #####################
+:: ######################    WARNING: modifying any lines past here might result in the program breaking!    ######################
 :: ################################################################################################################################
 
 :: code page, version, and title
@@ -108,6 +108,7 @@ if not exist "%~1" (
     goto guimenurefresh
     echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
 )
+:: get the audio stream and set it to a variable
 set inputvideo=%1
 ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %temp%\astream.txt
 set /p astream=<%temp%\astream.txt
@@ -119,6 +120,7 @@ if 1%astream% == 1 (
     echo Input has an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=y
 )
+:: get the video stream and set it to a variable, then 
 ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
 set /p vstream=<%temp%\vstream.txt
 if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
@@ -126,8 +128,16 @@ if 1%vstream% == 1 (
     echo Input does not have a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=n
     if %hasaudio% == y (
-        goto novideostream
+        :: if the input has an audio stream, set the audio encoder based on the input's container
+        :: then go to the menu
+        if %audiocontainer% == .mp3 (
+            set audioencoder=libmp3lame
+        ) else (
+            set audioencoder=aac
+        )
+        goto guimenurefresh
     ) else (
+        :: if the video has no video nor audio streams, set noinput to y and go to the menu
         echo Video has neither audio nor video streams, assumed to be an invalid input and going to noinput in the TUI>>"%temp%\qualitymuncherdebuglog.txt"
         set noinput=y
         goto guimenurefresh
@@ -136,9 +146,9 @@ if 1%vstream% == 1 (
     echo Input has a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=y
 )
-:: if the video is an image, ask specific image questions instead
 goto guimenurefresh
 
+:: displays the main menu title
 :titledisplay
 cls
 if %showtitle% == n (
@@ -272,50 +282,7 @@ if %errorlevel% == 8 (
 )
 goto guimenurefresh
 
-:: automatically saves your current config to a file in temp for retrieval later
-:autosaveconfig
-call :savetoconfigbypassname temp
-goto :eof
-
-:: loads a custom config from the user
-:customconfig
-echo Please enter either:
-echo  - the path of your config file
-echo  - [38;2;254;165;0mB[0m to go back
-echo  - or [38;2;254;165;0mR[0m to use your last used settings
-set /p "configfile="
-if %configfile% == b goto :eof
-if %configfile% == B goto :eof
-if %configfile% == R (
-    :: if the file doesn't exist, tell the user and go back
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-if %configfile% == r (
-    :: if the file doesn't exist, tell the user and go back
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-:: if the file doesn't exist, tell the user and go back
-if not exist %configfile% (
-    call :clearlastprompt
-    echo [91mFile not found.[0m
-    goto :customconfig
-)
-:: call the config file to load the settings
-call %configfile%
-goto :eof
-
+:: display the title for the video options
 :titledisplayvideo
 cls
 if %showtitle% == n (
@@ -413,6 +380,7 @@ if %gui_video_var% == 16 if %novideo% == y (
 )
 goto guivideooptionsrefresh
 
+:: display the title for the audio options
 :titledisplayaudio
 cls
 if %showtitle% == n (
@@ -488,6 +456,7 @@ if %gui_audio_var% == 8 if %noaudio% == y (
 )
 goto guiaudiooptionsrefresh
 
+:: display the title for the extra options
 :titledisplayextra
 cls
 if %showtitle% == n (
@@ -539,6 +508,7 @@ if %gui_extra_var% == 6 set "forceupdate=y"&call :updatecheck
 if %gui_extra_var% == 7 call :suggestionactual
 goto guiextrarefresh
 
+:: display the title for the image options
 :titledisplayimage
 cls
 if %showtitle% == n (
@@ -601,6 +571,60 @@ if %errorlevel% == 4 (
     set /p "imagesc="
 )
 goto guiimageoptionsrefresh
+
+:: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
+:render
+echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
+if not %isimage% == y (
+    set /a badaudiobitrate=80/%audiobr%
+    :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
+    if %distortaudio% == n (
+        if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%"
+            ) else (
+                set "audiofilters="
+            )
+    ) else (
+        if %method% == classic (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+            )
+        ) else (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            )
+        )
+    )
+)
+:: saves the final config and a log to the debug logs
+set fromrender=y
+call :makelog
+set fromrender=n
+echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
+type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
+if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
+call :savetoconfigbypassname temp
+type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+:: encode using the right encoding function
+if %hasvideo% == y (
+    if %isimage% == y (
+        set /a qvnew=^(%qv%*3^)+1
+        echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
+        goto newmunchmultiq
+    ) else (
+        echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
+        goto encodevideomultiq
+    )
+) else (
+    echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
+    goto encodeaudiomultiqueue
+)
+goto guimenu
 
 :: sends all video files to be encoded
 :encodevideomultiq
@@ -2252,15 +2276,6 @@ set "filename=%filenametemp%"
 call :clearlastprompt
 goto :eof
 
-:: audio questions - ran when the user uses an audio file as an input
-:novideostream
-if %audiocontainer% == .mp3 (
-    set audioencoder=libmp3lame
-) else (
-    set audioencoder=aac
-)
-goto guimenurefresh
-
 :: sending each audio only input to be encoded
 :encodeaudiomultiqueue
 set totalfiles=0
@@ -2695,60 +2710,6 @@ set "colorfilter="
 set method=classic
 goto :eof
 
-:: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
-:render
-echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
-if not %isimage% == y (
-    set /a badaudiobitrate=80/%audiobr%
-    :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
-    if %distortaudio% == n (
-        if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%"
-            ) else (
-                set "audiofilters="
-            )
-    ) else (
-        if %method% == classic (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-            )
-        ) else (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            )
-        )
-    )
-)
-:: saves the final config and a log to the debug logs
-set fromrender=y
-call :makelog
-set fromrender=n
-echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
-type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
-if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
-echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
-echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
-call :savetoconfigbypassname temp
-type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
-echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
-:: encode using the right encoding function
-if %hasvideo% == y (
-    if %isimage% == y (
-        set /a qvnew=^(%qv%*3^)+1
-        echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
-        goto newmunchmultiq
-    ) else (
-        echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
-        goto encodevideomultiq
-    )
-) else (
-    echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
-    goto encodeaudiomultiqueue
-)
-goto guimenu
-
 :: select a quality for audio
 :audioqualityselect
 :: resetting the highlighted value
@@ -3025,6 +2986,50 @@ set /a "quoteindex=%random% * %quotecount% / 32768 + 1"
 echo.
 echo [38;2;123;169;181m!messages%quoteindex%![0m
 echo.
+goto :eof
+
+:: automatically saves your current config to a file in temp for retrieval later
+:autosaveconfig
+call :savetoconfigbypassname temp
+goto :eof
+
+:: loads a custom config from the user
+:customconfig
+echo Please enter either:
+echo  - the path of your config file
+echo  - [38;2;254;165;0mB[0m to go back
+echo  - or [38;2;254;165;0mR[0m to use your last used settings
+set /p "configfile="
+if %configfile% == b goto :eof
+if %configfile% == B goto :eof
+if %configfile% == R (
+    :: if the file doesn't exist, tell the user and go back
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+if %configfile% == r (
+    :: if the file doesn't exist, tell the user and go back
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+:: if the file doesn't exist, tell the user and go back
+if not exist %configfile% (
+    call :clearlastprompt
+    echo [91mFile not found.[0m
+    goto :customconfig
+)
+:: call the config file to load the settings
+call %configfile%
 goto :eof
 
 :: leaves the script
