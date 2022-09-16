@@ -1036,6 +1036,17 @@ set outputvar="%cd%\%filename%%audiocontainer%
 if %tts% == y call :encodevoiceNV
 goto :eof
 
+:: text-to-speech encoding for no video stream
+:: seperate from the video one since it has some options that aren't the same
+:encodevoiceNV
+set "af2="
+if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB" -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+if exist "%filename%%audiocontainer%" (del "%filename%%audiocontainer%")
+set outputvar="%cd%\%filename% tts%audiocontainer%"
+goto :eof
+
 :: display the title for the extra options
 :titledisplayextra
 cls
@@ -1379,23 +1390,6 @@ if %imagecontainerbackup% == .gif (
 )
 rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"
-goto :eof
-
-:resamplemath
-:: do nothing if the input fps is equal to the output fps
-if %outputfps% == %intputfps% goto :eof
-:: interpolate if output fps is greater than input fps
-if %outputfps% gtr %intputfps% (
-    set "fpsfilter=minterpolate=fps=%outputfps%,"
-    goto :eof
-)
-:: resample if output fps is greater than input fps
-:: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
-set tmixframes=(%inputfps%/%outputfps%)
-set /a tmixcheck=%tmixframes%
-:: tmix breaks at >128 frames, so make sure it doesn't go above that
-if %tmixcheck% gtr 128 set tmixframes=128
-set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
 goto :eof
 
 :qualityselect
@@ -2089,6 +2083,23 @@ set outputvar="%cd%\%filename%.webm"
 rmdir "%temp%\qmframes" /s /q
 goto :eof
 
+:resamplemath
+:: do nothing if the input fps is equal to the output fps
+if %outputfps% == %intputfps% goto :eof
+:: interpolate if output fps is greater than input fps
+if %outputfps% gtr %intputfps% (
+    set "fpsfilter=minterpolate=fps=%outputfps%,"
+    goto :eof
+)
+:: resample if output fps is greater than input fps
+:: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
+set tmixframes=(%inputfps%/%outputfps%)
+set /a tmixcheck=%tmixframes%
+:: tmix breaks at >128 frames, so make sure it doesn't go above that
+if %tmixcheck% gtr 128 set tmixframes=128
+set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
+goto :eof
+
 :: asks if user wants to fry the video
 :videofrying
 choice /m "Do you want to fry the video? (will cause extreme distortion)"
@@ -2625,17 +2636,6 @@ echo                                         Enter your output name [93mwith no
 set /p "filenametemp="
 set "filename=%filenametemp%"
 call :clearlastprompt
-goto :eof
-
-:: text-to-speech encoding for no video stream
-:: seperate from the video one since it has some options that aren't the same
-:encodevoiceNV
-set "af2="
-if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-if exist "%filename%%audiocontainer%" (del "%filename%%audiocontainer%")
-set outputvar="%cd%\%filename% tts%audiocontainer%"
 goto :eof
 
 :: checks if a file with the same name as the output already exists, if so, appends a (1) to the name, then (2) if that also exists, then (3), etc
