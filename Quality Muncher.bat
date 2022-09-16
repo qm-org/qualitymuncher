@@ -9,11 +9,6 @@
 :: so if you need help figuring out what anything does shoot me a message or ask in the server
 :: and i'll explain whatever you need me to
 
-:: TODO - frost
-:: - more comments on code (maybe needed? idk how complex this seems to someone who didn't write it)
-:: - sort the functions better (very disorganized)
-:: - ???
-
 :main
 @echo off
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
@@ -282,6 +277,413 @@ if %errorlevel% == 8 (
 )
 goto guimenurefresh
 
+:: loads a custom config from the user
+:customconfig
+echo Please enter either:
+echo  - the path of your config file
+echo  - [38;2;254;165;0mB[0m to go back
+echo  - or [38;2;254;165;0mR[0m to use your last used settings
+set /p "configfile="
+if %configfile% == b goto :eof
+if %configfile% == B goto :eof
+if %configfile% == R (
+    :: if the file doesn't exist, tell the user and go back
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+if %configfile% == r (
+    :: if the file doesn't exist, tell the user and go back
+    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
+        echo [91mMost recent settings were unable to be found.[0m
+        pause
+        goto :eof
+    )
+    call "%temp%\qualitymuncherconfig_autosave.bat"
+    goto :eof
+)
+:: if the file doesn't exist, tell the user and go back
+if not exist %configfile% (
+    call :clearlastprompt
+    echo [91mFile not found.[0m
+    goto :customconfig
+)
+:: call the config file to load the settings
+call %configfile%
+goto :eof
+
+:savetoconfig
+call :clearlastprompt
+echo                                            Enter a name for the config file:
+set /p "configname="
+:savetoconfigbypassname
+if "%~1" == "temp" (set "configname=%temp%\qualitymuncherconfig_autosave")
+:: have to escape parentheses because they're nested and this is how i have to do it
+if defined textonepos set textoneposesc=%textonepos:(=^^^^^^^^^^(%
+if defined textonepos set textoneposesc=%textoneposesc:)=^^^^^^)%
+if defined texttwopos set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
+if defined texttwopos set texttwoposesc=%texttwoposesc:)=^^^^^^)%
+if defined audiofilters set audiofiltersesc=%audiofilters:(=^^^^^^^^^^(%
+if defined audiofilters set audiofiltersesc=%audiofiltersesc:)=^^^^^^)%
+echo Saving settings to a config file>>"%temp%\qualitymuncherdebuglog.txt"
+echo :: Configuration file for Quality Muncher v%version% > "%configname%.bat"
+echo :: Created at %time% on %date% >> "%configname%.bat"
+(
+    echo set endingmsg=%endingmsg%
+    echo set outputfps=%outputfps%
+    echo set videobr=%videobr%
+    echo set audiobr=%audiobr%
+    echo set /a badaudiobitrate=80/%audiobr%
+    echo set scaleq=%scaleq%
+
+    echo set novideo=%novideo%
+    echo set noaudio=%noaudio%
+
+    echo set trimmed=%trimmed%
+    echo set starttime=%starttime%
+    echo set vidtime=%vidtime%
+
+    echo set speedq=%speedq%
+    echo set "speedfilter=setpts=(1/%speedq%)*PTS,"
+    echo set audiospeedq=%audiospeedq%
+
+    echo set addedtextq=%addedtextq%
+    echo set tsize=%tsize%
+    echo set toptext=%toptext%
+    echo set textonepos=%textoneposesc%
+    echo set tsize2=%tsize2%
+    echo set bottomtext=%bottomtext%
+    echo set texttwopos=%texttwoposesc%
+
+    echo set colorq=%colorq%
+    echo set colorfilter=%colorfilter%
+
+    echo set stretchres=%stretchres%
+    echo set widthratio=%widthratio%
+    echo set heightratio=%heightratio%
+    echo set "aspectratio=%widthratio%/%heightratio%"
+
+    echo set corrupt=%corrupt%
+    echo set corruptsev=%corruptsev%
+
+    echo set spoofduration=%spoofduration%
+    echo set durationtype=%durationtype%
+
+    echo set bouncy=%bouncy%
+    echo set incrementbounce=%incrementbounce%
+    echo set minimumbounce=%minimumbounce%
+    echo set bouncetype=%bouncetype%
+
+    echo set resample=%resample%
+
+    echo set frying=%frying%
+    echo set levelcolor=%levelcolor%
+
+    echo set stutter=%stutter%
+    echo set stutteramount=%stutteramount%
+
+    echo set filtercl=%filtercl%
+
+    echo set audiofilters=%audiofiltersesc%
+
+    echo set tts=%tts%
+    echo set ttstext=%ttstext%
+    echo set volume=%volume%
+
+    echo set replaceaudio=%replaceaudio%
+    echo set lowqualmusic=%lowqualmusic%
+
+    echo set loopn=%loopn%
+    echo set qv=%qv%
+    echo set imagesc=%imagesc%
+
+    echo exit /b
+) >> "%configname%.bat"
+echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
+if "%~1" == "temp" goto :eof
+echo You config file is located at "%cd%\%configname%.bat"
+pause
+call :clearlastprompt
+goto :eof
+
+:: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
+:render
+echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
+if not %isimage% == y (
+    set /a badaudiobitrate=80/%audiobr%
+    :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
+    if %distortaudio% == n (
+        if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%"
+            ) else (
+                set "audiofilters="
+            )
+    ) else (
+        if %method% == simple (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+            )
+        ) else (
+            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            )
+        )
+    )
+)
+:: saves the final config and a log to the debug logs
+set fromrender=y
+call :makelog
+set fromrender=n
+echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
+type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
+if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
+call :savetoconfigbypassname temp
+type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
+echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
+:: encode using the right encoding function
+if %hasvideo% == y (
+    if %isimage% == y (
+        set /a qvnew=^(%qv%*3^)+1
+        echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
+        goto newmunchmultiq
+    ) else (
+        echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
+        goto encodevideomultiq
+    )
+) else (
+    echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
+    goto encodeaudiomultiqueue
+)
+goto guimenu
+
+:: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for some input
+:exiting
+echo Made it to exit>>"%temp%\qualitymuncherdebuglog.txt"
+echo.
+where /q ffplay.exe || goto aftersound
+if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
+:aftersound
+:: go to nopipingforyou if the user is using multiqueue
+if not "b%~2" == "b" goto nopipingforyou
+echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
+choice /n /c COFPLX /m "You can also press [X] to make a config file, or [L] to generate a debugging log for errors."
+if %errorlevel% == 5 (
+    call :makelog
+    goto closingbar
+)
+if %errorlevel% == 4 goto piped
+if %errorlevel% == 2 %outputvar%
+if %errorlevel% == 3 explorer /select, %outputvar%
+if %errorlevel% == 6 (
+    call :titledisplay
+    call :savetoconfig
+)
+goto closingbar
+
+:: where the script goes if the user is using multiqueue
+:nopipingforyou
+choice /n /c CLX /m "Press [C] to close, [X] to make a config file, or [L] to generate a debugging log for errors."
+if %errorlevel% == 2 (
+    call :makelog
+    goto closingbar
+)
+if %errorlevel% == 3 call :savetoconfig
+goto closingbar
+
+:: pipes the output to another script of the user's choosing
+:piped
+echo Piping output>>"%temp%\qualitymuncherdebuglog.txt"
+call :titledisplay
+echo Scripts found:
+:: add scripts here, if you want
+echo [S] Custom Script
+echo [1] FFmpeg
+if exist "%~dp0\^^!add text.bat" echo [2] add text
+if exist "%~dp0\^^!audio sync.bat" echo [3] audio sync
+if exist "%~dp0\^^!change fps.bat" echo [4] change fps
+if exist "%~dp0\^^!change speed.bat" echo [5] change speed
+if exist "%~dp0\^^!extract frame.bat" echo [6] extract frame
+if exist "%~dp0\^^!interpolater.bat" echo [7] interpolater
+if exist "%~dp0\^^!replace audio.bat" echo [8] replace audio
+if exist "%~dp0\^^!upscale nn.bat" echo [9] upscale NN
+if exist "%~dp0\^^!convert to gif.bat" echo [G] convert to GIF
+echo.
+:: selecting and piping
+choice /n /c S123456789CG /m "Select a script to pipe to, or press [C] to close: "
+if %errorlevel% == 1 goto customscript
+cls
+if %errorlevel% == 3 cmd /k call "%~dp0\^^!add text.bat" %outputvar%
+if %errorlevel% == 4 cmd /k call "%~dp0\^^!audio sync.bat" %outputvar%
+if %errorlevel% == 5 cmd /k call "%~dp0\^^!change fps.bat" %outputvar%
+if %errorlevel% == 6 cmd /k call "%~dp0\^^!change speed.bat" %outputvar%
+if %errorlevel% == 7 cmd /k call "%~dp0\^^!extract frame.bat" %outputvar%
+if %errorlevel% == 8 cmd /k call "%~dp0\^^!interpolater.bat" %outputvar%
+if %errorlevel% == 9 cmd /k call "%~dp0\^^!replace audio.bat" %outputvar%
+if %errorlevel% == 10 cmd /k call "%~dp0\^^!upscale nn.bat" %outputvar%
+if %errorlevel% == 12 cmd /k call "%~dp0\^^!convert to gif.bat" %outputvar%
+if %errorlevel% == 11 exit
+if %errorlevel% == 2 call :ffmpegpipe
+goto closingbar
+
+:ffmpegpipe
+echo Piping to FFmpeg>>"%temp%\qualitymuncherdebuglog.txt"
+set /p "ffmpeginput=ffmpeg -i %outputvar% "
+echo.
+echo [38;2;254;165;0mEncoding...[0m
+echo.
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% %ffmpeginput% && echo FFmpeg call 13 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 13 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+set done=y
+echo.
+echo [92mDone^^![0m
+echo.
+where /q ffplay.exe || goto aftersound2
+if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
+:aftersound2
+pause
+goto :eof
+
+:: piping to a custom script provided by the user
+:customscript
+call :clearlastprompt
+set /p "customscript=Enter the path to the script you want to pipe to: "
+cls
+cmd /k call %customscript% %outputvar%
+goto closingbar
+
+:: makes a log for when a user might encounter an error
+:makelog
+call :clearlastprompt
+:: go to the logs directory, if it exists
+set pastdir=%cd%
+if defined loggingdir cd /d %loggingdir%
+:: delete old log
+if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
+:: stuff to log (anything and everything possible for batch to get that might be responsible for issues)
+:: filename and outputvar are seperate from the rest because filesnames can have weird characters that might cause the entire log to fail if it's not seperated
+echo Making log...>>"%temp%\qualitymuncherdebuglog.txt"
+echo filename: %filename% > "Quality Muncher Log.txt"
+echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
+(
+    echo LOG CREATION TIME: %time% ON %date%
+    echo.
+    echo SIMPLE
+    echo     version: %version%
+    echo     customizationquestion: %customizationquestion%
+    echo     input width by height: %width% by %height%
+    echo     intput fps: %inputfps%
+    echo     output width by height: %desiredwidth% by %desiredheight%
+    echo     badvideobitrate: %badvideobitrate%
+    echo     badaudiobitrate with added 000: %badaudiobitrate%000
+    echo     internet: %internet%
+    echo.
+    echo VIDEO OPTIONS
+    echo     fps: %outputfps%
+    echo     videobr: %videobr%
+    echo     audiobr: %audiobr%
+    echo     scaleq: %scaleq%
+    echo.
+    echo ADVANCED
+    echo     trimmed: %trimmed%
+    echo         starttime: %starttime%
+    echo         vidtime {aka video length}: %vidtime%
+    echo     corrupt: %corrupt%
+    echo         corruptsev: %corruptsev%
+    echo     spoofduration: %spoofduration%
+    echo         durationtype: %durationtype%
+    echo         linecontentog: %linecontentog%
+    echo         linecontentnew: %linecontentnew%
+    echo     bouncy: %bouncy%
+    echo         bouncetype: %bouncetype%
+    echo         incrementbounce: %incrementbounce%
+    echo         minimumbounce: %incrementbounce%
+    echo     speedq: %speedq%
+    echo     audiospeedq: %audiospeedq%
+    echo     resample: %resample%
+    echo     stretchres %stretchres%
+    echo         custom width by height aspect ratio: %widthratio% by %heightratio%
+    echo     replaceaudio {added audio}: %replaceaudio%
+    echo     colorq: %colorq%
+    echo         contrast: %contrastvalue%
+    echo         saturation: %saturationvalue%
+    echo         brightness: %brightnessvalue%
+    echo     addedtextq: %addedtextq%
+    echo         toptext: %toptext%
+    echo         tsize: %tsize%
+    echo         bottomtext: %bottomtext%
+    echo         tsize2: %tsize2%
+    echo     distortaudio {audio distortion}: %distortaudio%
+    echo         method: %method%
+    echo         distortionseverity: %distortionseverity%
+    echo         distsev {distortionseverity*10}: %distsev%
+    echo     frying: %frying%
+    echo     tts: %tts%
+    echo         ttstext: %ttstext%
+    echo         volume: %volume%
+    echo     extra effects
+    echo         filtercl: %filtercl%
+    echo         tcly {at least one effect is enabled}: %tcly%
+    echo     stutter: %stutter%
+    echo         stutteramount: %stutteramount%
+    echo     novideo: %novideo%
+    echo     noaudio: %noaudio%
+    echo.
+    echo USER OPTIONS
+    echo     autoupdatecheck: %autoupdatecheck%
+    echo     stayopen: %stayopen%
+    echo     showtitle: %showtitle%
+    echo     animate: %animate%
+    echo     animatespeed: %animatespeed%
+    echo     encodingspeed: %encodingspeed%
+    echo     updatespeed: %updatespeed%
+    echo     container: %container%
+    echo     audiocontainer: %audiocontainer%
+    echo     imagecontainer: %imagecontainer%
+    echo FFMPEG DETAILS
+)>>"Quality Muncher Log.txt"
+echo Log made>>"%temp%\qualitymuncherdebuglog.txt"
+:: add ffmpeg to the log
+ffmpeg > nul 2>>"Quality Muncher Log.txt"
+if %fromrender% == y goto :eof
+:: prompt to upload to the webhook for the devs
+call :titledisplay
+choice /m "Log has been made. Upload and send to developers?"
+if %errorlevel% == 2 goto :eof
+choice /m "Do you want to provide more details about the log? For example, what might've caused it or what the error was."
+if %errorlevel% == 1 set /p "detaillog=Please provide more details: "
+if %errorlevel% == 2 set detaillog=No details provided.
+set /p "author=What is your name on discord? [93mThis is optional but very helpful[0m: "
+:: check if the user can connect to the site
+ping /n 1 transfer.sh  | find "Reply" > nul
+if %errorlevel% == 1 (
+    set internet=n
+    echo [91mSorry, either the transfer service is down or you're not connected to the internet. Please try again later.[0m
+    echo.
+    pause
+    goto :eof
+)
+:: upload and save the link to a file, then save to a variable
+curl -s --upload-file "Quality Muncher Log.txt" https://transfer.sh > "%temp%\curlurl.txt"
+set /p curlurl=<"%temp%\curlurl.txt"
+if exist "%temp%\curlurl.txt" (del "%temp%\curlurl.txt")
+:: send to the webhook for the devs
+:: please don't abuse this webhook it would make me very sad
+set wbh2=lxyrX4Y5TxLkQXfq
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"username\": \"Quality Logs\",\"content\": \"New log recieved^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%detaillog%\", \"description\": \"%curlurl%\", \"author\": {\"name\": \"%author% at %time% on %date:~4,10%\"}}]}" https://discord.com/api/webhooks/988214286629359656/0bSrcdJdOLGuR-w89lPasi16qVr_cj%wbh2%ndzi0K1CK4MoHYnoTmtcoS
+if not 1%loggingdir% == 1 cd /d %pastdir%
+call :titledisplay
+echo [92mYour log has been successfully sent to the developers^^![0m
+echo.
+pause
+goto :eof
+
 :: display the title for the video options
 :titledisplayvideo
 cls
@@ -379,252 +781,6 @@ if %gui_video_var% == 16 if %novideo% == y (
     set novideo=y
 )
 goto guivideooptionsrefresh
-
-:: display the title for the audio options
-:titledisplayaudio
-cls
-if %showtitle% == n (
-    goto :eof
-) else (
-    echo [s
-)
-cls
-echo                                           [38;2;39;55;210m_  _             ____          _    _
-echo                          [38;2;0;87;228m/\              ^| ^|(_)           / __ \        ^| ^|  (_)
-echo                         [38;2;0;111;235m/  \   _   _   __^| ^| _   ___     ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
-echo                        [38;2;0;130;235m/ /\ \ ^| ^| ^| ^| / _` ^|^| ^| / _ \    ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
-echo                       [38;2;0;148;230m/ ____ \^| ^|_^| ^|^| (_^| ^|^| ^|^| (_) ^|   ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
-echo                      [38;2;0;163;221m/_/    \_\\__,_^| \__,_^|^|_^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
-echo                                                                  [38;2;0;178;211m^| ^|
-echo                                                                  [38;2;49;191;204m^|_^|[0m
-call :splashtext
-echo.[s
-goto :eof
-
-:guiaudiooptions
-set guiaudiotitleisshowing=y
-:guiaudiooptionsrefresh
-:: save the config, then make sure any enabled options are green and disabled options are gray
-call :autosaveconfig
-call :checktogglesaudio
-:: display the title if it isn't already showing
-if %guiaudiotitleisshowing% == y (
-    call :titledisplayaudio
-) else (
-    call :clearlastprompt
-)
-set guiaudiotitleisshowing=n
-echo                                                          [38;2;254;165;0m[B]ack[0m
-echo.
-echo                %gui_audio_quality%                     %gui_audio_starttimeandduration%                      %gui_audio_speed%
-echo.
-echo               %gui_audio_distortion%                       %gui_audio_texttospeech%                         %gui_audio_replacing%
-echo.
-echo                                                       %gui_audio_noaudio%
-echo.
-echo.
-echo.
-choice /c 123456BN /n
-call :clearlastprompt
-echo Audio GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
-set /a gui_audio_var=%errorlevel%
-:: quality
-if %gui_audio_var% == 1 call :audioqualityselect
-:: start time and duration
-if %gui_audio_var% == 2 call :durationquestions
-:: speed
-:: speed questions, but set set hasvideo to false temporarily so it doesn't ask about video speed
-if %gui_audio_var% == 3 (
-    set hasvideoog=%hasvideo%
-    set hasvideo=n
-    call :speedquestions
-    set hasvideo=!hasvideoog!
-)
-:: distortion
-if %gui_audio_var% == 4 call :audiodistortion
-:: text to speech
-if %gui_audio_var% == 5 call :voicesynth
-:: replacing
-if %gui_audio_var% == 6 call :replaceaudioquestion
-:: back
-if %gui_audio_var% == 7 goto guimenu
-:: no audio
-if %gui_audio_var% == 8 if %noaudio% == y (
-    set noaudio=n
-) else (
-    set noaudio=y
-)
-goto guiaudiooptionsrefresh
-
-:: display the title for the extra options
-:titledisplayextra
-cls
-if %showtitle% == n (
-    goto :eof
-) else (
-    echo [s
-)
-cls
-echo                                            [38;2;39;55;210m______        _
-echo                                           [38;2;0;87;228m^|  ____^|      ^| ^|
-echo                                           [38;2;0;111;235m^| ^|__   __  __^| ^|_  _ __  __ _  ___
-echo                                           [38;2;0;130;235m^|  __^|  \ \/ /^| __^|^| '__^|/ _` ^|/ __^|
-echo                                           [38;2;0;148;230m^| ^|____  ^>  ^< ^| ^|_ ^| ^|  ^| {_^| ^|\__ \
-echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/[0m
-call :splashtext
-echo.[s
-goto :eof
-
-:guiextra
-set guiextratitleisshowing=y
-:guiextrarefresh
-:: save the config, then make sure any enabled options are green and disabled options are gray
-call :autosaveconfig
-call :checktogglesaudio
-:: display the title if it isn't already showing
-if %guiextratitleisshowing% == y (
-    call :titledisplayextra
-) else (
-    call :clearlastprompt
-)
-set guiextratitleisshowing=n
-echo                                                          [38;2;254;165;0m[B]ack[0m
-echo.
-echo                [W]ebsite                            [A]nnouncements                           [R]eport Bug
-echo.
-echo                [D]iscord                                [U]pdate                              [S]uggestion
-echo.
-echo.
-choice /n /c BWARDUS
-echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
-set /a gui_extra_var=%errorlevel%
-call :clearlastprompt
-if %gui_extra_var% == 1 goto guimenu
-if %gui_extra_var% == 2 call :website
-if %gui_extra_var% == 3 call :announcement
-if %gui_extra_var% == 4 call :bugreport
-if %gui_extra_var% == 5 call :discord
-if %gui_extra_var% == 6 set "forceupdate=y"&call :updatecheck
-if %gui_extra_var% == 7 call :suggestionactual
-goto guiextrarefresh
-
-:: display the title for the image options
-:titledisplayimage
-cls
-if %showtitle% == n (
-    goto :eof
-) else (
-    echo [s
-)
-cls
-echo                      [38;2;39;55;210m_____                                   ____          _    _
-echo                     [38;2;0;87;228m^|_   _^|                                 / __ \        ^| ^|  (_)
-echo                       [38;2;0;111;235m^| ^|   _ __ ___    __ _   __ _   ___  ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
-echo                       [38;2;0;130;235m^| ^|  ^| '_ ` _ \  / _` ^| / _` ^| / _ \ ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
-echo                      [38;2;0;148;230m_^| ^|_ ^| ^| ^| ^| ^| ^|^| {_^| ^|^| (_^| ^|^|  __/ ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
-echo                     [38;2;0;163;221m^|_____^|^|_^| ^|_^| ^|_^| \__,_^| \__, ^| \___^|  \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
-echo                                                [38;2;0;178;211m__/ ^|               ^| ^|
-echo                                               [38;2;49;191;204m^|___/                ^|_^|[0m
-call :splashtext
-echo.[s
-goto :eof
-
-:guiimageoptions
-set guivideotitleisshowing=y
-:guiimageoptionsrefresh
-:: save the config, then make sure any enabled options are green and disabled options are gray
-call :autosaveconfig
-call :checktogglesvideo
-:: display the title if it isn't already showing
-if %guiimagetitleisshowing% == y (
-    call :titledisplayimage
-) else (
-    call :clearlastprompt
-)
-set guiimagetitleisshowing=n
-echo                                                          [38;2;254;165;0m[B]ack[0m
-echo.
-echo                [Q]uality                            [T]imes to Compress                          [S]cale
-echo.
-echo.
-choice /n /c BQTS
-call :clearlastprompt
-echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
-:: back
-if %errorlevel% == 1 goto guimenu
-:: quality
-if %errorlevel% == 2 (
-    echo                                 [93mOn a scale from 1 to 10[0m, how bad should the quality be?
-    echo                                                   ^(Current value: %qv%^)
-    set /p "qv="
-)
-:: times to compress
-if %errorlevel% == 3 (
-    echo                    How many times do you want to compress the image [93m^(recommended to be at least 10^)[0m?
-    echo                                                  ^(Current value: %loopn%^)
-    set /p "loopn="
-)
-:: scale
-if %errorlevel% == 4 (
-    echo                                 [93mOn a scale from 1 to 10[0m, how much should the image be shrunk by?
-    echo                                                   ^(Current value: %imagesc%^)
-    set /p "imagesc="
-)
-goto guiimageoptionsrefresh
-
-:: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
-:render
-echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
-if not %isimage% == y (
-    set /a badaudiobitrate=80/%audiobr%
-    :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
-    if %distortaudio% == n (
-        if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%"
-            ) else (
-                set "audiofilters="
-            )
-    ) else (
-        if %method% == classic (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-            )
-        ) else (
-            set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            if not %audiospeedq% == 1 (
-                set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-            )
-        )
-    )
-)
-:: saves the final config and a log to the debug logs
-set fromrender=y
-call :makelog
-set fromrender=n
-echo -----------------LOG----------------->>"%temp%\qualitymuncherdebuglog.txt"
-type "Quality Muncher Log.txt">>"%temp%\qualitymuncherdebuglog.txt"
-if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
-echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
-echo ----------------CONFIG--------------->>"%temp%\qualitymuncherdebuglog.txt"
-call :savetoconfigbypassname temp
-type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
-echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
-:: encode using the right encoding function
-if %hasvideo% == y (
-    if %isimage% == y (
-        set /a qvnew=^(%qv%*3^)+1
-        echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
-        goto newmunchmultiq
-    ) else (
-        echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
-        goto encodevideomultiq
-    )
-) else (
-    echo Going to audio only rendering>>"%temp%\qualitymuncherdebuglog.txt"
-    goto encodeaudiomultiqueue
-)
-goto guimenu
 
 :: sends all video files to be encoded
 :encodevideomultiq
@@ -767,61 +923,840 @@ if %outputasgif% == y (
 )
 goto :eof
 
-:: audio distortion questions
-:audiodistortion
-echo                                    Do you want to distort the audio (earrape)? [Y/N]
-choice /n
-:: if yes, set the variable and continue, if no, check if the audio speed isn't one and if it isn't, set the audio filters to match it
-if %errorlevel% == 1 (
-    set distortaudio=y
+:: display the title for the audio options
+:titledisplayaudio
+cls
+if %showtitle% == n (
+    goto :eof
 ) else (
-    if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%"
-    ) else (
-        set "audiofilters="
-    )
+    echo [s
+)
+cls
+echo                                           [38;2;39;55;210m_  _             ____          _    _
+echo                          [38;2;0;87;228m/\              ^| ^|(_)           / __ \        ^| ^|  (_)
+echo                         [38;2;0;111;235m/  \   _   _   __^| ^| _   ___     ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
+echo                        [38;2;0;130;235m/ /\ \ ^| ^| ^| ^| / _` ^|^| ^| / _ \    ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                       [38;2;0;148;230m/ ____ \^| ^|_^| ^|^| (_^| ^|^| ^|^| (_) ^|   ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
+echo                      [38;2;0;163;221m/_/    \_\\__,_^| \__,_^|^|_^| \___/     \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                                  [38;2;0;178;211m^| ^|
+echo                                                                  [38;2;49;191;204m^|_^|[0m
+call :splashtext
+echo.[s
+goto :eof
+
+:guiaudiooptions
+set guiaudiotitleisshowing=y
+:guiaudiooptionsrefresh
+:: save the config, then make sure any enabled options are green and disabled options are gray
+call :autosaveconfig
+call :checktogglesaudio
+:: display the title if it isn't already showing
+if %guiaudiotitleisshowing% == y (
+    call :titledisplayaudio
+) else (
+    call :clearlastprompt
+)
+set guiaudiotitleisshowing=n
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo                %gui_audio_quality%                     %gui_audio_starttimeandduration%                      %gui_audio_speed%
+echo.
+echo               %gui_audio_distortion%                       %gui_audio_texttospeech%                         %gui_audio_replacing%
+echo.
+echo                                                       %gui_audio_noaudio%
+echo.
+echo.
+echo.
+choice /c 123456BN /n
+call :clearlastprompt
+echo Audio GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
+set /a gui_audio_var=%errorlevel%
+:: quality
+if %gui_audio_var% == 1 call :audioqualityselect
+:: start time and duration
+if %gui_audio_var% == 2 call :durationquestions
+:: speed
+:: speed questions, but set set hasvideo to false temporarily so it doesn't ask about video speed
+if %gui_audio_var% == 3 (
+    set hasvideoog=%hasvideo%
+    set hasvideo=n
+    call :speedquestions
+    set hasvideo=!hasvideoog!
+)
+:: distortion
+if %gui_audio_var% == 4 call :audiodistortion
+:: text to speech
+if %gui_audio_var% == 5 call :voicesynth
+:: replacing
+if %gui_audio_var% == 6 call :replaceaudioquestion
+:: back
+if %gui_audio_var% == 7 goto guimenu
+:: no audio
+if %gui_audio_var% == 8 if %noaudio% == y (
+    set noaudio=n
+) else (
+    set noaudio=y
+)
+goto guiaudiooptionsrefresh
+
+:: sending each audio only input to be encoded
+:encodeaudiomultiqueue
+set totalfiles=0
+for %%x in (%*) do set /a totalfiles+=1
+set filesdone=1
+for %%a in (%*) do (
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    echo Rendering audio !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+    set /a filesdone=!filesdone!+1
+    call :audioencode %%a
+)
+title [Done] Quality Muncher v%version%
+goto end
+
+:: encoding audio only outputs
+:audioencode
+:: makes sure the file doesn't already exist
+set "filename=%~n1 (Quality Munched)"
+if exist "%filename%%audiocontainer%" call :renamefile
+if %ismultiqueue% == y (
+    if not %filesdone% == 1 echo.
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
+echo.
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% -i %1 ^
+-vn %metadata% -preset %encodingspeed% ^
+-c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
+%audiofilters% ^
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+set outputvar="%cd%\%filename%%audiocontainer%
+if %tts% == y call :encodevoiceNV
+goto :eof
+
+:: display the title for the extra options
+:titledisplayextra
+cls
+if %showtitle% == n (
+    goto :eof
+) else (
+    echo [s
+)
+cls
+echo                                            [38;2;39;55;210m______        _
+echo                                           [38;2;0;87;228m^|  ____^|      ^| ^|
+echo                                           [38;2;0;111;235m^| ^|__   __  __^| ^|_  _ __  __ _  ___
+echo                                           [38;2;0;130;235m^|  __^|  \ \/ /^| __^|^| '__^|/ _` ^|/ __^|
+echo                                           [38;2;0;148;230m^| ^|____  ^>  ^< ^| ^|_ ^| ^|  ^| {_^| ^|\__ \
+echo                                           [38;2;0;163;221m^|______^|/_/\_\ \__^|^|_^|   \__,_^|^|___/[0m
+call :splashtext
+echo.[s
+goto :eof
+
+:guiextra
+set guiextratitleisshowing=y
+:guiextrarefresh
+:: save the config, then make sure any enabled options are green and disabled options are gray
+call :autosaveconfig
+call :checktogglesaudio
+:: display the title if it isn't already showing
+if %guiextratitleisshowing% == y (
+    call :titledisplayextra
+) else (
+    call :clearlastprompt
+)
+set guiextratitleisshowing=n
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo                [W]ebsite                            [A]nnouncements                           [R]eport Bug
+echo.
+echo                [D]iscord                                [U]pdate                              [S]uggestion
+echo.
+echo.
+choice /n /c BWARDUS
+echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
+set /a gui_extra_var=%errorlevel%
+call :clearlastprompt
+if %gui_extra_var% == 1 goto guimenu
+if %gui_extra_var% == 2 call :website
+if %gui_extra_var% == 3 call :announcement
+if %gui_extra_var% == 4 call :bugreport
+if %gui_extra_var% == 5 call :discord
+if %gui_extra_var% == 6 set "forceupdate=y"&call :updatecheck
+if %gui_extra_var% == 7 call :suggestion
+goto guiextrarefresh
+
+:: if the website is selected from the menu, it sends the user to the website, clears the console, and goes back to start
+:website
+echo [96mSending to website^^![0m
+start "" https://qualitymuncher.lgbt/
+call :clearlastprompt
+goto :eof
+
+:: provides the user a list of recent announcements from the devs
+:announcement
+:: checks if github is able to be accessed
+ping /n 1 github.com  | find "Reply" > nul
+if %errorlevel% == 1 goto fetchannouncementfail
+set internet=y
+:: grabs the announcements from github
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
+    echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
+    echo Press any key to go to the menu
+    pause > nul
+    goto :eof
+)
+set /p announce=<%temp%\anouncementQM.txt
+echo [38;2;255;190;0mAnnouncements:[0m
+:: echo each announcement
+for /f "tokens=*" %%s in (%temp%\anouncementQM.txt) do (
+    set /a "g+=1"
+    echo [38;2;90;90;90m[!g!][0m %%s
+)
+if exist "%temp%\anouncementQM.txt" del "%temp%\anouncementQM.txt"
+echo.
+pause
+goto :eof
+
+:: fails to access github
+:fetchannouncementfail
+set internet=n
+echo Failed to fetch announcements>>"%temp%\qualitymuncherdebuglog.txt"
+echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
+pause
+echo [H[u[0J
+goto :eof
+
+:: lets users report bugs
+:bugreport
+set wbh2=lxyrX4Y5TxLkQXfq
+set /p "mainsuggestion=What is the bug? "
+set /p "suggestionbody=How do you reproduce the bug: "
+set "author=NO INPUT FOR AUTHOR"
+set /p "author=What is your name on discord? [93mThis is optional but very helpful[0m: "
+echo.
+call :clearlastprompt
+:: repeats the bug for the user to verify
+echo %author%'s bug report:
+echo %mainsuggestion%
+echo %suggestionbody%
+echo.
+choice /m "Are you sure you would like to submit this bug report?"
+:: if the user does not want to submit the bug report, it goes back to the start
+if %errorlevel% == 2 (
+    call :clearlastprompt
+    echo [91mOkay, your bug report has been cancelled.[0m
     echo.
+    pause
     call :clearlastprompt
     goto :eof
 )
-:: sends the user to the method they choose
-echo                       Which distortion method should be used, simple [1] or advanced [2]?
-choice /n /c 12
-set disrortionseverity=3
-if %errorlevel% == 1 (
-    set method=classic
-    goto classic
+:: please do not abuse this webhook it would make me very sad
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New bug report^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/we^bhooks/100%wbh17%557%mathvar4%400%wb9%2094%wb6%4/an%wb11%Px9R%wbh4%4tV%wb19%
+call :clearlastprompt
+echo [92mYour bug report has been successfully sent to the developers^^![0m
+echo.
+pause
+call :clearlastprompt
+goto :eof
+
+:: if discord is selected from the menu, it sends the user to discord, clears the console, and goes back to start
+:discord
+echo [96mSending to Discord^^![0m
+start "" https://discord.com/invite/9tRZ6C7tYz
+call :clearlastprompt
+goto :eof
+
+:: suggestions
+:suggestion
+set /p "mainsuggestion=What's your suggestion? "
+set /p "suggestionbody=If needed, please elaborate further here: "
+set "author=NO INPUT FOR AUTHOR"
+set /p "author=What is your name on discord? [93mThis is optional[0m: "
+echo.
+call :clearlastprompt
+:: repeats the suggestion for the user to verify
+echo %author%'s suggestion:
+echo %mainsuggestion%
+echo %suggestionbody%
+echo.
+choice /m "Are you sure you would like to submit this suggestion?"
+:: cancel if the user doesn't want to send the suggestion
+if %errorlevel% == 2 (
+    call :clearlastprompt
+    echo [91mOkay, your suggestion has been cancelled.[0m
+    echo.
+    pause
+    call :clearlastprompt
+    goto :eof
+)
+:: please do not abuse this webhook it would make me very sad
+curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/100557400%wb9%2094%wb6%4/an%wb11%Px9R%wbh4%4tV%wb19%
+call :clearlastprompt
+echo [92mYour suggestion has been successfully sent to the developers^^![0m
+echo.
+pause
+call :clearlastprompt
+goto :eof
+
+:: display the title for the image options
+:titledisplayimage
+cls
+if %showtitle% == n (
+    goto :eof
 ) else (
-    set method=new
-    goto newmethod
+    echo [s
+)
+cls
+echo                      [38;2;39;55;210m_____                                   ____          _    _
+echo                     [38;2;0;87;228m^|_   _^|                                 / __ \        ^| ^|  (_)
+echo                       [38;2;0;111;235m^| ^|   _ __ ___    __ _   __ _   ___  ^| ^|  ^| ^| _ __  ^| ^|_  _   ___   _ __   ___
+echo                       [38;2;0;130;235m^| ^|  ^| '_ ` _ \  / _` ^| / _` ^| / _ \ ^| ^|  ^| ^|^| '_ \ ^| __^|^| ^| / _ \ ^| '_ \ / __^|
+echo                      [38;2;0;148;230m_^| ^|_ ^| ^| ^| ^| ^| ^|^| {_^| ^|^| (_^| ^|^|  __/ ^| ^|__^| ^|^| ^|_) ^|^| ^|_ ^| ^|^| (_) ^|^| ^| ^| ^|\__ \
+echo                     [38;2;0;163;221m^|_____^|^|_^| ^|_^| ^|_^| \__,_^| \__, ^| \___^|  \____/ ^| .__/  \__^|^|_^| \___/ ^|_^| ^|_^|^|___/
+echo                                                [38;2;0;178;211m__/ ^|               ^| ^|
+echo                                               [38;2;49;191;204m^|___/                ^|_^|[0m
+call :splashtext
+echo.[s
+goto :eof
+
+:guiimageoptions
+set guivideotitleisshowing=y
+:guiimageoptionsrefresh
+:: save the config, then make sure any enabled options are green and disabled options are gray
+call :autosaveconfig
+call :checktogglesvideo
+:: display the title if it isn't already showing
+if %guiimagetitleisshowing% == y (
+    call :titledisplayimage
+) else (
+    call :clearlastprompt
+)
+set guiimagetitleisshowing=n
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo                [Q]uality                            [T]imes to Compress                          [S]cale
+echo.
+echo.
+choice /n /c BQTS
+call :clearlastprompt
+echo Extra GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
+:: back
+if %errorlevel% == 1 goto guimenu
+:: quality
+if %errorlevel% == 2 (
+    echo                                 [93mOn a scale from 1 to 10[0m, how bad should the quality be?
+    echo                                                   ^(Current value: %qv%^)
+    set /p "qv="
+)
+:: times to compress
+if %errorlevel% == 3 (
+    echo                    How many times do you want to compress the image [93m^(recommended to be at least 10^)[0m?
+    echo                                                  ^(Current value: %loopn%^)
+    set /p "loopn="
+)
+:: scale
+if %errorlevel% == 4 (
+    echo                                 [93mOn a scale from 1 to 10[0m, how much should the image be shrunk by?
+    echo                                                   ^(Current value: %imagesc%^)
+    set /p "imagesc="
+)
+goto guiimageoptionsrefresh
+
+:: sends all images and/or GIFs to be encoded
+:newmunchmultiq
+set originalimagecontainer=%imagecontainer%
+:: set a counter for the number of images being encoded
+set totalfiles=0
+for %%x in (%*) do set /a totalfiles+=1
+set filesdone=1
+:: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
+for %%a in (%*) do (
+    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
+    set filesdoneold=!filesdone!
+    echo Rendering image !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+    set /a filesdone=!filesdone!+1
+    call :newmunchworking %%a %loopn% %qvnew% %imagesc%
+)
+title [Done] Quality Muncher v%version%
+echo.
+echo [92mDone^^![0m
+set done=y
+goto exiting
+
+:: encodes images and GIFs
+:newmunchworking
+if "%~x1" == ".gif" (
+    set imagecontainer=.gif
+) else (
+    set imagecontainer=%originalimagecontainer%
+)
+call :clearlastprompt
+if %ismultiqueue% == y (
+    if not %filesdone% == 1 echo.
+    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
+) else (
+    echo [38;2;254;165;0mEncoding...[0m
+)
+set loopn=%2
+set imagequal=%3
+:: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
+set /a imagequal3=%imagequal%*3
+set /a imagesc=%4
+set "tempfolder=%temp%\processingvideo"
+if exist "%tempfolder%" (rmdir "%tempfolder%" /q /s)
+mkdir "%tempfolder%"
+:: grab width and height of the input video
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %temp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %1 -of csv=p=0 > %temp%\height.txt
+set /p height=<%temp%\height.txt
+set /p width=<%temp%\width.txt
+if exist "%temp%\height.txt" (del "%temp%\height.txt")
+if exist "%temp%\width.txt" (del "%temp%\width.txt")
+:: basic height scaling and checks to make sure they're even
+set /a height=%height%/%imagesc%
+set /a height=(%height%/2)*2
+set /a width=%width%/%imagesc%
+set /a width=(%width%/2)*2
+set /a widthalt=%width%-2
+set /a heightalt=%height%-2
+:: sets containers and encoders depending on if it's a gif or an image
+set imagecontainerbackup=%imagecontainer%
+set webp=webp
+set weblib=libwebp
+if %imagecontainer% == .gif (
+    set imagecontainer=.mkv
+    set webp=webm
+    set weblib=libvpx
+)
+echo Beginning image munch loop>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
+set /a loopnreal=%loopn%-1
+:: loop through a few encoders until the loop is over
+echo 0/%loopn%
+set /a i=0
+:startmunch
+set /a i+=1
+set /a i1=%i%+1
+echo [1A[0J%i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto endmunch
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+set /a i+=1
+set /a i1=%i%+1
+echo [1A[0J%i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto endmunch
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+set /a i+=1
+set /a i1=%i%+1
+echo [1A[0J%i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto endmunch
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+goto startmunch
+:endmunch
+set /a i2=%i1%+1
+echo [1A[0J%loopn%/%loopn%
+set "filename=%~dpn1 (Quality Munched)"
+:: skip the loop if the file already doesn't exist
+if not exist "%filename%%imagecontainerbackup%" goto afterrename
+:: loop until the file doesn't exist
+:renamefileimage
+set /a "f+=1"
+if exist "%filename% (%f%)%imagecontainerbackup%" goto renamefileimage
+set "filename=%filename% (%f%)"
+:afterrename
+:: if it's a gif, encode it as a video then reencode it to a gif
+:: otherwisem encode it as a picture
+if %imagecontainerbackup% == .gif (
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%" && echo FFmpeg call 18 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 18 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%" && echo FFmpeg call 19 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 19 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+) else (
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %imagequal% -f mjpeg "%filename%%imagecontainerbackup%" && echo FFmpeg call 20 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 20 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+)
+rmdir "%tempfolder%" /q /s
+set outputvar="%filename%%imagecontainerbackup%"
+goto :eof
+
+:resamplemath
+:: do nothing if the input fps is equal to the output fps
+if %outputfps% == %intputfps% goto :eof
+:: interpolate if output fps is greater than input fps
+if %outputfps% gtr %intputfps% (
+    set "fpsfilter=minterpolate=fps=%outputfps%,"
+    goto :eof
+)
+:: resample if output fps is greater than input fps
+:: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
+set tmixframes=(%inputfps%/%outputfps%)
+set /a tmixcheck=%tmixframes%
+:: tmix breaks at >128 frames, so make sure it doesn't go above that
+if %tmixcheck% gtr 128 set tmixframes=128
+set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
+goto :eof
+
+:qualityselect
+set "dc_s="
+set "bc_s="
+set "tc_s="
+set "uc_s="
+set "cc_s="
+set "rc_s="
+if %videocustom% == y (
+    set cc_s=[92m
+) else (
+    if %videobr% == 3 (
+        set dc_s=[92m
+    ) else (
+        if %videobr% == 5 (
+            set bc_s=[92m
+        ) else (
+            if %videobr% == 8 (
+                set tc_s=[92m
+            ) else (
+                if %videobr% == 9 (
+                    set uc_s=[92m
+                ) else (
+                    if %videorandom% == y (
+                        set rc_s=[92m
+                    ) else (
+                        set cc_s=[92m
+                    )
+                )
+            )
+        )
+    )
+)
+echo Selecting video quality>>"%temp%\qualitymuncherdebuglog.txt"
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo      %dc_s%[1] Decent[0m           %bc_s%[2] Bad[0m           %tc_s%[3] Terrible[0m       %uc_s%[4] Unbearable[0m        %cc_s%[C] Custom[0m          %rc_s%[R] Random[0m
+choice /n /c 1234CRB
+:: set quality
+set "customizationquestion=%errorlevel%"
+if %customizationquestion% == 7 goto :eof
+echo Quality Selected: %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
+:: custom quality
+if %customizationquestion% == 5 set customizationquestion=c
+:: random quality
+if %customizationquestion% == 6 (
+    set videorandom=y
+    set customizationquestion=r
+    call :randomvideoquality
+    goto :eof
+) else (
+    set videorandom=n
+)
+:: defines a few variables that will be replaced later; used to check for valid user inputs
+set outputfps=24
+set videobr=3
+set audiobr=3
+set scaleq=2
+:: sets the quality based on customizationquestion
+:: endingmsg is added to the end of the video for the output name
+if "%customizationquestion%" == "c" (
+    set videocustom=y
+    call :clearlastprompt
+    echo                                                 Custom %qs%
+    echo.
+) else (
+    set videocustom=n
+)
+:customquestioncheckpoint
+:: custom quality
+if "%customizationquestion%" == "c" (
+    echo                                        What fps do you want it to be rendered at:
+    set /p "outputfps="
+    echo                   [93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad:
+    set /p "videobr="
+    echo                   [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
+    set /p "audiobr="
+    echo                     [93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot:
+    set /p "scaleq="
+    echo Custom selected, chose !outputfps! outputfps, !videobr! videobr, %audiobr% audiobr, %scaleq% scaleq>>"%temp%\qualitymuncherdebuglog.txt"
+    set endingmsg=Custom Quality
+)
+:: decent quality
+if %customizationquestion% == 1 (
+    echo [96mDecent %qs%[0m
+    set outputfps=24
+    set videobr=3
+    set scaleq=2
+    set audiobr=3
+    set endingmsg=Decent Quality
+)
+:: bad quality
+if %customizationquestion% == 2 (
+    echo [96mBad %qs%[0m
+    set outputfps=12
+    set videobr=5
+    set scaleq=4
+    set audiobr=5
+    set endingmsg=Bad Quality
+)
+:: terrible quality
+if %customizationquestion% == 3 (
+    echo [96mTerrible %qs%[0m
+    set outputfps=6
+    set videobr=8
+    set scaleq=8
+    set audiobr=8
+    set endingmsg=Terrible Quality
+)
+:: unbearable quality
+if %customizationquestion% == 4 (
+    echo [96mUnbearable %qs%[0m
+    set outputfps=1
+    set videobr=16
+    set scaleq=12
+    set audiobr=9
+    set endingmsg=Unbearable Quality
+)
+:: if custom quality is selected, check if the variables are all whole numbers
+:: if they aren't it'll ask again for their values
+set /a "testforfps=%outputfps%"
+set /a "testforvideobr=%videobr%"
+set /a "testforaudiobr=%audiobr%"
+set /a "testforscaleq=%scaleq%"
+if %customizationquestion% == c (
+    if not "%outputfps%"=="%outputfps: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%videobr%"=="%videobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not "%scaleq%"=="%scaleq: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforfps% == %outputfps% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforvideobr% == %videobr% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforscaleq% == %scaleq% (echo %errormsg% & goto customquestioncheckpoint)
 )
 goto :eof
 
-:: new method - boosts frequencies, swaps channels, adds echo and delay
-:newmethod
-set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
-set /a distsev=%distortionseverity%*10
-set /a bb1=0
-set /a bb2=(%distsev%*25)
-set /a bb3=2*(%distsev%*25)
-set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-:: if the audio speed isn't one, add it to the audio filters
-if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+:: random quality
+:randomvideoquality
+:: max and minimum for the random values
+set min=1
+set max=15
+echo.
+:: says "Random Quality Selected^^!" with "Random" in rainbow text color color
+echo [91mR[93ma[92mn[96md[94mo[95mm[0m %qs%
+:: gets random values
+set /a outputfps=%random% %% 30
+set /a videobr=%random% * %max% / 32768 + %min%
+set /a scaleq=%random% * %max% / 32768 + %min%
+set /a audiobr=%random% * %max% / 32768 + %min%
+set endingmsg=Random Quality
+goto :eof
+
+:: asks for start time and duration of video
+:durationquestions
+call :clearlastprompt
+:: asks if the user wants to trim
+choice /m "Do you want to trim the video?"
+if %errorlevel% == 1 (
+    set trimmed=y
+) else (
+    set trimmed=n
+    call :clearlastprompt
+    goto :eof
 )
+:: asks where to start clip
+:startquestion
+set starttime=0
+set /p "starttime=[93mIn seconds[0m, where do you want your video to start: "
+if "%starttime%" == " " set starttime=0
+:: asks length of clip
+:timequestion
+set vidtime=262144
+set /p "vidtime=[93mIn seconds[0m, how long do you want the video to be: "
+if "%vidtime%" == " " set vidtime=262144
+echo Start time %starttime%, Duration %vidtime%>>"%temp%\qualitymuncherdebuglog.txt"
 call :clearlastprompt
 goto :eof
 
-:: old method - just boosts frequencies
-:classic
-set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
-set /a distsev=%distortionseverity%*10
-set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-:: if the audio speed isn't one, add it to the audio filters
-if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+:: speed settings/questions
+:: collect the inputs needed to change video and audio speeds (if the user wants to do so)
+:speedquestions
+:: if there's no video, skip this question
+if not %hasvideo% == n (
+    echo                     What should the video speed be? [93m^(must be a positive number between 0.5 and 100^)[0m
+    echo                                                     ^(Current value: %speedq%^)
+    set /p "speedq="
 )
+set "audiopromptfill=(leave blank to match the video)"
+:: if there's no video, this is the first time being asked, so tell the users of the parameters needed, otherwise just tell them how to match it
+if %hasvideo% == n (
+    set "audiopromptfill=^(must be a positive number between 0.5 and 100^)"
+    set "afiller=                    "
+) else (
+    set "audiopromptfill=^(leave blank to match the video^)"
+    set "afiller=                            "
+)
+echo %afiller%What should the audio speed be? [93m%audiopromptfill%[0m
+echo                                                    (Current value: %audiospeedq%)
+set /p "audiospeedq="
+:: if no input, match audio speed with video speed
+if "%audiospeedq%1" == "1" set audiospeedq=%speedq%
+:: set the speed filter using the reciprocal
+set "speedfilter=setpts=(1/%speedq%)*PTS,"
 call :clearlastprompt
+goto :eof
+
+:addtext
+:: asks if they want to add text
+echo                                       Do you want to add text to the video? [Y/N]
+choice /c YN /n
+:: if yes, set the variable, if no, skip
+if %errorlevel% == 1 (
+    set addedtextq=y
+) else (
+    set addedtextq=n
+    call :clearlastprompt
+    goto :eof
+)
+:: first text size
+set tsize=1
+echo                         What size should text one be? [B]ig, [M]edium, [S]mall, or [V]ery small?
+choice /c BMSV /n
+set tsize=%errorlevel%
+:: if very small, set it to half the size of small
+if %tsize% == 4 set tsize=6
+:: top text
+set "toptext= "
+echo                                             Enter your text for text one now:
+set /p "toptext="
+:: ask the user where the font should go on the video
+call :screenlocation "text one" textonepos
+:: THE NEXT LINES UNTIL setting the text filter IS THE SAME AS THE TOP TEXT, BUT WITH DIFFERENT VARIABLE NAMES
+set tsize2=1
+echo                         What size should text two be? [B]ig, [M]edium, [S]mall, or [V]ery small?
+choice /c BMSV /n
+set tsize2=%errorlevel%
+if %tsize2% == 4 set tsize2=6
+:: secoond text
+set "bottomtext= "
+echo                                             Enter your text for text two now:
+set /p "bottomtext="
+call :screenlocation "text two" texttwopos
+:: setting text filter
+call :clearlastprompt
+goto :eof
+
+:textmath
+echo Doing text math>>"%temp%\qualitymuncherdebuglog.txt"
+:: remove spaces and count the characters in the text
+set toptextnospace=%toptext: =_%
+echo "%toptextnospace%" > %temp%\toptext.txt
+for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
+if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
+:: if below 16 characters, set it to 16 (essentially caps the font size)
+if %strlength% LSS 16 set strlength=16
+:: bottom text
+set bottomtextnospace=%bottomtext: =_%
+echo "%bottomtextnospace%" > %temp%\bottomtext.txt
+for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
+if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
+if %strlengthb% LSS 16 set strlengthb=16
+:: use width and size of the text, and the user's inputted text size to determine font size
+set /a fontsize=(%desiredwidth%/%strlength%)*2
+set /a fontsize=(%fontsize%)/%tsize%
+set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
+set /a fontsizebottom=(%fontsizebottom%)/%tsize2%
+:fontcheck
+set /a triplefontsize=%fontsize%*3
+if %triplefontsize% gtr %desiredheight% (
+    set /a fontsize=%fontsize%-5
+    goto fontcheck
+)
+:: does the same thing but for text two
+:fontcheck2
+set /a triplefontsizebottom=%fontsizebottom%*3
+if %triplefontsizebottom% gtr %desiredheight% (
+    set /a fontsizebottom=%fontsizebottom%-5
+    goto fontcheck2
+)
+:: setting text filter
+set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
+goto :eof
+
+:: prompts the user of where to place an item
+:screenlocation
+set item=%1
+set item=%item:"=%
+echo                                              .---------------------------.
+echo                                              ^| [1]        [2]        [3] ^|
+echo                                              ^|                           ^|
+echo                                              ^| [4]        [5]        [6] ^|
+echo                                              ^|                           ^|
+echo                                              ^| [7]        [8]        [9] ^|
+echo                                              ^'---------------------------^'
+echo                                             Where should %item% be placed?
+choice /n /c 123456789
+if %errorlevel% == 1 set "%2=x=(0.25*text_h):y=(0.25*text_h)"
+if %errorlevel% == 2 set "%2=x=(w-text_w)/2:y=(0.25*text_h)"
+if %errorlevel% == 3 set "%2=x=w-tw-(0.25*th):y=(0.25*text_h)"
+if %errorlevel% == 4 set "%2=x=(0.25*text_h):y=(h-text_h)/2"
+if %errorlevel% == 5 set "%2=x=(w-text_w)/2:y=(h-text_h)/2"
+if %errorlevel% == 6 set "%2=x=w-tw-(0.25*th):y=(h-text_h)/2"
+if %errorlevel% == 7 set "%2=x=(0.25*text_h):y=(h-1.25*text_h)"
+if %errorlevel% == 8 set "%2=x=(w-text_w)/2:y=(h-1.25*text_h)"
+if %errorlevel% == 9 set "%2=x=w-tw-(0.25*th):y=(h-1.25*text_h)"
+call :titledisplay
+goto :eof
+
+:: color modifications and video stretching (custom aspect ratio)
+:colorquestions
+call :clearlastprompt
+:: questions about modifying video color
+echo                           Do you want to customize saturation, contrast, and brightness? [Y/N]
+choice /c YN /n
+if %errorlevel% == 1 (
+    set colorq=y
+) else (
+    set colorq=n
+    goto :eof
+)
+:: prompts for specific values
+set /p "contrastvalue=Select a contrast value [93mbetween -1000.0 and 1000.0[0m, default is 1: "
+set /p "saturationvalue=Select a saturation value [93mbetween 0.0 and 3.0[0m, default is 1: "
+set /p "brightnessvalue=Select a brightness value [93mbetween -1.0 and 1.0[0m, default is 0: "
+:: tests if the values are floats (or positive floats)
+if not "%contrastvalue%"=="%contrastvalue: =%" set contrastvalue=1
+if not "%saturationvalue%"=="%saturationvalue: =%" set set saturationvalue=1
+if not "%brightnessvalue%"=="%brightnessvalue: =%" set brightnessvalue=0
+for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (if not "%%k"=="" set contrastvalue=1)
+for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (if not "%%m"=="" set saturationvalue=1)
+for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (if not "%%o"=="" set brightnessvalue=0)
+if %colorq% == y set "colorfilter=eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,"
+goto :eof
+
+:stretch
+call :clearlastprompt
+:: asks about the video's aspect ratio
+echo                                         Do you want to stretch the video? [Y/N]
+choice /n
+if %errorlevel% == 1 (
+    set stretchres=y
+) else (
+    set stretchres=n
+    call :clearlastprompt
+    goto :eof
+)
+echo [93mRemember to use only whole numbers.[0m
+set /p "widthratio=How stretched should be width be? [93mDefault is 1 (no stretch)[0m: "
+set /p "heightratio=How stretched should be height be? [93mDefault is 1 (no stretch)[0m: "
+:: sets the aspect ratio, but as an equation instead of as a float, since batch doesn't like floats
+set "aspectratio=%widthratio%/%heightratio%"
+call :clearlastprompt
+goto :eof
+
+:: set the stretched width/height
+:stretchmath
+:: in the words of the great vladaad, "fucking batch doesn't know what a float is"
+set /a "widthmod=(%desiredwidth%*%widthratio%) %% %heightratio%"
+set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
+set /a desiredwidth=(%desiredwidth%/2)*2
 goto :eof
 
 :: corruption questions, used to enable/disable video corruption
@@ -865,6 +1800,7 @@ set outputvar="%cd%\%filename%%cuffix%%container%"
 set "filename=%filename%%cuffix%"
 goto :eof
 
+:: asks the user if they want to spoof the video duration
 :durationspoof
 echo                                      Do you want to spoof the duration of the video?
 echo                    [91mWarning^^! This is an EXTREMELY expiramental feature and might not work as intended^^![0m
@@ -1152,542 +2088,78 @@ del %outputvar%
 set outputvar="%cd%\%filename%.webm"
 rmdir "%temp%\qmframes" /s /q
 goto :eof
-:: speed settings/questions
-:: collect the inputs needed to change video and audio speeds (if the user wants to do so)
-:speedquestions
-:: if there's no video, skip this question
-if not %hasvideo% == n (
-    echo                     What should the video speed be? [93m^(must be a positive number between 0.5 and 100^)[0m
-    echo                                                     ^(Current value: %speedq%^)
-    set /p "speedq="
-)
-set "audiopromptfill=(leave blank to match the video)"
-:: if there's no video, this is the first time being asked, so tell the users of the parameters needed, otherwise just tell them how to match it
-if %hasvideo% == n (
-    set "audiopromptfill=^(must be a positive number between 0.5 and 100^)"
-    set "afiller=                    "
-) else (
-    set "audiopromptfill=^(leave blank to match the video^)"
-    set "afiller=                            "
-)
-echo %afiller%What should the audio speed be? [93m%audiopromptfill%[0m
-echo                                                    (Current value: %audiospeedq%)
-set /p "audiospeedq="
-:: if no input, match audio speed with video speed
-if "%audiospeedq%1" == "1" set audiospeedq=%speedq%
-:: set the speed filter using the reciprocal
-set "speedfilter=setpts=(1/%speedq%)*PTS,"
-call :clearlastprompt
-goto :eof
 
-:addtext
-:: asks if they want to add text
-echo                                       Do you want to add text to the video? [Y/N]
-choice /c YN /n
-:: if yes, set the variable, if no, skip
-if %errorlevel% == 1 (
-    set addedtextq=y
-) else (
-    set addedtextq=n
-    call :clearlastprompt
-    goto :eof
-)
-:: first text size
-set tsize=1
-echo                         What size should text one be? [B]ig, [M]edium, [S]mall, or [V]ery small?
-choice /c BMSV /n
-set tsize=%errorlevel%
-:: if very small, set it to half the size of small
-if %tsize% == 4 set tsize=6
-:: top text
-set "toptext= "
-echo                                             Enter your text for text one now:
-set /p "toptext="
-:: ask the user where the font should go on the video
-call :screenlocation "text one" textonepos
-:: THE NEXT LINES UNTIL setting the text filter IS THE SAME AS THE TOP TEXT, BUT WITH DIFFERENT VARIABLE NAMES
-set tsize2=1
-echo                         What size should text two be? [B]ig, [M]edium, [S]mall, or [V]ery small?
-choice /c BMSV /n
-set tsize2=%errorlevel%
-if %tsize2% == 4 set tsize2=6
-:: secoond text
-set "bottomtext= "
-echo                                             Enter your text for text two now:
-set /p "bottomtext="
-call :screenlocation "text two" texttwopos
-:: setting text filter
-call :clearlastprompt
-goto :eof
-
-:textmath
-echo Doing text math>>"%temp%\qualitymuncherdebuglog.txt"
-:: remove spaces and count the characters in the text
-set toptextnospace=%toptext: =_%
-echo "%toptextnospace%" > %temp%\toptext.txt
-for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
-if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
-:: if below 16 characters, set it to 16 (essentially caps the font size)
-if %strlength% LSS 16 set strlength=16
-:: bottom text
-set bottomtextnospace=%bottomtext: =_%
-echo "%bottomtextnospace%" > %temp%\bottomtext.txt
-for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
-if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
-if %strlengthb% LSS 16 set strlengthb=16
-:: use width and size of the text, and the user's inputted text size to determine font size
-set /a fontsize=(%desiredwidth%/%strlength%)*2
-set /a fontsize=(%fontsize%)/%tsize%
-set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
-set /a fontsizebottom=(%fontsizebottom%)/%tsize2%
-:fontcheck
-set /a triplefontsize=%fontsize%*3
-if %triplefontsize% gtr %desiredheight% (
-    set /a fontsize=%fontsize%-5
-    goto fontcheck
-)
-:: does the same thing but for text two
-:fontcheck2
-set /a triplefontsizebottom=%fontsizebottom%*3
-if %triplefontsizebottom% gtr %desiredheight% (
-    set /a fontsizebottom=%fontsizebottom%-5
-    goto fontcheck2
-)
-:: setting text filter
-set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
-goto :eof
-
-:: prompts the user of where to place an item
-:screenlocation
-set item=%1
-set item=%item:"=%
-echo                                              .---------------------------.
-echo                                              ^| [1]        [2]        [3] ^|
-echo                                              ^|                           ^|
-echo                                              ^| [4]        [5]        [6] ^|
-echo                                              ^|                           ^|
-echo                                              ^| [7]        [8]        [9] ^|
-echo                                              ^'---------------------------^'
-echo                                             Where should %item% be placed?
-choice /n /c 123456789
-if %errorlevel% == 1 set "%2=x=(0.25*text_h):y=(0.25*text_h)"
-if %errorlevel% == 2 set "%2=x=(w-text_w)/2:y=(0.25*text_h)"
-if %errorlevel% == 3 set "%2=x=w-tw-(0.25*th):y=(0.25*text_h)"
-if %errorlevel% == 4 set "%2=x=(0.25*text_h):y=(h-text_h)/2"
-if %errorlevel% == 5 set "%2=x=(w-text_w)/2:y=(h-text_h)/2"
-if %errorlevel% == 6 set "%2=x=w-tw-(0.25*th):y=(h-text_h)/2"
-if %errorlevel% == 7 set "%2=x=(0.25*text_h):y=(h-1.25*text_h)"
-if %errorlevel% == 8 set "%2=x=(w-text_w)/2:y=(h-1.25*text_h)"
-if %errorlevel% == 9 set "%2=x=w-tw-(0.25*th):y=(h-1.25*text_h)"
-call :titledisplay
-goto :eof
-
-:: color modifications and video stretching (custom aspect ratio)
-:colorquestions
-call :clearlastprompt
-:: questions about modifying video color
-echo                           Do you want to customize saturation, contrast, and brightness? [Y/N]
-choice /c YN /n
-if %errorlevel% == 1 (
-    set colorq=y
-) else (
-    set colorq=n
-    goto :eof
-)
-:: prompts for specific values
-set /p "contrastvalue=Select a contrast value [93mbetween -1000.0 and 1000.0[0m, default is 1: "
-set /p "saturationvalue=Select a saturation value [93mbetween 0.0 and 3.0[0m, default is 1: "
-set /p "brightnessvalue=Select a brightness value [93mbetween -1.0 and 1.0[0m, default is 0: "
-:: tests if the values are floats (or positive floats)
-if not "%contrastvalue%"=="%contrastvalue: =%" set contrastvalue=1
-if not "%saturationvalue%"=="%saturationvalue: =%" set set saturationvalue=1
-if not "%brightnessvalue%"=="%brightnessvalue: =%" set brightnessvalue=0
-for /f "tokens=1* delims=-.0123456789" %%j in ("j0%contrastvalue:"=%") do (if not "%%k"=="" set contrastvalue=1)
-for /f "tokens=1* delims=.0123456789" %%l in ("l0%saturationvalue:"=%") do (if not "%%m"=="" set saturationvalue=1)
-for /f "tokens=1* delims=-.0123456789" %%n in ("n0%brightnessvalue:"=%") do (if not "%%o"=="" set brightnessvalue=0)
-if %colorq% == y set "colorfilter=eq=contrast=%contrastvalue%:saturation=%saturationvalue%:brightness=%brightnessvalue%,"
-goto :eof
-
-:stretch
-call :clearlastprompt
-:: asks about the video's aspect ratio
-echo                                         Do you want to stretch the video? [Y/N]
-choice /n
-if %errorlevel% == 1 (
-    set stretchres=y
-) else (
-    set stretchres=n
-    call :clearlastprompt
-    goto :eof
-)
-echo [93mRemember to use only whole numbers.[0m
-set /p "widthratio=How stretched should be width be? [93mDefault is 1 (no stretch)[0m: "
-set /p "heightratio=How stretched should be height be? [93mDefault is 1 (no stretch)[0m: "
-:: sets the aspect ratio, but as an equation instead of as a float, since batch doesn't like floats
-set "aspectratio=%widthratio%/%heightratio%"
-call :clearlastprompt
-goto :eof
-
-:: set the stretched width/height
-:stretchmath
-:: in the words of the great vladaad, "fucking batch doesn't know what a float is"
-set /a "widthmod=(%desiredwidth%*%widthratio%) %% %heightratio%"
-set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
-set /a desiredwidth=(%desiredwidth%/2)*2
-goto :eof
-
-:savetoconfigquestion
-choice /m "Do you want to save these settings to a config file?"
-call :clearlastprompt
-if %errorlevel% == 2 goto :eof
-:savetoconfig
-call :clearlastprompt
-echo                                            Enter a name for the config file:
-set /p "configname="
-:savetoconfigbypassname
-if "%~1" == "temp" (set "configname=%temp%\qualitymuncherconfig_autosave")
-:: have to escape parentheses because they're nested and this is how i have to do it
-if defined textonepos set textoneposesc=%textonepos:(=^^^^^^^^^^(%
-if defined textonepos set textoneposesc=%textoneposesc:)=^^^^^^)%
-if defined texttwopos set texttwoposesc=%texttwopos:(=^^^^^^^^^^(%
-if defined texttwopos set texttwoposesc=%texttwoposesc:)=^^^^^^)%
-if defined audiofilters set audiofiltersesc=%audiofilters:(=^^^^^^^^^^(%
-if defined audiofilters set audiofiltersesc=%audiofiltersesc:)=^^^^^^)%
-echo Saving settings to a config file>>"%temp%\qualitymuncherdebuglog.txt"
-echo :: Configuration file for Quality Muncher v%version% > "%configname%.bat"
-echo :: Created at %time% on %date% >> "%configname%.bat"
-(
-    echo set endingmsg=%endingmsg%
-    echo set outputfps=%outputfps%
-    echo set videobr=%videobr%
-    echo set audiobr=%audiobr%
-    echo set /a badaudiobitrate=80/%audiobr%
-    echo set scaleq=%scaleq%
-
-    echo set novideo=%novideo%
-    echo set noaudio=%noaudio%
-
-    echo set trimmed=%trimmed%
-    echo set starttime=%starttime%
-    echo set vidtime=%vidtime%
-
-    echo set speedq=%speedq%
-    echo set "speedfilter=setpts=(1/%speedq%)*PTS,"
-    echo set audiospeedq=%audiospeedq%
-
-    echo set addedtextq=%addedtextq%
-    echo set tsize=%tsize%
-    echo set toptext=%toptext%
-    echo set textonepos=%textoneposesc%
-    echo set tsize2=%tsize2%
-    echo set bottomtext=%bottomtext%
-    echo set texttwopos=%texttwoposesc%
-
-    echo set colorq=%colorq%
-    echo set colorfilter=%colorfilter%
-
-    echo set stretchres=%stretchres%
-    echo set widthratio=%widthratio%
-    echo set heightratio=%heightratio%
-    echo set "aspectratio=%widthratio%/%heightratio%"
-
-    echo set corrupt=%corrupt%
-    echo set corruptsev=%corruptsev%
-
-    echo set spoofduration=%spoofduration%
-    echo set durationtype=%durationtype%
-
-    echo set bouncy=%bouncy%
-    echo set incrementbounce=%incrementbounce%
-    echo set minimumbounce=%minimumbounce%
-    echo set bouncetype=%bouncetype%
-
-    echo set resample=%resample%
-
-    echo set frying=%frying%
-    echo set levelcolor=%levelcolor%
-
-    echo set stutter=%stutter%
-    echo set stutteramount=%stutteramount%
-
-    echo set filtercl=%filtercl%
-
-    echo set audiofilters=%audiofiltersesc%
-
-    echo set tts=%tts%
-    echo set ttstext=%ttstext%
-    echo set volume=%volume%
-
-    echo set replaceaudio=%replaceaudio%
-    echo set lowqualmusic=%lowqualmusic%
-
-    echo set loopn=%loopn%
-    echo set qv=%qv%
-    echo set imagesc=%imagesc%
-
-    echo exit /b
-) >> "%configname%.bat"
-echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
-if "%~1" == "temp" goto :eof
-echo You config file is located at "%cd%\%configname%.bat"
-pause
-call :clearlastprompt
-goto :eof
-
-:: asks if they want music and if so, the file to get it from and the start time
-:replaceaudioquestion
-echo                                         Do you want to replace the audio? [Y/N]                                        
-choice /n
+:: asks if user wants to fry the video
+:videofrying
+choice /m "Do you want to fry the video? (will cause extreme distortion)"
 if %errorlevel% == 2 (
-    set replaceaudio=n
+    set frying=n
     call :clearlastprompt
     goto :eof
 )
-:addingthemusic
-:: asks for a specific file to get music from
-set replaceaudio=y
-echo                            Please drag the desired file here, [93mit must be an audio/video file[0m:
-set /p lowqualmusic=
-:: if it's not a valid file send the user back to input a valid file
-if not exist %lowqualmusic% (
-    call :clearlastprompt
-    echo [91mInvalid file^^! Please drag an existing file from your computer^^![0m
-    goto addingthemusic
-)
-:: asks the user when the music should start
-echo                                  Enter a specific start time of the music [93min seconds[0m:
-set /p "musicstarttime="
-call :clearlastprompt
-goto :eof
-
-:resamplemath
-:: do nothing if the input fps is equal to the output fps
-if %outputfps% == %intputfps% goto :eof
-:: interpolate if output fps is greater than input fps
-if %outputfps% gtr %intputfps% (
-    set "fpsfilter=minterpolate=fps=%outputfps%,"
-    goto :eof
-)
-:: resample if output fps is greater than input fps
-:: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
-set tmixframes=(%inputfps%/%outputfps%)
-set /a tmixcheck=%tmixframes%
-:: tmix breaks at >128 frames, so make sure it doesn't go above that
-if %tmixcheck% gtr 128 set tmixframes=128
-set "fpsfilter=tmix=frames=!tmixframes!:weights=1,fps=%outputfps%,"
-goto :eof
-
-:qualityselect
-set "dc_s="
-set "bc_s="
-set "tc_s="
-set "uc_s="
-set "cc_s="
-set "rc_s="
-if %videocustom% == y (
-    set cc_s=[92m
-) else (
-    if %videobr% == 3 (
-        set dc_s=[92m
-    ) else (
-        if %videobr% == 5 (
-            set bc_s=[92m
-        ) else (
-            if %videobr% == 8 (
-                set tc_s=[92m
-            ) else (
-                if %videobr% == 9 (
-                    set uc_s=[92m
-                ) else (
-                    if %videorandom% == y (
-                        set rc_s=[92m
-                    ) else (
-                        set cc_s=[92m
-                    )
-                )
-            )
-        )
-    )
-)
-echo Selecting video quality>>"%temp%\qualitymuncherdebuglog.txt"
-echo                                                          [38;2;254;165;0m[B]ack[0m
-echo.
-echo      %dc_s%[1] Decent[0m           %bc_s%[2] Bad[0m           %tc_s%[3] Terrible[0m       %uc_s%[4] Unbearable[0m        %cc_s%[C] Custom[0m          %rc_s%[R] Random[0m
-choice /n /c 1234CRB
-:: set quality
-set "customizationquestion=%errorlevel%"
-if %customizationquestion% == 7 goto :eof
-echo Quality Selected: %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
-:: custom quality
-if %customizationquestion% == 5 set customizationquestion=c
-:: random quality
-if %customizationquestion% == 6 (
-    set videorandom=y
-    set customizationquestion=r
-    call :randomvideoquality
-    goto :eof
-) else (
-    set videorandom=n
-)
-:: defines a few variables that will be replaced later; used to check for valid user inputs
-set outputfps=24
-set videobr=3
-set audiobr=3
-set scaleq=2
-:: sets the quality based on customizationquestion
-:: endingmsg is added to the end of the video for the output name
-if "%customizationquestion%" == "c" (
-    set videocustom=y
-    call :clearlastprompt
-    echo                                                 Custom %qs%
-    echo.
-) else (
-    set videocustom=n
-)
-:customquestioncheckpoint
-:: custom quality
-if "%customizationquestion%" == "c" (
-    echo                                        What fps do you want it to be rendered at:
-    set /p "outputfps="
-    echo                   [93mOn a scale from 1 to 10[0m, how bad should the video bitrate be? 1 bad, 10 very very bad:
-    set /p "videobr="
-    echo                   [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
-    set /p "audiobr="
-    echo                     [93mOn a scale from 1 to 10[0m, how much should the video be shrunk by? 1 none, 10 a lot:
-    set /p "scaleq="
-    echo Custom selected, chose !outputfps! outputfps, !videobr! videobr, %audiobr% audiobr, %scaleq% scaleq>>"%temp%\qualitymuncherdebuglog.txt"
-    set endingmsg=Custom Quality
-)
-:: decent quality
-if %customizationquestion% == 1 (
-    echo [96mDecent %qs%[0m
-    set outputfps=24
-    set videobr=3
-    set scaleq=2
-    set audiobr=3
-    set endingmsg=Decent Quality
-)
-:: bad quality
-if %customizationquestion% == 2 (
-    echo [96mBad %qs%[0m
-    set outputfps=12
-    set videobr=5
-    set scaleq=4
-    set audiobr=5
-    set endingmsg=Bad Quality
-)
-:: terrible quality
-if %customizationquestion% == 3 (
-    echo [96mTerrible %qs%[0m
-    set outputfps=6
-    set videobr=8
-    set scaleq=8
-    set audiobr=8
-    set endingmsg=Terrible Quality
-)
-:: unbearable quality
-if %customizationquestion% == 4 (
-    echo [96mUnbearable %qs%[0m
-    set outputfps=1
-    set videobr=16
-    set scaleq=12
-    set audiobr=9
-    set endingmsg=Unbearable Quality
-)
-:: if custom quality is selected, check if the variables are all whole numbers
-:: if they aren't it'll ask again for their values
-set /a "testforfps=%outputfps%"
-set /a "testforvideobr=%videobr%"
-set /a "testforaudiobr=%audiobr%"
-set /a "testforscaleq=%scaleq%"
-if %customizationquestion% == c (
-    if not "%outputfps%"=="%outputfps: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%videobr%"=="%videobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not "%scaleq%"=="%scaleq: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforfps% == %outputfps% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforvideobr% == %videobr% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforscaleq% == %scaleq% (echo %errormsg% & goto customquestioncheckpoint)
-)
-goto :eof
-
-:: asks for start time and duration of video
-:durationquestions
-call :clearlastprompt
-:: asks if the user wants to trim
-choice /m "Do you want to trim the video?"
-if %errorlevel% == 1 (
-    set trimmed=y
-) else (
-    set trimmed=n
-    call :clearlastprompt
-    goto :eof
-)
-:: asks where to start clip
-:startquestion
-set starttime=0
-set /p "starttime=[93mIn seconds[0m, where do you want your video to start: "
-if "%starttime%" == " " set starttime=0
-:: asks length of clip
-:timequestion
-set vidtime=262144
-set /p "vidtime=[93mIn seconds[0m, how long do you want the video to be: "
-if "%vidtime%" == " " set vidtime=262144
-echo Start time %starttime%, Duration %vidtime%>>"%temp%\qualitymuncherdebuglog.txt"
-call :clearlastprompt
-goto :eof
-
-:: asks if the user wants to use text to speech and gets the text to be spoken and volume
-:voicesynth
-choice /m "Do you want to add text-to-speech?"
-if %errorlevel% == 1 set tts=y
+set frying=y
+set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
+choice /m "Do you want the built-in color changes that come with frying?"
 if %errorlevel% == 2 (
-    set tts=n
-    call :clearlastprompt
-    goto :eof
+    set levelcolor=10
+) else (
+    set levelcolor=%level%
 )
-:: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
-ffmpeg > nul 2>>"%temp%\ffmpegQM.txt"
-> nul find "libflite" "%temp%\ffmpegQM.txt" || (
-    echo USER DOES NOT HAVE FLITE INSTALLED>>"%temp%\qualitymuncherdebuglog.txt"
-    del "%temp%\ffmpegQM.txt"
-    echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
-    set tts=n
-    pause
-    call :clearlastprompt
-    goto :eof
-)
-del "%temp%\ffmpegQM.txt"
-:: text to speech text and volume
-echo What do you want the text-to-speech to say?
-set /p "ttstext="
-set volume=0
-set /p "volume=How much should the volume of the text-to-speech be boosted by (in dB)? Default is 0: "
 call :clearlastprompt
 goto :eof
 
-:: combines text to speech with output since the main encoders don't factor in text to speech
-:encodevoice
-set "af2="
-:: if no audio filters already exist, set them to -af (which is the audio filter flag)
-if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
-:: makes sure that the file doesn't already exist
-set "ttsuffix= tts"
-:ttexist
-set /a "q+=1"
-if exist "%cd%\%filename% %ttsuffix%%container%" (
-    set "ttsuffix= tts (%q%)"
-    goto ttexist
+:fryingmath
+:: sets the amount to shift the video back by, fixing some unwanted effects of displacement)
+set /a shiftv=%desiredheight%/4
+set /a shifth=%desiredwidth%/24
+if %shifth% gtr 255 set shifth=255
+if %shiftv% gtr 255 set shiftv=255
+set shiftv=-%shiftv%
+set shifth=-%shifth%
+set /a duration=((%duration%/%speedq%)+5)
+set "fryfilter=eq=saturation=(%levelcolor%+24)/25:contrast=%levelcolor%,noise=alls=%level%"
+:: uses a smaller map for distortion (1/10 the size of the output video)
+set /a smallwidth=((%desiredwidth%/(%level%*2))/2)*2
+set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
+if %smallheight% lss 10 set smallheight=10
+if %smallwidth% lss 10 set smallwidth=10
+goto :eof
+
+:: some extra steps for encoding a fried video, in order:
+:: generate noise map at 1/10 resolution, scale the map to final resolution, scale the input to the final resolution, add the input and noise together with displacement, and shift it back into place with rgbashift
+:encodefried
+echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
+echo Frying video...
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+:: use the output of the 5th ffmpeg call as the input for the final encoding
+set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
+if exist "%temp%\noisemapscaled%container%" (del "%temp%\noisemapscaled%container%")
+if exist "%temp%\scaledinput%container%" (del "%temp%\scaledinput%container%")
+echo Done frying video>>"%temp%\qualitymuncherdebuglog.txt"
+goto :eof
+
+:: asks if user wants to stutter the video
+:stutter
+:: setting the default amount in case the user doesn't enter a value
+set stutteramount=2
+choice /m "Do you want to add stutter to the video?"
+:: if no, exit the function, if yes, set the variable to y (the variable is only used for error logs)
+if %errorlevel% == 2 (
+    set stutter=n
+    call :clearlastprompt
+    goto :eof
+) else (
+    set stutter=y
 )
-:: encode and merge to output
-echo Encoding and merging text-to-speech...
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-:: delete the old file and update the name
-if exist "%filename%%container%" (del "%filename%%container%")
-set outputvar="%cd%\%filename%%ttsuffix%%container%"
-set "filename=%filename%%ttsuffix%"
+echo [93mNote that too much stutter will result in the video playing backwards. It's recommended to stay between 2 and 20.[0m
+set /p "stutteramount=How much stutter do you want, [93mfrom 2-512[0m: "
+:: random is the name of the filter that stutter uses
+set "stutterfilter=,random=frames=%stutteramount%"
+call :clearlastprompt
 goto :eof
 
 :: miscillaneous filters that are too small to be their own options
@@ -1802,329 +2274,226 @@ goto :eof
     set "tcl7=[92m"
 goto :eof
 
-:: if discord is selected from the menu, it sends the user to discord, clears the console, and goes back to start
-:discord
-echo [96mSending to Discord^^![0m
-start "" https://discord.com/invite/9tRZ6C7tYz
-call :clearlastprompt
+:: select a quality for audio
+:audioqualityselect
+:: resetting the highlighted value
+set "dc_sa="
+set "bc_sa="
+set "tc_sa="
+set "uc_sa="
+set "cc_sa="
+set "rc_sa="
+:: highlights the selected value with green
+if %audiocustom% == y (
+    set cc_sa=[92m
+) else (
+    if %audiobr% == 3 (
+        set dc_sa=[92m
+    ) else (
+        if %audiobr% == 5 (
+            set bc_sa=[92m
+        ) else (
+            if %audiobr% == 8 (
+                set tc_sa=[92m
+            ) else (
+                if %audiobr% == 9 (
+                    set uc_sa=[92m
+                ) else (
+                    if %audiorandom% == y (
+                        set rc_sa=[92m
+                    ) else (
+                        set cc_sa=[92m
+                    )
+                )
+            )
+        )
+    )
+)
+echo                                                          [38;2;254;165;0m[B]ack[0m
+echo.
+echo      %dc_sa%[1] Decent[0m           %bc_sa%[2] Bad[0m           %tc_sa%[3] Terrible[0m       %uc_sa%[4] Unbearable[0m        %cc_sa%[C] Custom[0m          %rc_sa%[R] Random[0m
+choice /n /c 1234CRB
+:: set quality
+set "audiocustomizationquestion=%errorlevel%"
+:: custom quality
+if %audiocustomizationquestion% == 7 goto :eof
+if %audiocustomizationquestion% == 5 set audiocustomizationquestion=c
+:: random quality
+if %audiocustomizationquestion% == 6 (
+    set audiorandom=y
+    set audiocustomizationquestion=r
+    set /a audiobr=%random% * 15 / 32768 + 1
+    goto :eof
+) else (
+    set audiorandom=n
+)
+:: defines a few variables that will be replaced later; used to check for valid user inputs
+set audiobr=a
+:: sets the quality based on audiocustomizationquestion
+:: endingmsg is added to the end of the video for the output name
+:customquestioncheckpoint
+:: custom quality
+if "%audiocustomizationquestion%" == "c" (
+    set audiocustom=y
+    call :clearlastprompt
+    echo                                                 Custom %qs%
+    echo.
+    echo                  [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
+    set /p "audiobr="
+) else (
+    set audiocustom=n
+)
+:: decent quality
+if %audiocustomizationquestion% == 1 set audiobr=3
+:: bad quality
+if %audiocustomizationquestion% == 2 set audiobr=5
+:: terrible quality
+if %audiocustomizationquestion% == 3 set audiobr=8
+:: unbearable quality
+if %audiocustomizationquestion% == 4 set audiobr=9
+:: if custom quality is selected, check if the variables are all whole numbers
+:: if they aren't it'll ask again for their values
+set /a "testforaudiobr=%audiobr%"
+if %audiocustomizationquestion% == c (
+    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
+    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
+)
 goto :eof
 
-:: if the website is selected from the menu, it sends the user to the website, clears the console, and goes back to start
-:website
-echo [96mSending to website^^![0m
-start "" https://qualitymuncher.lgbt/
-call :clearlastprompt
-goto :eof
-
-:: suggestions
-:suggestion
-set /a wb9=3428*12/5234*32-453+54+(8234*2+(300-3)*2)/3*7/2-3053
-call :clearlastprompt
-:: checks for a connection to discord since you need that to send a message to a webhook
-ping /n 1 discord.com  | find "Reply" > nul
+:: audio distortion questions
+:audiodistortion
+echo                                    Do you want to distort the audio (earrape)? [Y/N]
+choice /n
+:: if yes, set the variable and continue, if no, check if the audio speed isn't one and if it isn't, set the audio filters to match it
 if %errorlevel% == 1 (
-    set internet=n
-    echo [91mSorry, either discord is down or you're not connected to the internet. Please try again later.[0m
+    set distortaudio=y
+) else (
+    if not %audiospeedq% == 1 (
+    set "audiofilters=-af atempo=%audiospeedq%"
+    ) else (
+        set "audiofilters="
+    )
     echo.
-    pause
     call :clearlastprompt
     goto :eof
 )
-:: asks information about the suggestion for details
-choice /c SB /m "Would you like to make a suggestion or report a bug?"
-if %errorlevel% == 2 goto bugreport
-:suggestionactual
-set /p "mainsuggestion=What's your suggestion? "
-set /p "suggestionbody=If needed, please elaborate further here: "
-set "author=NO INPUT FOR AUTHOR"
-set /p "author=What is your name on discord? [93mThis is optional[0m: "
-echo.
-call :clearlastprompt
-:: repeats the suggestion for the user to verify
-echo %author%'s suggestion:
-echo %mainsuggestion%
-echo %suggestionbody%
-echo.
-choice /m "Are you sure you would like to submit this suggestion?"
-:: cancel if the user doesn't want to send the suggestion
-if %errorlevel% == 2 (
-    call :clearlastprompt
-    echo [91mOkay, your suggestion has been cancelled.[0m
-    echo.
-    pause
-    call :clearlastprompt
-    goto :eof
-)
-:continuesuggest
-:: please do not abuse this webhook it would make me very sad
-curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New suggestion^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/webhooks/100557400%wb9%2094%wb6%4/an%wb11%Px9R%wbh4%4tV%wb19%
-call :clearlastprompt
-echo [92mYour suggestion has been successfully sent to the developers^^![0m
-echo.
-pause
-call :clearlastprompt
-goto :eof
-
-:: lets users report bugs
-:bugreport
-set wbh2=lxyrX4Y5TxLkQXfq
-set /p "mainsuggestion=What is the bug? "
-set /p "suggestionbody=How do you reproduce the bug: "
-set "author=NO INPUT FOR AUTHOR"
-set /p "author=What is your name on discord? [93mThis is optional but very helpful[0m: "
-echo.
-call :clearlastprompt
-:: repeats the bug for the user to verify
-echo %author%'s bug report:
-echo %mainsuggestion%
-echo %suggestionbody%
-echo.
-choice /m "Are you sure you would like to submit this bug report?"
-:: if the user does not want to submit the bug report, it goes back to the start
-if %errorlevel% == 2 (
-    call :clearlastprompt
-    echo [91mOkay, your bug report has been cancelled.[0m
-    echo.
-    pause
-    call :clearlastprompt
-    goto :eof
-)
-:: please do not abuse this webhook it would make me very sad
-curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"New bug report^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%mainsuggestion%\", \"description\": \"%suggestionbody%\", \"author\": {\"name\": \"%author%\"}}]}" https://discord.com/api/we^bhooks/100%wbh17%557%mathvar4%400%wb9%2094%wb6%4/an%wb11%Px9R%wbh4%4tV%wb19%
-call :clearlastprompt
-echo [92mYour bug report has been successfully sent to the developers^^![0m
-echo.
-pause
-call :clearlastprompt
-goto :eof
-
-:: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for some input
-:exiting
-echo Made it to exit>>"%temp%\qualitymuncherdebuglog.txt"
-echo.
-where /q ffplay.exe || goto aftersound
-if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
-:aftersound
-:: go to nopipingforyou if the user is using multiqueue
-if not "b%~2" == "b" goto nopipingforyou
-echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
-choice /n /c COFPLX /m "You can also press [X] to make a config file, or [L] to generate a debugging log for errors."
-if %errorlevel% == 5 (
-    call :makelog
-    goto closingbar
-)
-if %errorlevel% == 4 goto piped
-if %errorlevel% == 2 %outputvar%
-if %errorlevel% == 3 explorer /select, %outputvar%
-if %errorlevel% == 6 (
-    call :titledisplay
-    call :savetoconfig
-)
-goto closingbar
-
-:: where the script goes if the user is using multiqueue
-:nopipingforyou
-choice /n /c CLX /m "Press [C] to close, [X] to make a config file, or [L] to generate a debugging log for errors."
-if %errorlevel% == 2 (
-    call :makelog
-    goto closingbar
-)
-if %errorlevel% == 3 call :savetoconfig
-goto closingbar
-
-:: makes a log for when a user might encounter an error
-:makelog
-call :clearlastprompt
-:: go to the logs directory, if it exists
-set pastdir=%cd%
-if not 1%loggingdir% == 1 cd /d %loggingdir%
-:: delete old log
-if exist "Quality Muncher Log.txt" del "Quality Muncher Log.txt"
-:: stuff to log (anything and everything possible for batch to get that might be responsible for issues)
-:: filename and outputvar are seperate from the rest because filesnames can have weird characters that might cause the entire log to fail if it's not seperated
-echo Making log...>>"%temp%\qualitymuncherdebuglog.txt"
-echo filename: %filename% > "Quality Muncher Log.txt"
-echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
-(
-    echo LOG CREATION TIME: %time% ON %date%
-    echo.
-    echo SIMPLE
-    echo     version: %version%
-    echo     customizationquestion: %customizationquestion%
-    echo     input width by height: %width% by %height%
-    echo     intput fps: %inputfps%
-    echo     output width by height: %desiredwidth% by %desiredheight%
-    echo     badvideobitrate: %badvideobitrate%
-    echo     badaudiobitrate with added 000: %badaudiobitrate%000
-    echo     internet: %internet%
-    echo.
-    echo VIDEO OPTIONS
-    echo     fps: %outputfps%
-    echo     videobr: %videobr%
-    echo     audiobr: %audiobr%
-    echo     scaleq: %scaleq%
-    echo.
-    echo ADVANCED
-    echo     trimmed: %trimmed%
-    echo         starttime: %starttime%
-    echo         vidtime {aka video length}: %vidtime%
-    echo     corrupt: %corrupt%
-    echo         corruptsev: %corruptsev%
-    echo     spoofduration: %spoofduration%
-    echo         durationtype: %durationtype%
-    echo         linecontentog: %linecontentog%
-    echo         linecontentnew: %linecontentnew%
-    echo     bouncy: %bouncy%
-    echo         bouncetype: %bouncetype%
-    echo         incrementbounce: %incrementbounce%
-    echo         minimumbounce: %incrementbounce%
-    echo     speedq: %speedq%
-    echo     audiospeedq: %audiospeedq%
-    echo     resample: %resample%
-    echo     stretchres %stretchres%
-    echo         custom width by height aspect ratio: %widthratio% by %heightratio%
-    echo     replaceaudio {added audio}: %replaceaudio%
-    echo     colorq: %colorq%
-    echo         contrast: %contrastvalue%
-    echo         saturation: %saturationvalue%
-    echo         brightness: %brightnessvalue%
-    echo     addedtextq: %addedtextq%
-    echo         toptext: %toptext%
-    echo         tsize: %tsize%
-    echo         bottomtext: %bottomtext%
-    echo         tsize2: %tsize2%
-    echo     distortaudio {audio distortion}: %distortaudio%
-    echo         method: %method%
-    echo         distortionseverity: %distortionseverity%
-    echo         distsev {distortionseverity*10}: %distsev%
-    echo     frying: %frying%
-    echo     tts: %tts%
-    echo         ttstext: %ttstext%
-    echo         volume: %volume%
-    echo     extra effects
-    echo         filtercl: %filtercl%
-    echo         tcly {at least one effect is enabled}: %tcly%
-    echo     stutter: %stutter%
-    echo         stutteramount: %stutteramount%
-    echo     novideo: %novideo%
-    echo     noaudio: %noaudio%
-    echo.
-    echo USER OPTIONS
-    echo     autoupdatecheck: %autoupdatecheck%
-    echo     stayopen: %stayopen%
-    echo     showtitle: %showtitle%
-    echo     animate: %animate%
-    echo     animatespeed: %animatespeed%
-    echo     encodingspeed: %encodingspeed%
-    echo     updatespeed: %updatespeed%
-    echo     container: %container%
-    echo     audiocontainer: %audiocontainer%
-    echo     imagecontainer: %imagecontainer%
-    echo FFMPEG DETAILS
-)>>"Quality Muncher Log.txt"
-echo Log made>>"%temp%\qualitymuncherdebuglog.txt"
-:: add ffmpeg to the log
-ffmpeg > nul 2>>"Quality Muncher Log.txt"
-if %fromrender% == y goto :eof
-:: prompt to upload to the webhook for the devs
-call :titledisplay
-choice /m "Log has been made. Upload and send to developers?"
-if %errorlevel% == 2 goto :eof
-choice /m "Do you want to provide more details about the log? For example, what might've caused it or what the error was."
-if %errorlevel% == 1 set /p "detaillog=Please provide more details: "
-if %errorlevel% == 2 set detaillog=No details provided.
-set /p "author=What is your name on discord? [93mThis is optional but very helpful[0m: "
-:: check if the user can connect to the site
-ping /n 1 transfer.sh  | find "Reply" > nul
+:: sends the user to the method they choose
+echo                       Which distortion method should be used, simple [1] or advanced [2]?
+choice /n /c 12
+set disrortionseverity=3
 if %errorlevel% == 1 (
-    set internet=n
-    echo [91mSorry, either the transfer service is down or you're not connected to the internet. Please try again later.[0m
-    echo.
-    pause
+    set method=simple
+    goto audiodistortionsim
+) else (
+    set method=advanced
+    goto audiodistortionadv
+)
+goto :eof
+
+:: advanced method - boosts frequencies, swaps channels, adds echo and delay
+:audiodistortionadv
+set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
+set /a distsev=%distortionseverity%*10
+set /a bb1=0
+set /a bb2=(%distsev%*25)
+set /a bb3=2*(%distsev%*25)
+set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+:: if the audio speed isn't one, add it to the audio filters
+if not %audiospeedq% == 1 (
+    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+)
+call :clearlastprompt
+goto :eof
+
+:: simple method - just boosts frequencies
+:audiodistortionsim
+set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
+set /a distsev=%distortionseverity%*10
+set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+:: if the audio speed isn't one, add it to the audio filters
+if not %audiospeedq% == 1 (
+    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+)
+call :clearlastprompt
+goto :eof
+
+:: asks if the user wants to use text to speech and gets the text to be spoken and volume
+:voicesynth
+choice /m "Do you want to add text-to-speech?"
+if %errorlevel% == 1 set tts=y
+if %errorlevel% == 2 (
+    set tts=n
+    call :clearlastprompt
     goto :eof
 )
-:: upload and save the link to a file, then save to a variable
-curl -s --upload-file "Quality Muncher Log.txt" https://transfer.sh > "%temp%\curlurl.txt"
-set /p curlurl=<"%temp%\curlurl.txt"
-if exist "%temp%\curlurl.txt" (del "%temp%\curlurl.txt")
-:: send to the webhook for the devs
-:: please don't abuse this webhook it would make me very sad
-set wbh2=lxyrX4Y5TxLkQXfq
-curl -s --output nul -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"username\": \"Quality Logs\",\"content\": \"New log recieved^^!\", \"allowed_mentions\": {\"parse\":[]} , \"embeds\": [{\"title\": \"%detaillog%\", \"description\": \"%curlurl%\", \"author\": {\"name\": \"%author% at %time% on %date:~4,10%\"}}]}" https://discord.com/api/webhooks/988214286629359656/0bSrcdJdOLGuR-w89lPasi16qVr_cj%wbh2%ndzi0K1CK4MoHYnoTmtcoS
-if not 1%loggingdir% == 1 cd /d %pastdir%
-call :titledisplay
-echo [92mYour log has been successfully sent to the developers^^![0m
-echo.
-pause
-goto :eof
-
-:: pipes the output to another script of the user's choosing
-:piped
-echo Piping output>>"%temp%\qualitymuncherdebuglog.txt"
-call :titledisplay
-echo Scripts found:
-:: add scripts here, if you want
-echo [S] Custom Script
-echo [1] FFmpeg
-if exist "%~dp0\^^!add text.bat" echo [2] add text
-if exist "%~dp0\^^!audio sync.bat" echo [3] audio sync
-if exist "%~dp0\^^!change fps.bat" echo [4] change fps
-if exist "%~dp0\^^!change speed.bat" echo [5] change speed
-if exist "%~dp0\^^!extract frame.bat" echo [6] extract frame
-if exist "%~dp0\^^!interpolater.bat" echo [7] interpolater
-if exist "%~dp0\^^!replace audio.bat" echo [8] replace audio
-if exist "%~dp0\^^!upscale nn.bat" echo [9] upscale NN
-if exist "%~dp0\^^!convert to gif.bat" echo [G] convert to GIF
-echo.
-:: selecting and piping
-choice /n /c S123456789CG /m "Select a script to pipe to, or press [C] to close: "
-if %errorlevel% == 1 goto customscript
-cls
-if %errorlevel% == 3 cmd /k call "%~dp0\^^!add text.bat" %outputvar%
-if %errorlevel% == 4 cmd /k call "%~dp0\^^!audio sync.bat" %outputvar%
-if %errorlevel% == 5 cmd /k call "%~dp0\^^!change fps.bat" %outputvar%
-if %errorlevel% == 6 cmd /k call "%~dp0\^^!change speed.bat" %outputvar%
-if %errorlevel% == 7 cmd /k call "%~dp0\^^!extract frame.bat" %outputvar%
-if %errorlevel% == 8 cmd /k call "%~dp0\^^!interpolater.bat" %outputvar%
-if %errorlevel% == 9 cmd /k call "%~dp0\^^!replace audio.bat" %outputvar%
-if %errorlevel% == 10 cmd /k call "%~dp0\^^!upscale nn.bat" %outputvar%
-if %errorlevel% == 12 cmd /k call "%~dp0\^^!convert to gif.bat" %outputvar%
-if %errorlevel% == 11 exit
-if %errorlevel% == 2 call :ffmpegpipe
-goto closingbar
-
-:ffmpegpipe
-echo Piping to FFmpeg>>"%temp%\qualitymuncherdebuglog.txt"
-set /p "ffmpeginput=ffmpeg -i %outputvar% "
-echo.
-echo [38;2;254;165;0mEncoding...[0m
-echo.
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% %ffmpeginput% && echo FFmpeg call 13 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 13 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-set done=y
-echo.
-echo [92mDone^^![0m
-echo.
-where /q ffplay.exe || goto aftersound2
-if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
-:aftersound2
-pause
-goto :eof
-
-:: piping to a custom script provided by the user
-:customscript
+:: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
+ffmpeg > nul 2>>"%temp%\ffmpegQM.txt"
+> nul find "libflite" "%temp%\ffmpegQM.txt" || (
+    echo USER DOES NOT HAVE FLITE INSTALLED>>"%temp%\qualitymuncherdebuglog.txt"
+    del "%temp%\ffmpegQM.txt"
+    echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
+    set tts=n
+    pause
+    call :clearlastprompt
+    goto :eof
+)
+del "%temp%\ffmpegQM.txt"
+:: text to speech text and volume
+echo What do you want the text-to-speech to say?
+set /p "ttstext="
+set volume=0
+set /p "volume=How much should the volume of the text-to-speech be boosted by (in dB)? Default is 0: "
 call :clearlastprompt
-set /p "customscript=Enter the path to the script you want to pipe to: "
-cls
-cmd /k call %customscript% %outputvar%
-goto closingbar
+goto :eof
 
-:: if the user inputs a file manually instead of with send to or drag and drop
-:manualfile
-set /p file=Please drag your input here: 
-echo User is using %file% as a manual file input>>"%temp%\qualitymuncherdebuglog.txt"
-cls
-call %0 %file%
-exit
+:: combines text to speech with output since the main encoders don't factor in text to speech
+:encodevoice
+set "af2="
+:: if no audio filters already exist, set them to -af (which is the audio filter flag)
+if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
+:: makes sure that the file doesn't already exist
+set "ttsuffix= tts"
+:ttexist
+set /a "q+=1"
+if exist "%cd%\%filename% %ttsuffix%%container%" (
+    set "ttsuffix= tts (%q%)"
+    goto ttexist
+)
+:: encode and merge to output
+echo Encoding and merging text-to-speech...
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+:: delete the old file and update the name
+if exist "%filename%%container%" (del "%filename%%container%")
+set outputvar="%cd%\%filename%%ttsuffix%%container%"
+set "filename=%filename%%ttsuffix%"
+goto :eof
+
+:: asks if they want music and if so, the file to get it from and the start time
+:replaceaudioquestion
+echo                                         Do you want to replace the audio? [Y/N]                                        
+choice /n
+if %errorlevel% == 2 (
+    set replaceaudio=n
+    call :clearlastprompt
+    goto :eof
+)
+:addingthemusic
+:: asks for a specific file to get music from
+set replaceaudio=y
+echo                            Please drag the desired file here, [93mit must be an audio/video file[0m:
+set /p lowqualmusic=
+:: if it's not a valid file send the user back to input a valid file
+if not exist %lowqualmusic% (
+    call :clearlastprompt
+    echo [91mInvalid file^^! Please drag an existing file from your computer^^![0m
+    goto addingthemusic
+)
+:: asks the user when the music should start
+echo                                  Enter a specific start time of the music [93min seconds[0m:
+set /p "musicstarttime="
+call :clearlastprompt
+goto :eof
 
 :: checks for updates - done automatically unless disabled in options
 :updatecheck
@@ -2204,8 +2573,6 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20
 )
 cls
 :: runs the (updated) script
-echo %me%
-pause
 %me% %*
 exit
 
@@ -2214,22 +2581,6 @@ exit
 set internet=n
 echo [91mUpdate check failed, skipping.[0m
 echo.
-goto :eof
-
-:: random quality
-:randomvideoquality
-:: max and minimum for the random values
-set min=1
-set max=15
-echo.
-:: rays "Random Quality Selected^^!" with "Random" in rainbow text color color
-echo [91mR[93ma[92mn[96md[94mo[95mm[0m %qs%
-:: gets random values
-set /a outputfps=%random% %% 30
-set /a videobr=%random% * %max% / 32768 + %min%
-set /a scaleq=%random% * %max% / 32768 + %min%
-set /a audiobr=%random% * %max% / 32768 + %min%
-set endingmsg=Random Quality
 goto :eof
 
 :: runs at the start of the script if animate is y (disabled by default)
@@ -2274,43 +2625,6 @@ echo                                         Enter your output name [93mwith no
 set /p "filenametemp="
 set "filename=%filenametemp%"
 call :clearlastprompt
-goto :eof
-
-:: sending each audio only input to be encoded
-:encodeaudiomultiqueue
-set totalfiles=0
-for %%x in (%*) do set /a totalfiles+=1
-set filesdone=1
-for %%a in (%*) do (
-    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
-    set filesdoneold=!filesdone!
-    echo Rendering audio !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    set /a filesdone=!filesdone!+1
-    call :audioencode %%a
-)
-title [Done] Quality Muncher v%version%
-goto end
-
-:: encoding audio only outputs
-:audioencode
-:: makes sure the file doesn't already exist
-set "filename=%~n1 (Quality Munched)"
-if exist "%filename%%audiocontainer%" call :renamefile
-if %ismultiqueue% == y (
-    if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
-) else (
-    echo [38;2;254;165;0mEncoding...[0m
-)
-echo.
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %1 ^
--vn %metadata% -preset %encodingspeed% ^
--c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
-%audiofilters% ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-set outputvar="%cd%\%filename%%audiocontainer%
-if %tts% == y call :encodevoiceNV
 goto :eof
 
 :: text-to-speech encoding for no video stream
@@ -2386,233 +2700,42 @@ if "%~x1" == ".GIF" set isimage=y
 echo Image check succeded, image status: %isimage%>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
-:: asks if user wants to fry the video
-:videofrying
-choice /m "Do you want to fry the video? (will cause extreme distortion)"
-if %errorlevel% == 2 (
-    set frying=n
-    call :clearlastprompt
-    goto :eof
-)
-set frying=y
-set /p "level=How fried do you want the video, [93mfrom 1-10[0m: "
-choice /m "Do you want the built-in color changes that come with frying?"
-if %errorlevel% == 2 (
-    set levelcolor=10
-) else (
-    set levelcolor=%level%
-)
-call :clearlastprompt
-goto :eof
-
-:fryingmath
-:: sets the amount to shift the video back by, fixing some unwanted effects of displacement)
-set /a shiftv=%desiredheight%/4
-set /a shifth=%desiredwidth%/24
-if %shifth% gtr 255 set shifth=255
-if %shiftv% gtr 255 set shiftv=255
-set shiftv=-%shiftv%
-set shifth=-%shifth%
-set /a duration=((%duration%/%speedq%)+5)
-set "fryfilter=eq=saturation=(%levelcolor%+24)/25:contrast=%levelcolor%,noise=alls=%level%"
-:: uses a smaller map for distortion (1/10 the size of the output video)
-set /a smallwidth=((%desiredwidth%/(%level%*2))/2)*2
-set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
-if %smallheight% lss 10 set smallheight=10
-if %smallwidth% lss 10 set smallwidth=10
-goto :eof
-
-:: some extra steps for encoding a fried video, in order:
-:: generate noise map at 1/10 resolution, scale the map to final resolution, scale the input to the final resolution, add the input and noise together with displacement, and shift it back into place with rgbashift
-:encodefried
-echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
-echo Frying video...
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-:: use the output of the 5th ffmpeg call as the input for the final encoding
-set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
-if exist "%temp%\noisemapscaled%container%" (del "%temp%\noisemapscaled%container%")
-if exist "%temp%\scaledinput%container%" (del "%temp%\scaledinput%container%")
-echo Done frying video>>"%temp%\qualitymuncherdebuglog.txt"
-goto :eof
-
 :: clears the screen up until the title, preventing flashing but keeping the terminal clean
 :clearlastprompt
 :: move cursor to saved point, then clear any text after the cursor
 echo [H[u[0J
 goto :eof
 
-:: provides the user a list of recent announcements from the devs
-:announcement
-:: checks if github is able to be accessed
-ping /n 1 github.com  | find "Reply" > nul
-if %errorlevel% == 1 goto fetchannouncementfail
-set internet=y
-:: grabs the announcements from github
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
-    echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
-    echo Press any key to go to the menu
-    pause > nul
-    goto :eof
-)
-set /p announce=<%temp%\anouncementQM.txt
-echo [38;2;255;190;0mAnnouncements:[0m
-:: echo each announcement
-for /f "tokens=*" %%s in (%temp%\anouncementQM.txt) do (
-    set /a "g+=1"
-    echo [38;2;90;90;90m[!g!][0m %%s
-)
-if exist "%temp%\anouncementQM.txt" del "%temp%\anouncementQM.txt"
-echo.
-pause
-goto :eof
-
-:: fails to access github
-:fetchannouncementfail
-set internet=n
-echo Failed to fetch announcements>>"%temp%\qualitymuncherdebuglog.txt"
-echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
-pause
-echo [H[u[0J
-goto :eof
-
-:: asks if user wants to stutter the video
-:stutter
-:: setting the default amount in case the user doesn't enter a value
-set stutteramount=2
-choice /m "Do you want to add stutter to the video?"
-:: if no, exit the function, if yes, set the variable to y (the variable is only used for error logs)
-if %errorlevel% == 2 (
-    set stutter=n
-    call :clearlastprompt
-    goto :eof
-) else (
-    set stutter=y
-)
-echo [93mNote that too much stutter will result in the video playing backwards. It's recommended to stay between 2 and 20.[0m
-set /p "stutteramount=How much stutter do you want, [93mfrom 2-512[0m: "
-:: random is the name of the filter that stutter uses
-set "stutterfilter=,random=frames=%stutteramount%"
-call :clearlastprompt
-goto :eof
-
-:: sends all images and/or GIFs to be encoded
-:newmunchmultiq
-set originalimagecontainer=%imagecontainer%
-:: set a counter for the number of images being encoded
-set totalfiles=0
-for %%x in (%*) do set /a totalfiles+=1
-set filesdone=1
-:: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
-for %%a in (%*) do (
-    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
-    set filesdoneold=!filesdone!
-    echo Rendering image !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    set /a filesdone=!filesdone!+1
-    call :newmunchworking %%a %loopn% %qvnew% %imagesc%
-)
-title [Done] Quality Muncher v%version%
-echo.
-echo [92mDone^^![0m
-set done=y
-goto exiting
-
-:: encodes images and GIFs
-:newmunchworking
-if "%~x1" == ".gif" (
-    set imagecontainer=.gif
-) else (
-    set imagecontainer=%originalimagecontainer%
-)
-call :clearlastprompt
-if %ismultiqueue% == y (
-    if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
-) else (
-    echo [38;2;254;165;0mEncoding...[0m
-)
-set loopn=%2
-set imagequal=%3
-:: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
-set /a imagequal3=%imagequal%*3
-set /a imagesc=%4
-set "tempfolder=%temp%\processingvideo"
-if exist "%tempfolder%" (rmdir "%tempfolder%" /q /s)
-mkdir "%tempfolder%"
-:: grab width and height of the input video
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %1 -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
-if exist "%temp%\height.txt" (del "%temp%\height.txt")
-if exist "%temp%\width.txt" (del "%temp%\width.txt")
-:: basic height scaling and checks to make sure they're even
-set /a height=%height%/%imagesc%
-set /a height=(%height%/2)*2
-set /a width=%width%/%imagesc%
-set /a width=(%width%/2)*2
-set /a widthalt=%width%-2
-set /a heightalt=%height%-2
-:: sets containers and encoders depending on if it's a gif or an image
-set imagecontainerbackup=%imagecontainer%
-set webp=webp
-set weblib=libwebp
-if %imagecontainer% == .gif (
-    set imagecontainer=.mkv
-    set webp=webm
-    set weblib=libvpx
-)
-echo Beginning image munch loop>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
-set /a loopnreal=%loopn%-1
-:: loop through a few encoders until the loop is over
-echo 0/%loopn%
-set /a i=0
-:startmunch
-set /a i+=1
-set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-set /a i+=1
-set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-set /a i+=1
-set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-goto startmunch
-:endmunch
-set /a i2=%i1%+1
-echo [1A[0J%loopn%/%loopn%
-set "filename=%~dpn1 (Quality Munched)"
-:: skip the loop if the file already doesn't exist
-if not exist "%filename%%imagecontainerbackup%" goto afterrename
-:: loop until the file doesn't exist
-:renamefileimage
-set /a "f+=1"
-if exist "%filename% (%f%)%imagecontainerbackup%" goto renamefileimage
-set "filename=%filename% (%f%)"
-:afterrename
-:: if it's a gif, encode it as a video then reencode it to a gif
-:: otherwisem encode it as a picture
-if %imagecontainerbackup% == .gif (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%" && echo FFmpeg call 18 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 18 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%" && echo FFmpeg call 19 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 19 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-) else (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv410p -c:v mjpeg -q:v %imagequal% -f mjpeg "%filename%%imagecontainerbackup%" && echo FFmpeg call 20 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 20 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-)
-rmdir "%tempfolder%" /q /s
-set outputvar="%filename%%imagecontainerbackup%"
+:: splash texts
+:setquotes
+set quotecount=26
+set quoteindex=0
+set messages1=                                       There is something addictive about secrets.
+set messages2=                                               The stereo sounds strange.
+set messages3=                                                   .bind flight none
+set messages4=                                          +5 extra gigashits compared to vegas^^^!
+set messages5=                                     The power of the sun... in the palm of my hand.
+set messages6=                                         Sometimes the silence guides our minds.
+set messages7=                     I am not the villain in this story. I do what I do because there is no choice.
+set messages8=                        Don't call it a god complex, there's nothing complex about it. I am God.
+set messages9=                                     I was a god, Valeria. I found it... beneath me.
+set messages10=                                       Madness to magnet keeps attracting me, me.
+set messages11=                                     Heart plays in ways the mind can't figure out.
+set messages12=                                   The laws of the land or the heart, what's greater?
+set messages13=                                                      Full of soup.
+set messages14=                        I once broke the entire script for almost a month and didn't realize it.
+set messages15=                                                   There is no spork.
+set messages16=                               The eyes see only what the mind is prepared to comprehend.
+set messages17=                          If I have seen further, it is by standing on the shoulders of giants.
+set messages18=  [38;2;24;24;24mWake up. [38;2;36;36;36mWake up. [38;2;48;48;48mWake up. [38;2;60;60;60mWake up. [38;2;72;72;72mWake up. [38;2;84;84;84mWake up. [38;2;96;96;96mWake up. [38;2;84;84;84mWake up. [38;2;72;72;72mWake up. [38;2;60;60;60mWake up. [38;2;48;48;48mWake up. [38;2;36;36;36mWake up. [38;2;24;24;24mWake up. [0m
+set messages19=                       The mystery of life isn't a problem to solve, but a reality to experience.
+set messages20=                                           Simulating hone renders since 2022.
+set messages21=                                               Sanity check not mandatory.
+set messages22=                                           Fatal error occurred. Just kidding.
+set messages23=                                                    Missing Operand.
+set messages24=                                     Statements dreamed up by the utterly deranged.
+set messages25=                                                Hold gently like burger.
+set messages26=                                                          Meow
 goto :eof
 
 :: sets default values for variables
@@ -2707,104 +2830,7 @@ set audiobr=3
 set scaleq=2
 set "qs=Quality Selected^^^^^!"
 set "colorfilter="
-set method=classic
-goto :eof
-
-:: select a quality for audio
-:audioqualityselect
-:: resetting the highlighted value
-set "dc_sa="
-set "bc_sa="
-set "tc_sa="
-set "uc_sa="
-set "cc_sa="
-set "rc_sa="
-:: highlights the selected value with green
-if %audiocustom% == y (
-    set cc_sa=[92m
-) else (
-    if %audiobr% == 3 (
-        set dc_sa=[92m
-    ) else (
-        if %audiobr% == 5 (
-            set bc_sa=[92m
-        ) else (
-            if %audiobr% == 8 (
-                set tc_sa=[92m
-            ) else (
-                if %audiobr% == 9 (
-                    set uc_sa=[92m
-                ) else (
-                    if %audiorandom% == y (
-                        set rc_sa=[92m
-                    ) else (
-                        set cc_sa=[92m
-                    )
-                )
-            )
-        )
-    )
-)
-echo                                                          [38;2;254;165;0m[B]ack[0m
-echo.
-echo      %dc_sa%[1] Decent[0m           %bc_sa%[2] Bad[0m           %tc_sa%[3] Terrible[0m       %uc_sa%[4] Unbearable[0m        %cc_sa%[C] Custom[0m          %rc_sa%[R] Random[0m
-choice /n /c 1234CRB
-:: set quality
-set "audiocustomizationquestion=%errorlevel%"
-:: custom quality
-if %audiocustomizationquestion% == 7 goto :eof
-if %audiocustomizationquestion% == 5 set audiocustomizationquestion=c
-:: random quality
-if %audiocustomizationquestion% == 6 (
-    set audiorandom=y
-    set audiocustomizationquestion=r
-    set /a audiobr=%random% * 15 / 32768 + 1
-    goto :eof
-) else (
-    set audiorandom=n
-)
-:: defines a few variables that will be replaced later; used to check for valid user inputs
-set audiobr=a
-:: sets the quality based on audiocustomizationquestion
-:: endingmsg is added to the end of the video for the output name
-:customquestioncheckpoint
-:: custom quality
-if "%audiocustomizationquestion%" == "c" (
-    set audiocustom=y
-    call :clearlastprompt
-    echo                                                 Custom %qs%
-    echo.
-    echo                  [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
-    set /p "audiobr="
-) else (
-    set audiocustom=n
-)
-:: decent quality
-if %audiocustomizationquestion% == 1 (
-    set audiobr=3
-)
-:: bad quality
-if %audiocustomizationquestion% == 2 (
-    set audiobr=5
-)
-:: terrible quality
-if %audiocustomizationquestion% == 3 (
-    set audiobr=8
-)
-:: unbearable quality
-if %audiocustomizationquestion% == 4 (
-    set audiobr=9
-)
-:: if custom quality is selected, check if the variables are all whole numbers
-:: if they aren't it'll ask again for their values
-set /a "testforfps=%outputfps%"
-set /a "testforvideobr=%videobr%"
-set /a "testforaudiobr=%audiobr%"
-set /a "testforscaleq=%scaleq%"
-if %audiocustomizationquestion% == c (
-    if not "%audiobr%"=="%audiobr: =%" (echo %errormsg% & goto customquestioncheckpoint)
-    if not %testforaudiobr% == %audiobr% (echo %errormsg% & goto customquestioncheckpoint)
-)
+set method=simple
 goto :eof
 
 :: makes the video options in the GUI either white or green (off and on respectively)
@@ -2946,38 +2972,6 @@ if "%temptogglevar:~0,5%" == "[92m" (
 set "temptogglevar"
 goto :eof
 
-:: splash texts
-:setquotes
-set quotecount=26
-set quoteindex=0
-set messages1=                                       There is something addictive about secrets.
-set messages2=                                               The stereo sounds strange.
-set messages3=                                                   .bind flight none
-set messages4=                                          +5 extra gigashits compared to vegas^^^!
-set messages5=                                     The power of the sun... in the palm of my hand.
-set messages6=                                         Sometimes the silence guides our minds.
-set messages7=                     I am not the villain in this story. I do what I do because there is no choice.
-set messages8=                        Don't call it a god complex, there's nothing complex about it. I am God.
-set messages9=                                     I was a god, Valeria. I found it... beneath me.
-set messages10=                                       Madness to magnet keeps attracting me, me.
-set messages11=                                     Heart plays in ways the mind can't figure out.
-set messages12=                                   The laws of the land or the heart, what's greater?
-set messages13=                                                      Full of soup.
-set messages14=                        I once broke the entire script for almost a month and didn't realize it.
-set messages15=                                                   There is no spork.
-set messages16=                               The eyes see only what the mind is prepared to comprehend.
-set messages17=                          If I have seen further, it is by standing on the shoulders of giants.
-set messages18=  [38;2;24;24;24mWake up. [38;2;36;36;36mWake up. [38;2;48;48;48mWake up. [38;2;60;60;60mWake up. [38;2;72;72;72mWake up. [38;2;84;84;84mWake up. [38;2;96;96;96mWake up. [38;2;84;84;84mWake up. [38;2;72;72;72mWake up. [38;2;60;60;60mWake up. [38;2;48;48;48mWake up. [38;2;36;36;36mWake up. [38;2;24;24;24mWake up. [0m
-set messages19=                       The mystery of life isn't a problem to solve, but a reality to experience.
-set messages20=                                           Simulating hone renders since 2022.
-set messages21=                                               Sanity check not mandatory.
-set messages22=                                           Fatal error occurred. Just kidding.
-set messages23=                                                    Missing Operand.
-set messages24=                                     Statements dreamed up by the utterly deranged.
-set messages25=                                                Hold gently like burger.
-set messages26=                                                          Meow
-goto :eof
-
 :: load a random message from a list of messages
 :splashtext
 if %displaymessages% == n goto :eof
@@ -2991,45 +2985,6 @@ goto :eof
 :: automatically saves your current config to a file in temp for retrieval later
 :autosaveconfig
 call :savetoconfigbypassname temp
-goto :eof
-
-:: loads a custom config from the user
-:customconfig
-echo Please enter either:
-echo  - the path of your config file
-echo  - [38;2;254;165;0mB[0m to go back
-echo  - or [38;2;254;165;0mR[0m to use your last used settings
-set /p "configfile="
-if %configfile% == b goto :eof
-if %configfile% == B goto :eof
-if %configfile% == R (
-    :: if the file doesn't exist, tell the user and go back
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-if %configfile% == r (
-    :: if the file doesn't exist, tell the user and go back
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-:: if the file doesn't exist, tell the user and go back
-if not exist %configfile% (
-    call :clearlastprompt
-    echo [91mFile not found.[0m
-    goto :customconfig
-)
-:: call the config file to load the settings
-call %configfile%
 goto :eof
 
 :: leaves the script
