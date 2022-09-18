@@ -724,7 +724,7 @@ echo              %gui_video_corruption%                        %gui_video_durat
 echo.
 echo       %gui_video_resamplinginterpolation%                     %gui_video_frying%                           %gui_video_framestutter%
 echo.
-echo             %gui_video_outputasgif%                  %gui_video_miscillaneousfilters%                      %gui_video_novideo%
+echo             %gui_video_outputasgif%                  %gui_video_miscellaneousfilters%                      %gui_video_novideo%
 echo.
 echo.
 echo.
@@ -766,7 +766,7 @@ if %gui_video_var% == 13 if %outputasgif% == y (
 ) else (
     set outputasgif=y
 )
-:: miscillaneous filters
+:: miscellaneous filters
 if %gui_video_var% == 14 call :filterlist
 :: back
 if %gui_video_var% == 15 goto guimenu
@@ -2169,7 +2169,7 @@ set "stutterfilter=,random=frames=%stutteramount%"
 call :clearlastprompt
 goto :eof
 
-:: miscillaneous filters that are too small to be their own options
+:: miscellaneous filters that are too small to be their own options
 :: all of the "toggletc(x)" labels are a part of this, used to toggle the colors
 :filterlist
 echo                                                          [38;2;254;165;0m[B]ack[0m
@@ -2764,7 +2764,7 @@ set gui_video_resamplinginterpolation=[R] Resampling/Interpolation
 set gui_video_frying=[F] Frying
 set gui_video_framestutter=[S] Frame Stutter
 set gui_video_outputasgif=[G] Output as GIF
-set gui_video_miscillaneousfilters=[M] Miscillaneous Filters
+set gui_video_miscellaneousfilters=[M] Miscellaneous Filters
 set gui_video_novideo=[N] No Video
 set gui_audio_quality=[1] Quality
 set gui_audio_starttimeandduration=[2] Start Time and Duration
@@ -2897,9 +2897,9 @@ if %outputasgif% == y (
     call :togglethis gui_video_outputasgif off
 )
 if not "a%filtercl%" == "a" (
-    call :togglethis gui_video_miscillaneousfilters on
+    call :togglethis gui_video_miscellaneousfilters on
 ) else (
-    call :togglethis gui_video_miscillaneousfilters off
+    call :togglethis gui_video_miscellaneousfilters off
 )
 if %novideo% == y (
     call :togglethis gui_video_novideo on
