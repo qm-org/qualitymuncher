@@ -5,10 +5,6 @@
 :: made by Frost#5872
 :: https://github.com/qm-org/qualitymuncher
 
-:: ik this shitty code is really fucked up rn with the comments and stuff all over the place
-:: so if you need help figuring out what anything does shoot me a message or ask in the server
-:: and i'll explain whatever you need me to
-
 :main
 @echo off
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
@@ -56,16 +52,27 @@ echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo %*>>"%temp%\qualitymuncherdebuglog.txt"
 echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
 set ismultiqueue=n
+if not check%1 == check (
+    if "%~1" == "-h" goto arghelp
+    if "%~1" == "--h" goto arghelp
+    if "%~1" == "-help" goto arghelp
+    if "%~1" == "--help" goto arghelp
+    if "%~1" == "-?" goto arghelp
+    if "%~1" == "--?" goto arghelp
+    if "%~1" == "?" goto arghelp
+    if "%~1" == "/?" goto arghelp
+    if "%~1" == "/h" goto arghelp
+    if "%~1" == "/help" goto arghelp
+    set inpath=%~dp1
+    set inpath=%inpath:~0,-1%
+    if not "%cd%" == "!inpath!" cd /d !inpath!
+)
 if not check%2 == check (
     set ismultiqueue=y
     echo More than one parameter is being used to run the file>>"%temp%\qualitymuncherdebuglog.txt"
 )
 :: if there is an input file, check the current directory and fix it if needed
-if not check%1 == check (
-    set inpath=%~dp1
-    set inpath=%inpath:~0,-1%
-    if not "%cd%" == "%inpath%" cd /d %inpath%
-)
+
 :: set the title
 title Quality Muncher v%version%
 set inpcontain=%~x1
@@ -95,7 +102,7 @@ set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
 :: checks if the input has a video stream (i.e. if the input is an audio file)
 :: and if there isn't a video stream, ask audio questions instead
 call :imagecheck %1
-if %1check == check (
+if check%1 == check (
     echo File was ran without parameters ^(no input^)>>"%temp%\qualitymuncherdebuglog.txt"
     goto guimenurefresh
 )
@@ -104,11 +111,11 @@ if not exist "%~1" (
     echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
 )
 :: get the audio stream and set it to a variable
-set inputvideo=%1
+set inputvideo="%~1"
 ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %temp%\astream.txt
 set /p astream=<%temp%\astream.txt
 if exist "%temp%\astream.txt" (del "%temp%\astream.txt")
-if 1%astream% == 1 (
+if not defined astream (
     echo Input does not have an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=n
 ) else (
@@ -254,6 +261,7 @@ if %errorlevel% == 5 (
     echo                                              [31mAre you sure you want to exit?[0m
     choice /n
     if !errorlevel! == 1 (
+        endlocal
         exit /b
     ) else (
         goto guimenurefresh
@@ -529,7 +537,7 @@ if %errorlevel% == 8 cmd /k call "%~dp0\^^!interpolater.bat" %outputvar%
 if %errorlevel% == 9 cmd /k call "%~dp0\^^!replace audio.bat" %outputvar%
 if %errorlevel% == 10 cmd /k call "%~dp0\^^!upscale nn.bat" %outputvar%
 if %errorlevel% == 12 cmd /k call "%~dp0\^^!convert to gif.bat" %outputvar%
-if %errorlevel% == 11 exit
+if %errorlevel% == 11 endlocal & exit /b
 if %errorlevel% == 2 call :ffmpegpipe
 goto closingbar
 
@@ -811,7 +819,8 @@ goto exiting
 :: also does a lot of stuff before encoding that needs to be set but has to be run for each video since it relies on things like the input's dimensions
 :videospecificstuff
 :: get duration
-set inputvideo=%1
+echo input is %1 >>"%temp%\qualitymuncherdebuglog.txt"
+set inputvideo="%~1"
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
 set /p duration=<%temp%\fileduration.txt
 :: make sure the variable is an integer
@@ -874,6 +883,10 @@ set audiofiltersnormal=%audiofilters%
 if %noaudio% == y (
     set audiofiltersnormal=-an
 )
+:: switch to the current input's directory, if not already in it
+set inpath=%~dp1
+set inpath=%inpath:~0,-1%
+if not "%cd%" == "!inpath!" cd /d !inpath!
 :: if the user selected to fry the video, encode all of the needed parts
 if %frying% == y call :encodefried
 :: goto the correct encoding option
@@ -1830,9 +1843,31 @@ set theline=n
 :: loop through the file's lines until the line containing duration is found and replacde
 set linenum=0
 for /f "usebackq tokens=*" %%a in ("%temp%\%filename% hexed.txt") do (
-    call :findmvhdlineandreplacenext "%%~a"
+    set /a linenum+=1
+    set "linecontent=%%~a"
+    if !nextline! == y (
+        if %durationtype% == superlongnegative (
+            set /a "theline=!linenum!+1"
+        ) else (
+            set /a "theline=!linenum!"
+        )
+        set /a numofloops+=1
+        echo Powershell is working, please wait...
+        if %durationtype% == superlong call :thelinesuperlong
+        if %durationtype% == superlongnegative call :superlongnegative
+        if %durationtype% == increasing call :thelineincreasing
+        if !numofloops!1 == 11 set nextline=n
+    )
+    :: exit the for loop if the line is found and replaced
+    if !linenum! gtr !theline! goto enddurationspoofloop
+    if not %durationtype% == superlongnegative (
+        if !nextline! == y (
+            goto enddurationspoofloop
+        )
+    )
+    if not "!linecontent!" == "!linecontent:mvhd=!" set nextline=y
 )
-:endloop
+:enddurationspoofloop
 :: decode the hex back into a video, with the changed duration
 certutil -decodehex "%temp%\%filename% hexed.txt" "%filename% hexed.mp4"
 del %outputvar%
@@ -1841,37 +1876,10 @@ del "%temp%\%filename% hexed.txt"
 set outputvar="%cd%\%filename%.mp4"
 goto donewithdurationspoof
 
-:: a loop that finds the line that contains duration information
-:findmvhdlineandreplacenext
-set /a linenum+=1
-set "linecontent=%~1"
-if %nextline% == y (
-    if %durationtype% == superlongnegative (
-        set /a "theline=%linenum%+1"
-    ) else (
-        set /a "theline=%linenum%"
-    )
-    set /a numofloops+=1
-    if %durationtype% == superlong call :thelinesuperlong
-    if %durationtype% == superlongnegative call :superlongnegative
-    if %durationtype% == increasing call :thelineincreasing
-    if %numofloops%1 == 11 set nextline=n
-)
-:: exit the for loop if the line is found and replaced
-if %linenum% gtr %theline% goto endloop
-if not %durationtype% == superlongnegative (
-    if %nextline% == y (
-        goto endloop
-    )
-)
-if not "%linecontent%" == "%linecontent:mvhd=%" set nextline=y
-goto :eof
-
 :: replace the information with super long duration
 :thelinesuperlong
 :: saving the old line content
 set "linecontentog=%linecontent%"
-echo first %linecontentog%
 :: replacing the line content with the super long duration
 if "%linecontent:~4,1%" == " " (
     set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
@@ -1898,9 +1906,7 @@ if "%linecontent:~4,1%" == " " (
 )
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
-echo next %linecontentnew%
 :: calling powershell to replace the line content
-echo Powershell is working, please wait...
 powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
 :: deleting the old file and renaming the new one
 del "%temp%\%filename% hexed.txt"
@@ -1913,8 +1919,6 @@ goto :eof
 set "linecontentog=%linecontent%"
 :: only use the parts with hex code because the rest had weird characters and caused issues
 set linecontentog=%linecontentog:~0,55%
-:: display it for error checking (remove in public release maybe?)
-echo first %linecontentog%
 :: skip the first part if it's the second line
 if %numofloops% == 2 goto secondlinething
 if "%linecontent:~4,1%" == " " (
@@ -1970,9 +1974,7 @@ if "%linecontent:~4,1%" == " " (
 :: making sure everything works okay-ish (for some reason it kept an extra hex at the start of the line sometimes)
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
 set linecontentnew=%linecontentnew:00 FF 67 69 81 00 00 00 01=FF 67 69 81 00 00 00 01%
-echo next %linecontentnew%
 :: calling powershell to replace the line content
-echo Powershell is working, please wait...
 powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
 :: deleting the old file and renaming the new one
 del "%temp%\%filename% hexed.txt"
@@ -2011,7 +2013,6 @@ if "%linecontent:~4,1%" == " " (
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 ff ff=00 00 00 00 00 00 ff ff%
 :: calling powershell to replace the line content
-echo Powershell is working, please wait...
 powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
 :: deleting the old file and renaming the new one
 del "%temp%\%filename% hexed.txt"
@@ -2085,12 +2086,16 @@ goto :eof
 
 :resamplemath
 :: do nothing if the input fps is equal to the output fps
-if %outputfps% == %intputfps% goto :eof
+if %outputfps% == %inputfps% goto :eof
 :: interpolate if output fps is greater than input fps
-if %outputfps% gtr %intputfps% (
+if %outputfps% gtr %inputfps% (
     set "fpsfilter=minterpolate=fps=%outputfps%,"
+    echo Interpolating>>"%temp%\qualitymuncherdebuglog.txt"
+    echo !fpsfilter!>>"%temp%\qualitymuncherdebuglog.txt"
     goto :eof
 )
+echo Resampling>>"%temp%\qualitymuncherdebuglog.txt"
+echo %fpsfilter%>>"%temp%\qualitymuncherdebuglog.txt"
 :: resample if output fps is greater than input fps
 :: determines the number of frames to blend together per frame (does not use decimals/floats because batch is like that)
 set tmixframes=(%inputfps%/%outputfps%)
@@ -2580,12 +2585,14 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20
     powershell -noprofile "iex(iwr -useb install.qualitymuncher.lgbt)"
     echo Exiting in 10 seconds...
     timeout /t 10
-    exit
+    endlocal
+    exit /b
 )
 cls
 :: runs the (updated) script
 %me% %*
-exit
+endlocal
+exit /b
 
 :: runs if there isn't internet (comes from update check)
 :nointernet
@@ -2615,14 +2622,14 @@ goto :eof
 
 :: essentially the opposite of loadingbar (but exits if animate is n)
 :closingbar
-if %animate% == n exit
+if %animate% == n endlocal & exit /b
 :closingloop
 mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%-5
 set /a lines=%lines%-1
 if not %cols% == 14 goto closingloop
 endlocal
-exit
+exit /b
 
 :: asks if the user wants a custom output name
 :outputquestion
@@ -2650,57 +2657,51 @@ if exist "%filename% (%i%)%container%" goto renamefileloop
 set "filename=%filename% (%i%)"
 goto :eof
 
+:: makes the first file extension lowercase, letter by letter
+:makelowercase
+set counterex=%1
+set _FROM=!_UCASE:~%counterex%,1!!
+set _TO=!_LCASE:~%counterex%,1!
+set firstex=!firstex:%_FROM%=%_TO%!
+goto :eof
+
 :: checks if the input is an image
 :imagecheck
 echo First file extension is "%~x1">>"%temp%\qualitymuncherdebuglog.txt"
-if "%~x1" == ".png" set isimage=y
-if "%~x1" == ".jpg" set isimage=y
-if "%~x1" == ".jpeg" set isimage=y
-if "%~x1" == ".jfif" set isimage=y
-if "%~x1" == ".jpe" set isimage=y
-if "%~x1" == ".jif" set isimage=y
-if "%~x1" == ".jfi" set isimage=y
-if "%~x1" == ".pjpeg" set isimage=y
-if "%~x1" == ".bmp" set isimage=y
-if "%~x1" == ".tiff" set isimage=y
-if "%~x1" == ".tif" set isimage=y
-if "%~x1" == ".raw" set isimage=y
-if "%~x1" == ".heif" set isimage=y
-if "%~x1" == ".heic" set isimage=y
-if "%~x1" == ".webp" set isimage=y
-if "%~x1" == ".jp2" set isimage=y
-if "%~x1" == ".j2k" set isimage=y
-if "%~x1" == ".jpx" set isimage=y
-if "%~x1" == ".jpm" set isimage=y
-if "%~x1" == ".jpm" set isimage=y
-if "%~x1" == ".mj2" set isimage=y
-if "%~x1" == ".gif" set isimage=y
-if "%~x1" == ".PNG" set isimage=y
-if "%~x1" == ".JPG" set isimage=y
-if "%~x1" == ".JPEG" set isimage=y
-if "%~x1" == ".JFIF" set isimage=y
-if "%~x1" == ".JPE" set isimage=y
-if "%~x1" == ".JIF" set isimage=y
-if "%~x1" == ".JFI" set isimage=y
-if "%~x1" == ".PJPEG" set isimage=y
-if "%~x1" == ".BMP" set isimage=y
-if "%~x1" == ".TIFF" set isimage=y
-if "%~x1" == ".TIF" set isimage=y
-if "%~x1" == ".RAW" set isimage=y
-if "%~x1" == ".HEIF" set isimage=y
-if "%~x1" == ".HEIC" set isimage=y
-if "%~x1" == ".WEBP" set isimage=y
-if "%~x1" == ".JP2" set isimage=y
-if "%~x1" == ".J2K" set isimage=y
-if "%~x1" == ".JPX" set isimage=y
-if "%~x1" == ".JPM" set isimage=y
-if "%~x1" == ".JPM" set isimage=y
-if "%~x1" == ".MJ2" set isimage=y
-if "%~x1" == ".GIF" set isimage=y
+:: make a variable with the first file extension in lowercase
+set "firstex=%~x1"
+set "_UCASE=ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+set "_LCASE=abcdefghijklmnopqrstuvwxyz"
+for /l %%a in (0,1,25) do (
+    call :makelowercase %%a
+)
+echo Lowercase first file extension is "%firstex%">>"%temp%\qualitymuncherdebuglog.txt"
+if "%firstex%" == ".png" set isimage=y
+if "%firstex%" == ".jpg" set isimage=y
+if "%firstex%" == ".jpeg" set isimage=y
+if "%firstex%" == ".jfif" set isimage=y
+if "%firstex%" == ".jpe" set isimage=y
+if "%firstex%" == ".jif" set isimage=y
+if "%firstex%" == ".jfi" set isimage=y
+if "%firstex%" == ".pjpeg" set isimage=y
+if "%firstex%" == ".bmp" set isimage=y
+if "%firstex%" == ".tiff" set isimage=y
+if "%firstex%" == ".tif" set isimage=y
+if "%firstex%" == ".raw" set isimage=y
+if "%firstex%" == ".heif" set isimage=y
+if "%firstex%" == ".heic" set isimage=y
+if "%firstex%" == ".webp" set isimage=y
+if "%firstex%" == ".jp2" set isimage=y
+if "%firstex%" == ".j2k" set isimage=y
+if "%firstex%" == ".jpx" set isimage=y
+if "%firstex%" == ".jpm" set isimage=y
+if "%firstex%" == ".jpm" set isimage=y
+if "%firstex%" == ".mj2" set isimage=y
+if "%firstex%" == ".gif" set isimage=y
 echo Image check succeded, image status: %isimage%>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
-:: clears the screen up until the title, preventing flashing but keeping the terminal clean
+:: clears the screen up until the title, preventing flashing while keeping the terminal clean
 :clearlastprompt
 :: move cursor to saved point, then clear any text after the cursor
 echo [H[u[0J
@@ -2731,7 +2732,7 @@ set messages18=  [38;2;24;24;24mWake up. [38;2;36;36;36mWake up. [38;2;48;48;
 set messages19=                       The mystery of life isn't a problem to solve, but a reality to experience.
 set messages20=                                           Simulating hone renders since 2022.
 set messages21=                                               Sanity check not mandatory.
-set messages22=                                           Fatal error occurred. Just kidding.
+set messages22=                                           Fatal error occurred^^^! Just kidding.
 set messages23=                                                    Missing Operand.
 set messages24=                                     Statements dreamed up by the utterly deranged.
 set messages25=                                                Hold gently like burger.
@@ -2742,6 +2743,7 @@ goto :eof
 :setdefaults
 :: splash texts
 call :setquotes
+set endingmsg=Decent Quality
 set videocustom=n
 set audiocustom=n
 set videorandom=n
@@ -2986,6 +2988,18 @@ goto :eof
 :autosaveconfig
 call :savetoconfigbypassname temp
 goto :eof
+
+:: display a message if ran with a help argument
+:arghelp
+echo.
+echo Quality Muncher v%version%
+echo Usage    -  [Path to Quality Muncher] [Path to input files]
+echo Example  -  "Quality Muncher" C:\desktop\video_no_spaces.mp4 "D:\drive\video with spaces.mkv"
+echo Important:
+echo  - don't use inputs of different media types together (such as an image and a video)
+echo  - remember to quote any file paths with spaces
+endlocal
+exit /b
 
 :: leaves the script
 :ending
