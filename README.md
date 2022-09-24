@@ -5,12 +5,11 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 # Current New Features
 
  - fallback for updating
- - better comments in code
+ - backend changes
 
 # Planned
 
  - information/credits/disclaimers etc page in the menu or maybe extras
- - sort the functions better (very disorganized)
  - ???
 
 # Bugs
