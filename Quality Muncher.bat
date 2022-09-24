@@ -262,7 +262,7 @@ if %errorlevel% == 5 (
     choice /n
     if !errorlevel! == 1 (
         endlocal
-        exit /b
+        exit /b 0
     ) else (
         goto guimenurefresh
     )
@@ -409,7 +409,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set qv=%qv%
     echo set imagesc=%imagesc%
 
-    echo exit /b
+    echo exit /b 0
 ) >> "%configname%.bat"
 echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
 if "%~1" == "temp" goto :eof
@@ -537,7 +537,7 @@ if %errorlevel% == 8 cmd /k call "%~dp0\^^!interpolater.bat" %outputvar%
 if %errorlevel% == 9 cmd /k call "%~dp0\^^!replace audio.bat" %outputvar%
 if %errorlevel% == 10 cmd /k call "%~dp0\^^!upscale nn.bat" %outputvar%
 if %errorlevel% == 12 cmd /k call "%~dp0\^^!convert to gif.bat" %outputvar%
-if %errorlevel% == 11 endlocal & exit /b
+if %errorlevel% == 11 endlocal & exit /b 0
 if %errorlevel% == 2 call :ffmpegpipe
 goto closingbar
 
@@ -1881,28 +1881,13 @@ goto donewithdurationspoof
 :: saving the old line content
 set "linecontentog=%linecontent%"
 :: replacing the line content with the super long duration
-if "%linecontent:~4,1%" == " " (
-    set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
+set /a lineloop=4
+:loopsuperlongduration
+if "!linecontent:~%lineloop%,1!" == " " (
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
 ) else (
-    if "%linecontent:~5,1%" == " " (
-        set "linecontentnew=%linecontent:~0,5% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................""
-    ) else (
-        if "%linecontent:~6,1%" == " " (
-            set "linecontentnew=%linecontent:~0,6% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
-        ) else (
-            if "%linecontent:~7,1%" == " " (
-                set "linecontentnew=%linecontent:~0,7% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
-            ) else (
-                if "%linecontent:~8,1%" == " " (
-                    set "linecontentnew=%linecontent:~0,8% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
-                ) else (
-                    if "%linecontent:~9,1%" == " " (
-                        set "linecontentnew=%linecontent:~0,9% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
-                    )
-                )
-            )
-        )
-    )
+    set /a lineloop+=1
+    goto loopsuperlongduration
 )
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
@@ -1921,54 +1906,23 @@ set "linecontentog=%linecontent%"
 set linecontentog=%linecontentog:~0,55%
 :: skip the first part if it's the second line
 if %numofloops% == 2 goto secondlinething
-if "%linecontent:~4,1%" == " " (
-    set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
+:loopsuperlongnegativeduration
+if "!linecontent:~%lineloop%,1!" == " " (
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
 ) else (
-    if "%linecontent:~5,1%" == " " (
-        set "linecontentnew=%linecontent:~0,5% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
-    ) else (
-        if "%linecontent:~6,1%" == " " (
-            set "linecontentnew=%linecontent:~0,6% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
-        ) else (
-            if "%linecontent:~7,1%" == " " (
-                set "linecontentnew=%linecontent:~0,7% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
-            ) else (
-                if "%linecontent:~8,1%" == " " (
-                    set "linecontentnew=%linecontent:~0,8% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
-                ) else (
-                    if "%linecontent:~9,1%" == " " (
-                        set "linecontentnew=%linecontent:~0,9% 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01  "
-                    )
-                )
-            )
-        )
-    )
+    set /a lineloop+=1
+    goto loopsuperlongnegativeduration
 )
 :: skip the second part if it's the first line
 goto :endsecondlinething
 :secondlinething
-if "%linecontent:~4,1%" == " " (
-    set "linecontentnew=%linecontent:~0,4% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
+set /a lineloop=4
+:loopsuperlongnegativedurationtwo
+if "!linecontent:~%lineloop%,1!" == " " (
+    set "linecontentnew=!linecontent:~0,%lineloop%! FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
 ) else (
-    if "%linecontent:~5,1%" == " " (
-        set "linecontentnew=%linecontent:~0,5% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
-    ) else (
-        if "%linecontent:~6,1%" == " " (
-            set "linecontentnew=%linecontent:~0,6% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
-        ) else (
-            if "%linecontent:~7,1%" == " " (
-                set "linecontentnew=%linecontent:~0,7% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
-            ) else (
-                if "%linecontent:~8,1%" == " " (
-                    set "linecontentnew=%linecontent:~0,8% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
-                ) else (
-                    if "%linecontent:~9,1%" == " " (
-                        set "linecontentnew=%linecontent:~0,9% FF 67 69 81 00 00 00 01  00 00 00 00 00 00 00 01"
-                    )
-                )
-            )
-        )
-    )
+    set /a lineloop+=1
+    goto loopsuperlongnegativedurationtwo
 )
 :endsecondlinething
 :: making sure everything works okay-ish (for some reason it kept an extra hex at the start of the line sometimes)
@@ -1987,28 +1941,13 @@ goto :eof
 :: saving the old line content
 set "linecontentog=%linecontent%"
 :: replacing the line content with the increasing duration
-if "%linecontent:~4,1%" == " " (
-    set "linecontentnew=%linecontent:~0,4% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
+set /a lineloop=4
+:loopincreasingduration
+if "!linecontent:~%lineloop%,1!" == " " (
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
 ) else (
-    if "%linecontent:~5,1%" == " " (
-        set "linecontentnew=%linecontent:~0,5% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................""
-    ) else (
-        if "%linecontent:~6,1%" == " " (
-            set "linecontentnew=%linecontent:~0,6% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
-        ) else (
-            if "%linecontent:~7,1%" == " " (
-                set "linecontentnew=%linecontent:~0,7% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
-            ) else (
-                if "%linecontent:~8,1%" == " " (
-                    set "linecontentnew=%linecontent:~0,8% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
-                ) else (
-                    if "%linecontent:~9,1%" == " " (
-                        set "linecontentnew=%linecontent:~0,9% 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
-                    )
-                )
-            )
-        )
-    )
+    set /a lineloop+=1
+    goto loopincreasingduration
 )
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 ff ff=00 00 00 00 00 00 ff ff%
@@ -2586,13 +2525,13 @@ curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20
     echo Exiting in 10 seconds...
     timeout /t 10
     endlocal
-    exit /b
+    exit /b 0
 )
 cls
 :: runs the (updated) script
 %me% %*
 endlocal
-exit /b
+exit /b 0
 
 :: runs if there isn't internet (comes from update check)
 :nointernet
@@ -2622,14 +2561,14 @@ goto :eof
 
 :: essentially the opposite of loadingbar (but exits if animate is n)
 :closingbar
-if %animate% == n endlocal & exit /b
+if %animate% == n endlocal & exit /b 0
 :closingloop
 mode con: cols=%cols% lines=%lines%
 set /a cols=%cols%-5
 set /a lines=%lines%-1
 if not %cols% == 14 goto closingloop
 endlocal
-exit /b
+exit /b 0
 
 :: asks if the user wants a custom output name
 :outputquestion
@@ -2999,8 +2938,10 @@ echo Important:
 echo  - don't use inputs of different media types together (such as an image and a video)
 echo  - remember to quote any file paths with spaces
 endlocal
-exit /b
+exit /b 0
 
 :: leaves the script
 :ending
 if %animate% == y goto closingbar
+endlocal
+exit /b
