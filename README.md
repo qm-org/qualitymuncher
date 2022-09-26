@@ -6,6 +6,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
  - fallback for updating
  - backend changes
+ - progress bar
 
 # Planned
 

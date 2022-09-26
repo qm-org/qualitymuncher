@@ -12,6 +12,8 @@ setlocal enabledelayedexpansion
 set me=%0
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
+    :: clear the screen when each render finishes
+    set clearaftereachrender=y
     :: automatic update checks, highly recommended to keep this enabled
     set autoupdatecheck=y
     :: directory for logs, if none set the input's directory is used ***add quotes if there is a space***
@@ -38,6 +40,19 @@ set me=%0
     set audiocontainer=.mp3
     :: the image container, uses .jpg as default
     set imagecontainer=.jpg
+    :: progress bar options
+    :: enable or disable progress bar
+    set progressbar=y
+    :: character to represent amount completed (MUST BE A SINGLE CHARACTER, NO MORE, NO LESS)
+    set "progressbar_donechar= "
+    :: prefix of all the characters (a color code is useful here)
+    set "progressbar_donecharprefix=[48;2;49;191;204m"
+    :: suffix of all the characters (set something here that undoes whatever you used for a prefix)
+    set "progressbar_donecharsuffix=[48;2;71;71;71m"
+    :: character to represent amount not yet completed
+    set "progressbar_unfinishedchar= "
+    :: length of progress bar
+    set progressbar_size=120
 :: END OF OPTIONS
 
 :: ################################################################################################################################
@@ -197,6 +212,7 @@ goto :eof
 :setdefaults
 :: splash texts
 call :setquotes
+set progressbar_charisdefined=n
 set endingmsg=Decent Quality
 set videocustom=n
 set audiocustom=n
@@ -313,7 +329,7 @@ set messages17=                          If I have seen further, it is by standi
 set messages18=  [38;2;24;24;24mWake up. [38;2;36;36;36mWake up. [38;2;48;48;48mWake up. [38;2;60;60;60mWake up. [38;2;72;72;72mWake up. [38;2;84;84;84mWake up. [38;2;96;96;96mWake up. [38;2;84;84;84mWake up. [38;2;72;72;72mWake up. [38;2;60;60;60mWake up. [38;2;48;48;48mWake up. [38;2;36;36;36mWake up. [38;2;24;24;24mWake up. [0m
 set messages19=                       The mystery of life isn't a problem to solve, but a reality to experience.
 set messages20=                                           Simulating hone renders since 2022.
-set messages21=                                               Sanity check not mandatory.
+set messages21=                                                Sanity check not mandatory.
 set messages22=                                           Fatal error occurred^^^! Just kidding.
 set messages23=                                                    Missing Operand.
 set messages24=                                     Statements dreamed up by the utterly deranged.
@@ -790,7 +806,7 @@ if %hasvideo% == y (
     if %isimage% == y (
         set /a qvnew=^(%qv%*3^)+1
         echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
-        goto newmunchmultiq
+        goto encodeimagemultiqueue
     ) else (
         echo Going to video rendering>>"%temp%\qualitymuncherdebuglog.txt"
         goto encodevideomultiq
@@ -1769,16 +1785,27 @@ for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
+    if %clearaftereachrender% == y (echo [10;1H)
     set videoinp=%%a
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
     echo Encoding video !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
+    if %ismultiqueue% == y (
+        echo.
+        set /a progbarcall=!filesdoneold!-1
+        call :progressbar !progbarcall! %totalfiles%
+        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+    ) else (
+        echo [38;2;254;165;0mEncoding...[0m
+    )
     call :videospecificstuff %%a
 )
 title [Done] Quality Muncher v%version%
 :end
+if %clearaftereachrender% == y (echo [10;1H)
 echo.
+if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
 :: delete temp files and show ending (unless stayopen is n)
@@ -1839,12 +1866,6 @@ if %ismultiqueue% == n (
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
 :: let the user know encoding is happening
-if %ismultiqueue% == y (
-    if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
-) else (
-    echo [38;2;254;165;0mEncoding...[0m
-)
 echo.
 if %novideo% == y (
     set filters=-vn
@@ -2118,6 +2139,20 @@ if %triplefontsizebottom% gtr %desiredheight% (
 )
 :: setting text filter
 set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
+goto :eof
+
+:: asks if the user wants a custom output name
+:outputquestion
+echo                                           Would you like a custom output name?
+choice
+if %errorlevel% == 2 (
+    call :clearlastprompt
+    goto :eof
+)
+echo                                         Enter your output name [93mwith no extension[0m:
+set /p "filenametemp="
+set "filename=%filenametemp%"
+call :clearlastprompt
 goto :eof
 
 :: determine if you should interpolate (input fps less than output fps), resample (input fps greater than output fps), or do nothing (input fps equal to output fps)
@@ -2556,20 +2591,6 @@ set /p "musicstarttime="
 call :clearlastprompt
 goto :eof
 
-:: asks if the user wants a custom output name
-:outputquestion
-choice /m "Would you like a custom output name?"
-if %errorlevel% == 2 (
-    echo.
-    call :clearlastprompt
-    goto :eof
-)
-echo                                         Enter your output name [93mwith no extension[0m:
-set /p "filenametemp="
-set "filename=%filenametemp%"
-call :clearlastprompt
-goto :eof
-
 :: ========================================
 :: everything needed for audio encoding
 :: ========================================
@@ -2580,26 +2601,34 @@ set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 for %%a in (%*) do (
+    if %clearaftereachrender% == y (echo [10;1H)
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
     echo Encoding audio !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
-    call :audioencode %%a
+    if %ismultiqueue% == y (
+        echo.
+        set /a progbarcall=!filesdoneold!-1
+        call :progressbar !progbarcall! %totalfiles%
+        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+    ) else (
+        echo [38;2;254;165;0mEncoding...[0m
+    )
+    call :audiospecificstuff %%a
 )
 title [Done] Quality Muncher v%version%
+if %clearaftereachrender% == y (echo [10;1H)
+echo.
+if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
+echo [92mDone^^![0m
+set done=y
 goto end
 
 :: encoding audio only outputs
-:audioencode
+:audiospecificstuff
 :: makes sure the file doesn't already exist
 set "filename=%~n1 (Quality Munched)"
 if exist "%filename%%audiocontainer%" call :renamefile
-if %ismultiqueue% == y (
-    if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
-) else (
-    echo [38;2;254;165;0mEncoding...[0m
-)
 echo.
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %1 ^
@@ -2897,7 +2926,7 @@ goto guiimageoptionsrefresh
 :: ========================================
 
 :: sends all images and/or GIFs to be encoded
-:newmunchmultiq
+:encodeimagemultiqueue
 set originalimagecontainer=%imagecontainer%
 :: set a counter for the number of images being encoded
 set totalfiles=0
@@ -2905,32 +2934,37 @@ for %%x in (%*) do set /a totalfiles+=1
 set filesdone=1
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
+    if %clearaftereachrender% == y (echo [10;1H)
     title [!filesdone!/%totalfiles%] Quality Muncher v%version%
     set filesdoneold=!filesdone!
     echo Encoding image !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     set /a filesdone=!filesdone!+1
-    call :newmunchworking %%a %loopn% %qvnew% %imagesc%
+    if %ismultiqueue% == y (
+        echo.
+        set /a progbarcall=!filesdoneold!-1
+        call :progressbar !progbarcall! %totalfiles%
+        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+    ) else (
+        echo [38;2;254;165;0mEncoding...[0m
+    )
+    call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
 )
 title [Done] Quality Muncher v%version%
+if %clearaftereachrender% == y (echo [10;1H)
 echo.
+if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
 goto exiting
 
 :: encodes images and GIFs
-:newmunchworking
+:imagespecificstuff
 if "%~x1" == ".gif" (
     set imagecontainer=.gif
 ) else (
     set imagecontainer=%originalimagecontainer%
 )
 call :clearlastprompt
-if %ismultiqueue% == y (
-    if not %filesdone% == 1 echo.
-    echo [38;2;254;165;0m[%filesdoneold%/%totalfiles%] Encoding %1[0m
-) else (
-    echo [38;2;254;165;0mEncoding...[0m
-)
 set loopn=%2
 set imagequal=%3
 :: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
@@ -3026,6 +3060,53 @@ goto :eof
 :: miscellaneous functions used by multiple parts of the script
 :: ################################################################################################################################################################
 :: ################################################################################################################################################################
+
+:: progress bar
+:: first parameter is amount completed, second is total amount, for example "call :progressbar 5 8" would show 62.5% complete and a progress bar like ##########
+:progressbar
+if not %progressbar% == y goto :eof
+:: reset the progress bar, set needed variables
+set "progressbar_bar="
+set /a progressbar_counter=0
+set progressbar_donecharcounter=0
+set /a progressbar_amount=%~1
+set /a progressbar_total=%~2
+:: sets two variables, one relative to the ratio of amount:done and 100, the other as a ratio between amount:done and the size of the progress bar
+set /a progressbar_percentofhundred=(%progressbar_amount%*100/%progressbar_total%*100)/100
+set /a progressbar_percentofdonechars=(%progressbar_amount%*%progressbar_size%/%progressbar_total%*%progressbar_size%)/%progressbar_size%
+:: if they aren't already set, set a two variables, each consisting of the maximum number of done characters of the done character and not yet done character
+if %progressbar_charisdefined% == n call :hashloop
+:: set the amount of non-done characters needed to fill the progress bar
+set /a progressbar_spaceamount=%progressbar_size%-%progressbar_percentofdonechars%
+:: progress bar
+set progressbar_bar=!progressbar_donechars:~0,%progressbar_percentofdonechars%!%progressbar_donecharsuffix%!progressbar_notdonechars:~0,%progressbar_spaceamount%![0m
+:: find the number of characters that the percentage takes up (with a space on each end)
+set "progressbar_charsofpercent=5"
+if %progressbar_percentofhundred% lss 10 (
+    set "progressbar_charsofpercent=4"
+)
+if %progressbar_percentofhundred% geq 100 (
+    set "progressbar_charsofpercent=6"
+)
+:: find where to place the percentage by calculating the middle of the progress bar
+set /a progressbar_half=(%progressbar_size%-%progressbar_charsofpercent%)/2
+:: print the progress bar
+echo %progressbar_donecharprefix%%progressbar_bar%[0J
+:: print the percentage on top
+echo [1A[%progressbar_half%C[0m %progressbar_percentofhundred%%% 
+goto :eof
+
+:: find the number of done and non-done characters needed
+:hashloop
+echo running hashloop>>"%temp%\qualitymuncherdebuglog.txt"
+if %progressbar_donecharcounter% lss %progressbar_size% (
+    set /a progressbar_donecharcounter+=1
+    set progressbar_donechars=%progressbar_donechars%%progressbar_donechar%
+    set "progressbar_notdonechars=%progressbar_notdonechars%%progressbar_unfinishedchar%"
+    goto hashloop
+)
+set progressbar_charisdefined=y
+goto :eof
 
 :: clears the screen up until the title, preventing flashing while keeping the terminal clean
 :clearlastprompt
