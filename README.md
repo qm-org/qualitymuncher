@@ -6,11 +6,11 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
  - fallback for updating
  - backend changes
- - progress bar
+ - animated progress bar
+ - information page
 
 # Planned
 
- - information/credits/disclaimers etc page in the menu or maybe extras
  - ???
 
 # Bugs

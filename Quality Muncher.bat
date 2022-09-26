@@ -53,6 +53,8 @@ set me=%0
     set "progressbar_unfinishedchar= "
     :: length of progress bar
     set progressbar_size=120
+    :: progress bar animation speed
+    set progressbaranimated_speed=3
 :: END OF OPTIONS
 
 :: ################################################################################################################################
@@ -240,7 +242,7 @@ set gui_video_resamplinginterpolation=[R] Resampling/Interpolation
 set gui_video_frying=[F] Frying
 set gui_video_framestutter=[S] Frame Stutter
 set gui_video_outputasgif=[G] Output as GIF
-set gui_video_miscellaneousfilters=[M] miscellaneous Filters
+set gui_video_miscellaneousfilters=[M] Miscellaneous Filters
 set gui_video_novideo=[N] No Video
 set gui_audio_quality=[1] Quality
 set gui_audio_starttimeandduration=[2] Start Time and Duration
@@ -1782,20 +1784,27 @@ goto :eof
 :: set up a counter for the number of files encoded and the total
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
-set filesdone=1
+set filenum=1
+set filenumold=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
     if %clearaftereachrender% == y (echo [10;1H)
     set videoinp=%%a
-    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
-    set filesdoneold=!filesdone!
-    echo Encoding video !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    set /a filesdone=!filesdone!+1
+    title [!filenum!/%totalfiles%] Quality Muncher v%version%
+    echo Encoding video !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     if %ismultiqueue% == y (
+        if %frying% == y (
+            if %spoofduration% == y (
+                call :titledisplay
+            )
+        )
         echo.
-        set /a progbarcall=!filesdoneold!-1
-        call :progressbar !progbarcall! %totalfiles%
-        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+        set /a progbarcall=!filenum!-1
+        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+        echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
+        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
+        if !filenum! gtr 1 set /a filenumold+=1
+        set /a filenum=!filenum!+1
     ) else (
         echo [38;2;254;165;0mEncoding...[0m
     )
@@ -1805,7 +1814,7 @@ title [Done] Quality Muncher v%version%
 :end
 if %clearaftereachrender% == y (echo [10;1H)
 echo.
-if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
+if %ismultiqueue% == y call :progressbaranimated %totalfiles% %totalfiles% %filenumold%
 echo [92mDone^^![0m
 set done=y
 :: delete temp files and show ending (unless stayopen is n)
@@ -2599,18 +2608,19 @@ goto :eof
 :encodeaudiomultiqueue
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
-set filesdone=1
+set filenum=1
+set filenumold=0
 for %%a in (%*) do (
     if %clearaftereachrender% == y (echo [10;1H)
-    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
-    set filesdoneold=!filesdone!
-    echo Encoding audio !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    set /a filesdone=!filesdone!+1
+    title [!filenum!/%totalfiles%] Quality Muncher v%version%
+    echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     if %ismultiqueue% == y (
         echo.
-        set /a progbarcall=!filesdoneold!-1
-        call :progressbar !progbarcall! %totalfiles%
-        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+        set /a progbarcall=!filenum!-1
+        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+        echo [38;2;254;165;0m[!filenumold!/%totalfiles%] Encoding "%%~nxa"[0m
+        if !filenum! gtr 1 set /a filenumold+=1
+        set /a filenum=!filenum!+1
     ) else (
         echo [38;2;254;165;0mEncoding...[0m
     )
@@ -2619,10 +2629,12 @@ for %%a in (%*) do (
 title [Done] Quality Muncher v%version%
 if %clearaftereachrender% == y (echo [10;1H)
 echo.
+echo. [0J
 if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
-goto end
+if %stayopen% == n goto ending
+goto exiting
 
 :: encoding audio only outputs
 :audiospecificstuff
@@ -2931,27 +2943,31 @@ set originalimagecontainer=%imagecontainer%
 :: set a counter for the number of images being encoded
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
-set filesdone=1
+set filenum=1
+set filenumold=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
     if %clearaftereachrender% == y (echo [10;1H)
-    title [!filesdone!/%totalfiles%] Quality Muncher v%version%
-    set filesdoneold=!filesdone!
-    echo Encoding image !filesdone!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    set /a filesdone=!filesdone!+1
+    title [!filenum!/%totalfiles%] Quality Muncher v%version%
+    echo Encoding image !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
     if %ismultiqueue% == y (
         echo.
-        set /a progbarcall=!filesdoneold!-1
-        call :progressbar !progbarcall! %totalfiles%
-        echo [38;2;254;165;0m[!filesdoneold!/%totalfiles%] Encoding "%~nx1"[0m
+        set /a progbarcall=!filenum!-1
+        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+        echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
+        echo [38;2;254;165;0m[!filenumold!/%totalfiles%] Encoding "%%~nxa"[0m
+        echo.
+        if !filenum! gtr 1 set /a filenumold+=1
+        set /a filenum=!filenum!+1
     ) else (
         echo [38;2;254;165;0mEncoding...[0m
+        echo.
     )
     call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
 )
 title [Done] Quality Muncher v%version%
 if %clearaftereachrender% == y (echo [10;1H)
-echo.
+echo.[0J
 if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
@@ -2964,7 +2980,6 @@ if "%~x1" == ".gif" (
 ) else (
     set imagecontainer=%originalimagecontainer%
 )
-call :clearlastprompt
 set loopn=%2
 set imagequal=%3
 :: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
@@ -3000,31 +3015,40 @@ echo Beginning image munch loop>>"%temp%\qualitymuncherdebuglog.txt"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i %1 -preset ultrafast -vf scale=%width%x%height%:flags=%scalingalg% -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n11%imagecontainer%"
 set /a loopnreal=%loopn%-1
 :: loop through a few encoders until the loop is over
+call :progressbar 0 %loopn%
 echo 0/%loopn%
 set /a i=0
 :startmunch
 set /a i+=1
 set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 set /a i+=1
 set /a i1=%i%+1
-echo [1A[0J%i%/%loopn%
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
 if %i% geq %loopnreal% goto endmunch
 del "%tempfolder%\%~n1%i%%imagecontainer%"
 goto startmunch
 :endmunch
 set /a i2=%i1%+1
-echo [1A[0J%loopn%/%loopn%
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
 set "filename=%~dpn1 (Quality Munched)"
 :: skip the loop if the file already doesn't exist
 if not exist "%filename%%imagecontainerbackup%" goto afterrenameimage
@@ -3061,10 +3085,43 @@ goto :eof
 :: ################################################################################################################################################################
 :: ################################################################################################################################################################
 
+:progressbaranimated
+set progressbaranimated_newamount=%~1
+set progressbaranimated_total=%~2
+set progressbaranimated_oldamount=%~3
+echo %progressbaranimated_newamount% newamount>>"%temp%\qualitymuncherdebuglog.txt"
+echo %progressbaranimated_total% total>>"%temp%\qualitymuncherdebuglog.txt"
+echo %progressbaranimated_oldamount% oldamount>>"%temp%\qualitymuncherdebuglog.txt"
+if %progressbaranimated_oldamount% leq 0 (
+    set /a progressbaranimated_oldpercentofhundred=0
+) else (
+    set /a progressbaranimated_oldpercentofhundred=^(%progressbaranimated_oldamount%*100/%progressbaranimated_total%*100^)/100
+)
+if %progressbaranimated_newamount% leq 0 (
+    set /a progressbaranimated_newpercentofhundred=0
+) else (
+    set /a progressbaranimated_newpercentofhundred=^(%progressbaranimated_newamount%*100/%progressbaranimated_total%*100^)/100
+)
+echo %progressbaranimated_oldpercentofhundred% oldpercentofhundred>>"%temp%\qualitymuncherdebuglog.txt"
+echo %progressbaranimated_newpercentofhundred% newpercentofhundred>>"%temp%\qualitymuncherdebuglog.txt"
+set progressbaranimated_loop=0
+:progressbaranimated_loop
+set /a progressbaranimated_loop+=1
+set /a progressbaranimated_oldpercentofhundred+=%progressbaranimated_speed%
+if %progressbaranimated_oldpercentofhundred% gtr %progressbaranimated_newpercentofhundred% set /a progressbaranimated_oldpercentofhundred=%progressbaranimated_newpercentofhundred%
+if %progressbaranimated_loop% gtr 1 echo [2A
+call :progressbar %progressbaranimated_oldpercentofhundred% 100
+echo %progressbaranimated_oldpercentofhundred% 100 was call>>"%temp%\qualitymuncherdebuglog.txt"
+if %progressbaranimated_oldpercentofhundred% lss %progressbaranimated_newpercentofhundred% goto progressbaranimated_loop
+goto :eof
+
 :: progress bar
 :: first parameter is amount completed, second is total amount, for example "call :progressbar 5 8" would show 62.5% complete and a progress bar like ##########
 :progressbar
-if not %progressbar% == y goto :eof
+if not %progressbar% == y (
+    echo.
+    goto :eof
+)
 :: reset the progress bar, set needed variables
 set "progressbar_bar="
 set /a progressbar_counter=0
@@ -3098,7 +3155,7 @@ goto :eof
 
 :: find the number of done and non-done characters needed
 :hashloop
-echo running hashloop>>"%temp%\qualitymuncherdebuglog.txt"
+:: echo running hashloop>>"%temp%\qualitymuncherdebuglog.txt"
 if %progressbar_donecharcounter% lss %progressbar_size% (
     set /a progressbar_donecharcounter+=1
     set progressbar_donechars=%progressbar_donechars%%progressbar_donechar%
