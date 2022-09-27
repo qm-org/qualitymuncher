@@ -67,7 +67,7 @@ set me=%0
 
 :: code page, version, and title
 chcp 437 > nul
-set version=1.5.1
+set version=1.5.2
 echo Quality Muncher v%version% successfully started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo %*>>"%temp%\qualitymuncherdebuglog.txt"
@@ -696,6 +696,8 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
 
     echo set novideo=%novideo%
     echo set noaudio=%noaudio%
+
+    echo set outputasgif=%outputasgif%
 
     echo set trimmed=%trimmed%
     echo set starttime=%starttime%
@@ -1398,6 +1400,8 @@ choice /m "Do you want to trim the video?"
 if %errorlevel% == 1 (
     set trimmed=y
 ) else (
+    set vidtime=262144
+    set starttime=0
     set trimmed=n
     call :clearlastprompt
     goto :eof
@@ -1520,6 +1524,7 @@ choice /c YN /n
 if %errorlevel% == 1 (
     set colorq=y
 ) else (
+    set "colorfilter="
     set colorq=n
     goto :eof
 )
@@ -1584,7 +1589,7 @@ choice /n
 if %errorlevel% == 1 (
     set spoofduration=y
 ) else (
-    set spooofduration=n
+    set spoofduration=n
     call :clearlastprompt
     goto :eof
 )
@@ -1809,16 +1814,24 @@ for %%a in (%*) do (
         echo [38;2;254;165;0mEncoding...[0m
     )
     call :videospecificstuff %%a
+    if exist "%temp%\scaledandfriedvideotempfix!container!" (del "%temp%\scaledandfriedvideotempfix!container!")
+)
+if %ismultiqueue% == y (
+    if %frying% == y (
+        if %spoofduration% == y (
+            call :titledisplay
+        )
+    )
 )
 title [Done] Quality Muncher v%version%
 :end
 if %clearaftereachrender% == y (echo [10;1H)
-echo.
+echo.[0J
 if %ismultiqueue% == y call :progressbaranimated %totalfiles% %totalfiles% %filenumold%
 echo [92mDone^^![0m
 set done=y
-:: delete temp files and show ending (unless stayopen is n)
 if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
+:: delete temp files and show ending (unless stayopen is n)
 if %stayopen% == n goto ending
 goto exiting
 
@@ -1930,7 +1943,7 @@ if "%corrupt%"=="y" call :corruptoutput
 :skipvideoencodingoptions
 :: if the video is supposed to be a GIF, convert it to a GIF
 if %outputasgif% == y (
-    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %outputvar% -f gif -an "%filename%.gif" && echo FFmpeg call 4 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 4 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i %outputvar% -f gif -an "%filename%.gif" && echo FFmpeg call 4 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 4 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     del %outputvar%
     set outputvar="%cd%\%filename%.gif"
 )
@@ -3085,13 +3098,19 @@ goto :eof
 :: ################################################################################################################################################################
 :: ################################################################################################################################################################
 
+:: simulates an animated progress bar by calling the progress bar function with increasing values until it reaches the desired amount
+:: first parameter is the new amount (the amount to reach)
+:: second parameter is the total amount (the total amount that CAN be reached)
+:: third parameter is the old amount (the amount to start from)
 :progressbaranimated
+:: set variables using the parameters
 set progressbaranimated_newamount=%~1
 set progressbaranimated_total=%~2
 set progressbaranimated_oldamount=%~3
 echo %progressbaranimated_newamount% newamount>>"%temp%\qualitymuncherdebuglog.txt"
 echo %progressbaranimated_total% total>>"%temp%\qualitymuncherdebuglog.txt"
 echo %progressbaranimated_oldamount% oldamount>>"%temp%\qualitymuncherdebuglog.txt"
+:: if anything is less than or equal to 0, set the values to 0 just to be safe, otherwise set them to percents of 100
 if %progressbaranimated_oldamount% leq 0 (
     set /a progressbaranimated_oldpercentofhundred=0
 ) else (
@@ -3105,10 +3124,12 @@ if %progressbaranimated_newamount% leq 0 (
 echo %progressbaranimated_oldpercentofhundred% oldpercentofhundred>>"%temp%\qualitymuncherdebuglog.txt"
 echo %progressbaranimated_newpercentofhundred% newpercentofhundred>>"%temp%\qualitymuncherdebuglog.txt"
 set progressbaranimated_loop=0
+:: call the progressbar with the old amount + the animation speed, then with old amount + (the animation speed * 2), then old amount + (the animation speed * 3), etc. until it reaches the new amount
 :progressbaranimated_loop
 set /a progressbaranimated_loop+=1
 set /a progressbaranimated_oldpercentofhundred+=%progressbaranimated_speed%
 if %progressbaranimated_oldpercentofhundred% gtr %progressbaranimated_newpercentofhundred% set /a progressbaranimated_oldpercentofhundred=%progressbaranimated_newpercentofhundred%
+:: overwrite the old progress bar (if it exists)
 if %progressbaranimated_loop% gtr 1 echo [2A
 call :progressbar %progressbaranimated_oldpercentofhundred% 100
 echo %progressbaranimated_oldpercentofhundred% 100 was call>>"%temp%\qualitymuncherdebuglog.txt"
