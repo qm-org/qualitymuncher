@@ -244,6 +244,9 @@ set gui_video_framestutter=[S] Frame Stutter
 set gui_video_outputasgif=[G] Output as GIF
 set gui_video_miscellaneousfilters=[M] Miscellaneous Filters
 set gui_video_novideo=[N] No Video
+set gui_video_visualnoise=[V] Visual Noise
+set gui_video_constantquantizer=[Q] Constant Quantizer
+set gui_video_vignette=[I] Vignette
 set gui_audio_quality=[1] Quality
 set gui_audio_starttimeandduration=[2] Start Time and Duration
 set gui_audio_speed=[3] Speed
@@ -290,6 +293,9 @@ set forceupdate=n
 set spoofduration=n
 set durationtype=superlong
 set bouncy=n
+set visualnoise=n
+set constantquantizer=n
+set vignette=n
 set "audiofilters="
 set "tcl1= "
 set "tcl2= "
@@ -718,6 +724,15 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set colorq=%colorq%
     echo set colorfilter=%colorfilter%
 
+    echo set visualnoise=%visualnoise%
+    echo set "visualnoisefilter=%visualnoisefilter%"
+
+    echo set constantquantizer=%constantquantizer%
+    echo set "constantquantizerfilter=%constantquantizerfilter%"
+
+    echo set vignette=%vignette%
+    echo set "vignettefilter=%vignettefilter%"
+
     echo set stretchres=%stretchres%
     echo set widthratio=%widthratio%
     echo set heightratio=%heightratio%
@@ -1104,9 +1119,11 @@ echo       %gui_video_resamplinginterpolation%                     %gui_video_fr
 echo.
 echo             %gui_video_outputasgif%                  %gui_video_miscellaneousfilters%                      %gui_video_novideo%
 echo.
+echo          %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
 echo.
 echo.
-choice /c 123456789RFSGMBN /n
+echo.
+choice /c 123456789RFSGMBNVQI /n
 call :clearlastprompt
 echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_video_var=%errorlevel%
@@ -1154,6 +1171,12 @@ if %gui_video_var% == 16 if %novideo% == y (
 ) else (
     set novideo=y
 )
+:: visual noise
+if %gui_video_var% == 17 call :visualnoise
+:: constant quantizer
+if %gui_video_var% == 18 call :constantquantizer
+:: vignette
+if %gui_video_var% == 19 call :vignette
 goto guivideooptionsrefresh
 
 :: makes the video options in the GUI either white or green (off and on respectively)
@@ -1232,6 +1255,21 @@ if %novideo% == y (
     call :togglethis gui_video_novideo on
 ) else (
     call :togglethis gui_video_novideo off
+)
+if %visualnoise% == y (
+    call :togglethis gui_video_visualnoise on
+) else (
+    call :togglethis gui_video_visualnoise off
+)
+if %constantquantizer% == y (
+    call :togglethis gui_video_constantquantizer on
+) else (
+    call :togglethis gui_video_constantquantizer off
+)
+if %vignette% == y (
+    call :togglethis gui_video_vignette on
+) else (
+    call :togglethis gui_video_vignette off
 )
 call :autosaveconfig
 goto :eof
@@ -1780,6 +1818,55 @@ goto :eof
     set "tcl7=[92m"
 goto :eof
 
+:: visual noise question
+:visualnoise
+echo                                             Do you want to add visual noise?
+choice /n
+if %errorlevel% == 1 set visualnoise=y
+if %errorlevel% == 2 (
+    set "visualnoisefilter="
+    set visualnoise=n
+    goto :eof
+)
+set visualnoiselevel=20
+echo                        How much visual noise do you want to add? 1 is the least, 100 is the most.
+set /p "visualnoiselevel="
+set "visualnoisefilter=,noise=alls=%visualnoiselevel%:allf=t"
+goto :eof
+
+:: constant quantizer question
+:constantquantizer
+echo                                    Do you want to set a constant quantization level?
+choice /n
+if %errorlevel% == 1 set constantquantizer=y
+if %errorlevel% == 2 (
+    set "constantquantizerfilter="
+    set constantquantizer=n
+    goto :eof
+)
+set constantquantizerlevel=40
+echo                       What CQP level do you want to use? 1 is the highest quality, 63 is the worst.
+set /p "constantquantizerlevel="
+set "constantquantizerfilter=-qp %constantquantizerlevel% "
+
+goto :eof
+
+:: vignette questions
+:vignette
+echo                                              Do you want to add a vignette?
+choice /n
+if %errorlevel% == 1 set vignette=y
+if %errorlevel% == 2 (
+    set "vignettefilter="
+    set vignette=n
+    goto :eof
+)
+echo                     How strong do you want the vignette to be? 1 is the weakest, 10 is the strongest.
+set /p "vignettelevel="
+set "vignettefilter=,vignette=PI/(5/(%vignettelevel%/2))"
+goto :eof
+
+
 :: ========================================
 :: everything needed for video rendering
 :: ========================================
@@ -1825,8 +1912,16 @@ if %ismultiqueue% == y (
 )
 title [Done] Quality Muncher v%version%
 :end
-if %clearaftereachrender% == y (echo [10;1H)
-echo.[0J
+if %clearaftereachrender% == y (
+    if %ismultiqueue% == y (
+        echo [10;1H
+        echo.[0J
+    ) else (
+        echo.
+    )
+) else (
+    echo.
+)
 if %ismultiqueue% == y call :progressbaranimated %totalfiles% %totalfiles% %filenumold%
 echo [92mDone^^![0m
 set done=y
@@ -1873,11 +1968,11 @@ set "fpsfilter=fps=%outputfps%,"
 if %resample% == y call :resamplemath
 :: frying
 if %frying% == y call :fryingmath
-:: color filters
+:: video bitrate
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: actual video filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%%colorfilter%format=yuv410p%stutterfilter%%filtercl%"
+set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%%colorfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%"
 :: add the suffix to the output name
 set "filename=%~n1 (%endingmsg%)"
 :: asks if the user wants a custom output name (non-multiqueue only)
@@ -1888,7 +1983,7 @@ if %ismultiqueue% == n (
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
 :: let the user know encoding is happening
-echo.
+if %ismultiqueue% == y echo.
 if %novideo% == y (
     set filters=-vn
     set frying=n
@@ -1909,7 +2004,7 @@ if %replaceaudio% == y goto encodereplacedaudio
 :: option one, audio is not replaced
 :encodewithnormalaudio
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% ^
+-ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
 %filters% %audiofiltersnormal% ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
@@ -1920,7 +2015,7 @@ goto endofthis
 :: option two, audio is replaced
 :encodereplacedaudio
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% ^
+-ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% %constantquantizerfilter%^
 %filters% %audiofiltersnormal% ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
@@ -2456,7 +2551,7 @@ if "%audiocustomizationquestion%" == "c" (
     call :clearlastprompt
     echo                                                 Custom %qs%
     echo.
-    echo                  [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad:
+    echo                  [93mOn a scale from 1 to 10[0m, how bad should the audio bitrate be? 1 bad, 10 very very bad.
     set /p "audiobr="
 ) else (
     set audiocustom=n
