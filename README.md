@@ -8,6 +8,9 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - backend changes
  - animated progress bar
  - information page
+ - vignette
+ - CQP
+ - visual noise
 
 # Planned
 
