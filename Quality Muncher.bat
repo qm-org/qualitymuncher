@@ -1963,7 +1963,9 @@ for %%a in (%*) do (
         if !filenum! gtr 1 set /a filenumold+=1
         set /a filenum=!filenum!+1
     ) else (
-        echo [38;2;254;165;0mEncoding...[0m
+        call :outputquestion
+        echo [2A[0J[38;2;254;165;0mEncoding...[0m
+        echo.
     )
     call :videospecificstuff %%a
     if exist "%temp%\scaledandfriedvideotempfix!container!" (del "%temp%\scaledandfriedvideotempfix!container!")
@@ -2046,15 +2048,11 @@ if %resample% == y call :resamplemath
 if %frying% == y call :fryingmath
 :: video bitrate
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
-if %badvideobitrate% LSS 1000 set badvideobitrate=1000
+if %badvideobitrate% lss 1000 set badvideobitrate=1000
 :: actual video filters
 set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
 :: add the suffix to the output name
-set "filename=%~n1 (%endingmsg%)"
-:: asks if the user wants a custom output name (non-multiqueue only)
-if %ismultiqueue% == n (
-    call :outputquestion
-)
+if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: if the file already exists, append a (1), and if that exists, append a (2) instead, etc
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
