@@ -11,6 +11,9 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - vignette
  - CQP
  - visual noise
+ - zoom
+ - fade in
+ - fade out
 
 # Planned
 

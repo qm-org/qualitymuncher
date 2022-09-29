@@ -68,7 +68,7 @@ set me=%0
 :: code page, version, and title
 chcp 437 > nul
 set version=1.5.2
-echo Quality Muncher v%version% successfully started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Quality Muncher v%version% successfully started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo %*>>"%temp%\qualitymuncherdebuglog.txt"
 echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
@@ -247,6 +247,9 @@ set gui_video_novideo=[N] No Video
 set gui_video_visualnoise=[V] Visual Noise
 set gui_video_constantquantizer=[Q] Constant Quantizer
 set gui_video_vignette=[I] Vignette
+set gui_video_zoom=[Z] Zoom
+set gui_video_fadein=[P] Fade In
+set gui_video_fadeout=[O] Fade Out
 set gui_audio_quality=[1] Quality
 set gui_audio_starttimeandduration=[2] Start Time and Duration
 set gui_audio_speed=[3] Speed
@@ -274,7 +277,6 @@ set colorq=n
 set addedtextq=n
 set resample=n
 set stutter=n
-set tcly=n
 set internet=undetermined
 set speedq=1
 set audiospeedq=1
@@ -296,6 +298,9 @@ set bouncy=n
 set visualnoise=n
 set constantquantizer=n
 set vignette=n
+set zoom=n
+set fadein=n
+set fadeout=n
 set "audiofilters="
 set "tcl1= "
 set "tcl2= "
@@ -494,7 +499,7 @@ if "%firstex%" == ".jpm" set isimage=y
 if "%firstex%" == ".jpm" set isimage=y
 if "%firstex%" == ".mj2" set isimage=y
 if "%firstex%" == ".gif" set isimage=y
-echo Image check succeded, image status: %isimage%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Image check succeded, image status: "%isimage%">>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
 :: makes the first file extension lowercase, letter by letter
@@ -733,6 +738,15 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set vignette=%vignette%
     echo set "vignettefilter=%vignettefilter%"
 
+    echo set zoom=%zoom%
+    echo set "zoomfilter=%zoomfilter%"
+
+    echo set fadein=%fadein%
+    echo set "fadeinfilter=%fadeinfilter%"
+
+    echo set fadeout=%fadeout%
+    echo set fadeoutduration=%fadeoutduration%
+
     echo set stretchres=%stretchres%
     echo set widthratio=%widthratio%
     echo set heightratio=%heightratio%
@@ -784,7 +798,7 @@ goto :eof
 
 :: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
 :render
-echo Rendering process started on %date% at %time%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Rendering process started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 if not %isimage% == y (
     set /a badaudiobitrate=80/%audiobr%
     :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
@@ -1002,7 +1016,6 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         volume: %volume%
     echo     extra effects
     echo         filtercl: %filtercl%
-    echo         tcly {at least one effect is enabled}: %tcly%
     echo     stutter: %stutter%
     echo         stutteramount: %stutteramount%
     echo     novideo: %novideo%
@@ -1121,9 +1134,8 @@ echo             %gui_video_outputasgif%                  %gui_video_miscellaneo
 echo.
 echo          %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
 echo.
-echo.
-echo.
-choice /c 123456789RFSGMBNVQI /n
+echo          %gui_video_zoom%                     %gui_video_fadein%                          %gui_video_fadeout%
+choice /c 123456789RFSGMBNVQIZPO /n
 call :clearlastprompt
 echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_video_var=%errorlevel%
@@ -1177,6 +1189,12 @@ if %gui_video_var% == 17 call :visualnoise
 if %gui_video_var% == 18 call :constantquantizer
 :: vignette
 if %gui_video_var% == 19 call :vignette
+:: zoom
+if %gui_video_var% == 20 call :zoom
+:: fade in
+if %gui_video_var% == 21 call :fadein
+:: fade out
+if %gui_video_var% == 22 call :fadeout
 goto guivideooptionsrefresh
 
 :: makes the video options in the GUI either white or green (off and on respectively)
@@ -1271,6 +1289,21 @@ if %vignette% == y (
 ) else (
     call :togglethis gui_video_vignette off
 )
+if %zoom% == y (
+    call :togglethis gui_video_zoom on
+) else (
+    call :togglethis gui_video_vignette off
+)
+if %fadein% == y (
+    call :togglethis gui_video_fadein on
+) else (
+    call :togglethis gui_video_fadein off
+)
+if %fadeout% == y (
+    call :togglethis gui_video_fadeout on
+) else (
+    call :togglethis gui_video_fadeout off
+)
 call :autosaveconfig
 goto :eof
 
@@ -1319,7 +1352,7 @@ choice /n /c 1234CRB
 :: set quality
 set "customizationquestion=%errorlevel%"
 if %customizationquestion% == 7 goto :eof
-echo Quality Selected: %customizationquestion%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Quality Selected: "%customizationquestion%">>"%temp%\qualitymuncherdebuglog.txt"
 :: custom quality
 if %customizationquestion% == 5 set customizationquestion=c
 :: random quality
@@ -1454,7 +1487,7 @@ if "%starttime%" == " " set starttime=0
 set vidtime=262144
 set /p "vidtime=[93mIn seconds[0m, how long do you want the video to be: "
 if "%vidtime%" == " " set vidtime=262144
-echo Start time %starttime%, Duration %vidtime%>>"%temp%\qualitymuncherdebuglog.txt"
+echo Start time %starttime%, Duration "%vidtime%">>"%temp%\qualitymuncherdebuglog.txt"
 call :clearlastprompt
 goto :eof
 
@@ -1712,13 +1745,6 @@ goto :eof
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
 :filterlistloop
-if "%tcly%" == "n" (
-    if %errorlevel% == 2 (
-        echo Misc. Filters selected: %filtercl%>>"%temp%\qualitymuncherdebuglog.txt"
-        call :clearlastprompt
-        goto :eof
-    )
-)
 echo [92mGreen[0m items are selected, [90mgray[0m items are unselected[90m
 echo  %tcl1% [1] Erosion - makes the edges of objects appear darker[90m
 echo  %tcl2% [2] Lagfun - makes darker pixels update slower[90m
@@ -1729,6 +1755,7 @@ echo  %tcl6% [6] Shufflepixels - reorder pixels in video frames[90m
 echo  %tcl7% [7] Guided - apply guided filter for edge-preserving smoothing, dehazing, etc[0m
 choice /c 1234567B /n /m "Select one or more options: "
 if %errorlevel% == 8 (
+    echo Misc. Filters selected: %filtercl% - blank means none>>"%temp%\qualitymuncherdebuglog.txt"
     call :titledisplay
     goto :eof
 )
@@ -1737,12 +1764,10 @@ echo [10A
 goto :filterlistloop
 
 :: what all of the toglectl(x) functions do is:
-:: - confirm that an option has been made (setting tcly to y)
 :: - if the option was previously set to disabled, enable it and add the filter to the filters, highlight the selection, then exit the function
 :: - if the option was previously set to enabled, disable it and remove the filter from the filters, remove the highlight, and exit the function
 
 :toggletcl1
-    set tcly=y
     if "%tcl1%2" == "[92m2" (
         set "tcl1= "
         set "filtercl=%filtercl:,erosion=%"
@@ -1753,7 +1778,6 @@ goto :filterlistloop
 goto :eof
 
 :toggletcl2
-    set tcly=y
     if "%tcl2%2" == "[92m2" (
         set "tcl2= "
         set "filtercl=%filtercl:,lagfun=%"
@@ -1764,7 +1788,6 @@ goto :eof
 goto :eof
 
 :toggletcl3
-    set tcly=y
     if "%tcl3%2" == "[92m2" (
         set "tcl3= "
         set "filtercl=%filtercl:,negate=%"
@@ -1775,7 +1798,6 @@ goto :eof
 goto :eof
 
 :toggletcl4
-    set tcly=y
     if "%tcl4%2" == "[92m2" (
         set "tcl4= "
         set "filtercl=%filtercl:,interlace=%"
@@ -1786,7 +1808,6 @@ goto :eof
 goto :eof
 
 :toggletcl5
-    set tcly=y
     if "%tcl5%2" == "[92m2" (
         set "tcl5= "
         set "filtercl=%filtercl:,edgedetect=%"
@@ -1797,7 +1818,6 @@ goto :eof
 goto :eof
 
 :toggletcl6
-    set tcly=y
     if "%tcl6%2" == "[92m2" (
         set "tcl6= "
         set "filtercl=%filtercl:,shufflepixels=%"
@@ -1808,7 +1828,6 @@ goto :eof
 goto :eof
 
 :toggletcl7
-    set tcly=y
     if "%tcl7%2" == "[92m2" (
         set "tcl7= "
         set "filtercl=%filtercl:,guided=%"
@@ -1866,6 +1885,52 @@ set /p "vignettelevel="
 set "vignettefilter=,vignette=PI/(5/(%vignettelevel%/2))"
 goto :eof
 
+:: zoom questions
+:zoom
+echo                                                  Do you want to zoom in?
+choice /n
+if %errorlevel% == 1 set zoom=y
+if %errorlevel% == 2 (
+    set "zoomfilter="
+    set zoom=n
+    goto :eof
+)
+set zoomlevel=1
+echo                             How much do you want to zoom in? 1 is the least, 10 is the most.
+set /p "zoomlevel="
+set "zoomfilter=,zoompan=zoom=%zoomlevel%"
+goto :eof
+
+:: fade in questions
+:fadein
+echo                                                  Do you want to fade in?
+choice /n
+if %errorlevel% == 1 set fadein=y
+if %errorlevel% == 2 (
+    set "fadeinfilter="
+    set fadein=n
+    goto :eof
+)
+set fadeinduration=1
+echo                                    [93mIn seconds[0m, how long do you want the fade in to be?
+set /p "fadeinduration="
+set "fadeinfilter=,fade=t=in:d=%fadeinduration%"
+goto :eof
+
+:: fade out questions
+:fadeout
+echo                                                 Do you want to fade out?
+choice /n
+if %errorlevel% == 1 set fadeout=y
+if %errorlevel% == 2 (
+    set "fadeoutfilter="
+    set fadeout=n
+    goto :eof
+)
+set fadeoutduration=1
+echo                                   [93mIn seconds[0m, how long do you want the fade out to be?
+set /p "fadeoutduration="
+goto :eof
 
 :: ========================================
 :: everything needed for video rendering
@@ -1938,6 +2003,17 @@ echo input is %1 >>"%temp%\qualitymuncherdebuglog.txt"
 set inputvideo="%~1"
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
 set /p duration=<%temp%\fileduration.txt
+if %fadeout% == y (
+    set /a intduration=%duration%
+    set /a intvidtime=%vidtime%
+    if !intduration! gtr !intvidtime! (
+        set /a fadeoutstart=!intvidtime!-%starttime%-%fadeoutduration%
+    ) else (
+        set /a fadeoutstart=!intduration!-%starttime%-%fadeoutduration%
+    )
+    echo "!fadeoutstart! is start and !intduration! is the video duration">>"%temp%\qualitymuncherdebuglog.txt"
+    set "fadeoutfilter=fade=t=out:d=%fadeoutduration%:st=!fadeoutstart!,"
+)
 :: make sure the variable is an integer
 set /a "duration=%duration%" > nul 2> nul
 if exist "%temp%\fileduration.txt" (del "%temp%\fileduration.txt")
@@ -1972,7 +2048,7 @@ if %frying% == y call :fryingmath
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% LSS 1000 set badvideobitrate=1000
 :: actual video filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%speedfilter%%colorfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%"
+set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
 :: add the suffix to the output name
 set "filename=%~n1 (%endingmsg%)"
 :: asks if the user wants a custom output name (non-multiqueue only)
