@@ -1945,6 +1945,7 @@ set filenum=1
 set filenumold=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
+    set "filename="
     if %clearaftereachrender% == y (echo [10;1H)
     set videoinp=%%a
     title [!filenum!/%totalfiles%] Quality Muncher v%version%
