@@ -14,6 +14,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - zoom
  - fade in
  - fade out
+ - different temp file
 
 # Planned
 
