@@ -10,6 +10,7 @@
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 set me=%0
+call :loadinganimation
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
     :: clear the screen when each render finishes
@@ -56,7 +57,6 @@ set me=%0
     :: progress bar animation speed
     set progressbaranimated_speed=3
 :: END OF OPTIONS
-
 :: ################################################################################################################################
 :: ######################    WARNING: modifying any lines past here might result in the program breaking!    ######################
 :: ################################################################################################################################
@@ -65,8 +65,15 @@ set me=%0
 :: startup
 :: ========================================
 
+:: default values for variables
+call :setdefaults
+if "%animate%" == "y" call :loadingbar
+call :loadinganimation
 :: code page, version, and title
 chcp 437 > nul
+set "qmtemp=%temp%\qualitymunchertemp"
+rmdir "%qmtemp%" > nul
+mkdir "%qmtemp%" > nul
 set version=1.5.2
 echo Quality Muncher v%version% successfully started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
@@ -91,24 +98,15 @@ if not check%1 == check (
     set inpath=%inpath:~0,-1%
     if not "%cd%" == "!inpath!" cd /d !inpath!
 )
+call :loadinganimation
 :: check if multiqueue is being used (since we don't need to display some information if it isn't)
-if not check%2 == check (
+if not "%~2" == "" (
     set ismultiqueue=y
     echo More than one parameter is being used to run the file>>"%temp%\qualitymuncherdebuglog.txt"
 )
 :: set the title
 title Quality Muncher v%version%
-set inpcontain=%~x1
-:: default values for variables
-call :setdefaults
 echo Default variables set>>"%temp%\qualitymuncherdebuglog.txt"
-:: plays an animation is the first parameter is qmloo
-if %animate% == y call :loadingbar
-call :titledisplay
-:: checks for updates
-if %autoupdatecheck% == y call :updatecheck
-:: afterstartup is everything that happens after the main "startup" - setting constants, defaults, options, doing animations, checking updates, etc
-:afterstartup
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg.exe || (
     echo FFmpeg not found, sending error, pausing, then exiting>>"%temp%\qualitymuncherdebuglog.txt"
@@ -118,14 +116,19 @@ where /q ffmpeg.exe || (
     if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
     goto closingbar
 )
+call :loadinganimation
 :: checks for inputs, if no input tell them and send to a secondary main menu
 set /a wb5=7+1-4+5/6+11-5+1*51/7*2-4+94*14/(14+22)*3/57-6
 set wbh2=Zh9-TL8nNTP%wb5%c1PwW
 set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
+call :titledisplay
+:: checks for updates
+if %autoupdatecheck% == y call :updatecheck
 if check%1 == check (
     echo File was ran without parameters ^(no input^)>>"%temp%\qualitymuncherdebuglog.txt"
     goto guimenurefresh
 )
+call :loadinganimation
 :: checks if the input has a video stream (i.e. if the input is an audio file)
 :: and if there isn't a video stream, ask audio questions instead
 call :imagecheck %1
@@ -133,11 +136,12 @@ if not exist "%~1" (
     goto guimenurefresh
     echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
 )
+call :loadinganimation
 :: get the audio stream and set it to a variable
 set inputvideo="%~1"
-ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %temp%\astream.txt
-set /p astream=<%temp%\astream.txt
-if exist "%temp%\astream.txt" (del "%temp%\astream.txt")
+ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %qmtemp%\astream.txt
+set /p astream=<%qmtemp%\astream.txt
+if exist "%qmtemp%\astream.txt" (del "%qmtemp%\astream.txt")
 if not defined astream (
     echo Input does not have an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=n
@@ -145,10 +149,12 @@ if not defined astream (
     echo Input has an audio stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasaudio=y
 )
+call :loadinganimation
 :: get the video stream and set it to a variable, then 
-ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %temp%\vstream.txt
-set /p vstream=<%temp%\vstream.txt
-if exist "%temp%\vstream.txt" (del "%temp%\vstream.txt")
+ffprobe -i %inputvideo% -show_streams -select_streams v -loglevel error > %qmtemp%\vstream.txt
+set /p vstream=<%qmtemp%\vstream.txt
+if exist "%qmtemp%\vstream.txt" (del "%qmtemp%\vstream.txt")
+call :loadinganimation
 if 1%vstream% == 1 (
     echo Input does not have a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=n
@@ -192,7 +198,7 @@ exit /b 0
 :: displays the title
 :titledisplay
 cls
-if %showtitle% == n (
+if "%showtitle%" == "n" (
     goto :eof
 ) else (
     echo [s
@@ -382,7 +388,8 @@ exit /b 0
 
 :: checks for updates - done automatically unless disabled in options
 :updatecheck
-if exist "%temp%\QMnewversion.txt" del "%temp%\QMnewversion.txt"
+call :loadinganimation
+if exist "%qmtemp%\QMnewversion.txt" del "%qmtemp%\QMnewversion.txt"
 :: checks if github is able to be accessed
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 (
@@ -392,13 +399,16 @@ if %errorlevel% == 1 (
     echo.
     goto :eof
 )
+call :loadinganimation
 set internet=y
 :: grabs the version of the latest public release from the github
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/version.txt" --output %temp%\QMnewversion.txt
-set /p newversion=<%temp%\QMnewversion.txt
-if exist "%temp%\QMnewversion.txt" (del "%temp%\QMnewversion.txt")
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/version.txt" --output %qmtemp%\QMnewversion.txt
+set /p newversion=<%qmtemp%\QMnewversion.txt
+if exist "%qmtemp%\QMnewversion.txt" (del "%qmtemp%\QMnewversion.txt")
+call :loadinganimation
 :: if the new version is the same as the current one, go to the start
 :: however, if the user choose to update from the main menu, give the option for the user to force an update
+call :clearlastprompt
 if "%version%" == "%newversion%" (
     set isupdate=n
     if %forceupdate% == n (
@@ -799,7 +809,7 @@ goto :eof
 :: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
 :render
 echo Rendering process started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
-if not %isimage% == y (
+if not "%isimage%" == "y" (
     set /a badaudiobitrate=80/%audiobr%
     :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
     if %distortaudio% == n (
@@ -835,7 +845,7 @@ call :savetoconfigbypassname temp
 type "%temp%\qualitymuncherconfig_autosave.bat">>"%temp%\qualitymuncherdebuglog.txt"
 echo ------------------------------------->>"%temp%\qualitymuncherdebuglog.txt"
 :: encode using the right encoding function
-if %hasvideo% == y (
+if "%hasvideo%" == "y" (
     if %isimage% == y (
         set /a qvnew=^(%qv%*3^)+1
         echo Going to image rendering>>"%temp%\qualitymuncherdebuglog.txt"
@@ -857,8 +867,8 @@ echo.
 where /q ffplay.exe || goto aftersound
 if %done% == y start /min cmd /c ffplay "C:\Windows\Media\notify.wav" -volume 50 -autoexit -showmode 0 -loglevel quiet
 :aftersound
-:: go to nopipingforyou if the user is using multiqueue
-if not "b%~2" == "b" goto nopipingforyou
+:: go to nopipingforyou if the user is using more than one input
+if not "%~2" == "" goto nopipingforyou
 echo Press [C] to close, [O] to open the output, [F] to open the file path, or [P] to pipe the output to another script.
 choice /n /c COFPLX /m "You can also press [X] to make a config file, or [L] to generate a debugging log for errors."
 if %errorlevel% == 5 (
@@ -892,30 +902,12 @@ echo Scripts found:
 :: add scripts here, if you want
 echo [S] Custom Script
 echo [1] FFmpeg
-if exist "%~dp0\^^!add text.bat" echo [2] add text
-if exist "%~dp0\^^!audio sync.bat" echo [3] audio sync
-if exist "%~dp0\^^!change fps.bat" echo [4] change fps
-if exist "%~dp0\^^!change speed.bat" echo [5] change speed
-if exist "%~dp0\^^!extract frame.bat" echo [6] extract frame
-if exist "%~dp0\^^!interpolater.bat" echo [7] interpolater
-if exist "%~dp0\^^!replace audio.bat" echo [8] replace audio
-if exist "%~dp0\^^!upscale nn.bat" echo [9] upscale NN
-if exist "%~dp0\^^!convert to gif.bat" echo [G] convert to GIF
 echo.
 :: selecting and piping
-choice /n /c S123456789CG /m "Select a script to pipe to, or press [C] to close: "
+choice /n /c S1C /m "Select a script to pipe to, or press [C] to close: "
 if %errorlevel% == 1 goto customscript
 cls
-if %errorlevel% == 3 cmd /k call "%~dp0\^^!add text.bat" %outputvar%
-if %errorlevel% == 4 cmd /k call "%~dp0\^^!audio sync.bat" %outputvar%
-if %errorlevel% == 5 cmd /k call "%~dp0\^^!change fps.bat" %outputvar%
-if %errorlevel% == 6 cmd /k call "%~dp0\^^!change speed.bat" %outputvar%
-if %errorlevel% == 7 cmd /k call "%~dp0\^^!extract frame.bat" %outputvar%
-if %errorlevel% == 8 cmd /k call "%~dp0\^^!interpolater.bat" %outputvar%
-if %errorlevel% == 9 cmd /k call "%~dp0\^^!replace audio.bat" %outputvar%
-if %errorlevel% == 10 cmd /k call "%~dp0\^^!upscale nn.bat" %outputvar%
-if %errorlevel% == 12 cmd /k call "%~dp0\^^!convert to gif.bat" %outputvar%
-if %errorlevel% == 11 endlocal & exit /b 0
+if %errorlevel% == 3 endlocal & exit /b 0
 if %errorlevel% == 2 call :ffmpegpipe
 goto closingbar
 
@@ -1056,9 +1048,9 @@ if %errorlevel% == 1 (
     goto :eof
 )
 :: upload and save the link to a file, then save to a variable
-curl -s --upload-file "Quality Muncher Log.txt" https://transfer.sh > "%temp%\curlurl.txt"
-set /p curlurl=<"%temp%\curlurl.txt"
-if exist "%temp%\curlurl.txt" (del "%temp%\curlurl.txt")
+curl -s --upload-file "Quality Muncher Log.txt" https://transfer.sh > "%qmtemp%\curlurl.txt"
+set /p curlurl=<"%qmtemp%\curlurl.txt"
+if exist "%qmtemp%\curlurl.txt" (del "%qmtemp%\curlurl.txt")
 :: send to the webhook for the devs
 :: please don't abuse this webhook it would make me very sad
 set wbh2=lxyrX4Y5TxLkQXfq
@@ -1088,7 +1080,7 @@ goto :eof
 :: display the title for the video options
 :titledisplayvideo
 cls
-if %showtitle% == n (
+if "%showtitle%" == "n" (
     goto :eof
 ) else (
     echo [s
@@ -1122,19 +1114,19 @@ if %guivideotitleisshowing% == y (
 set guivideotitleisshowing=n
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                %gui_video_quality%                    %gui_video_starttimeandduration%                       %gui_video_speed%
+echo               %gui_video_quality%                     %gui_video_starttimeandduration%                     %gui_video_speed%
 echo.
-echo                 %gui_video_text%                                %gui_video_color%                              %gui_video_stretch%
+echo                %gui_video_text%                                %gui_video_color%                             %gui_video_stretch%
 echo.
-echo              %gui_video_corruption%                        %gui_video_durationspoof%                        %gui_video_bouncywebm%
+echo             %gui_video_corruption%                        %gui_video_durationspoof%                       %gui_video_bouncywebm%
 echo.
-echo       %gui_video_resamplinginterpolation%                     %gui_video_frying%                           %gui_video_framestutter%
+echo        %gui_video_resamplinginterpolation%                   %gui_video_frying%                          %gui_video_framestutter%
 echo.
-echo             %gui_video_outputasgif%                  %gui_video_miscellaneousfilters%                      %gui_video_novideo%
+echo            %gui_video_outputasgif%                   %gui_video_miscellaneousfilters%                     %gui_video_novideo%
 echo.
-echo          %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
+echo         %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
 echo.
-echo          %gui_video_zoom%                     %gui_video_fadein%                          %gui_video_fadeout%
+echo                %gui_video_zoom%                              %gui_video_fadein%                             %gui_video_fadeout%
 choice /c 123456789RFSGMBNVQIZPO /n
 call :clearlastprompt
 echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
@@ -1969,7 +1961,7 @@ for %%a in (%*) do (
         echo.
     )
     call :videospecificstuff %%a
-    if exist "%temp%\scaledandfriedvideotempfix!container!" (del "%temp%\scaledandfriedvideotempfix!container!")
+    if exist "%qmtemp%\scaledandfriedvideotempfix!container!" (del "%qmtemp%\scaledandfriedvideotempfix!container!")
 )
 if %ismultiqueue% == y (
     if %frying% == y (
@@ -1993,7 +1985,7 @@ if %clearaftereachrender% == y (
 if %ismultiqueue% == y call :progressbaranimated %totalfiles% %totalfiles% %filenumold%
 echo [92mDone^^![0m
 set done=y
-if exist "%temp%\scaledandfriedvideotempfix%container%" (del "%temp%\scaledandfriedvideotempfix%container%")
+if exist "%qmtemp%\scaledandfriedvideotempfix%container%" (del "%qmtemp%\scaledandfriedvideotempfix%container%")
 :: delete temp files and show ending (unless stayopen is n)
 if %stayopen% == n goto ending
 goto exiting
@@ -2004,8 +1996,10 @@ goto exiting
 :: get duration
 echo input is %1 >>"%temp%\qualitymuncherdebuglog.txt"
 set inputvideo="%~1"
-ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %temp%\fileduration.txt
-set /p duration=<%temp%\fileduration.txt
+ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %qmtemp%\fileduration.txt
+set /p duration=<%qmtemp%\fileduration.txt
+:: if fade out is enabled, set duration and video time to integers, then calculate the file duration minus the fade out duration to find the start time for fading out
+:: does not factor in speed since speed is applied after the fade out filter
 if %fadeout% == y (
     set /a intduration=%duration%
     set /a intvidtime=%vidtime%
@@ -2019,20 +2013,20 @@ if %fadeout% == y (
 )
 :: make sure the variable is an integer
 set /a "duration=%duration%" > nul 2> nul
-if exist "%temp%\fileduration.txt" (del "%temp%\fileduration.txt")
+if exist "%qmtemp%\fileduration.txt" (del "%qmtemp%\fileduration.txt")
 :: gets the input framerate, which is used in determining whether to ask about interpolation, frame resampling, or neither
-ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %temp%\fps.txt
-set /p inputfps=<%temp%\fps.txt
-if exist "%temp%\fps.txt" (del "%temp%\fps.txt")
+ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %qmtemp%\fps.txt
+set /p inputfps=<%qmtemp%\fps.txt
+if exist "%qmtemp%\fps.txt" (del "%qmtemp%\fps.txt")
 :: sets the outputfps variable to an integer
 set /a inputfps=%inputfps%
 :: gets the resolution of the video
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
-if exist "%temp%\height.txt" (del "%temp%\height.txt")
-if exist "%temp%\width.txt" (del "%temp%\width.txt")
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %inputvideo% -of csv=p=0 > %qmtemp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %inputvideo% -of csv=p=0 > %qmtemp%\height.txt
+set /p height=<%qmtemp%\height.txt
+set /p width=<%qmtemp%\width.txt
+if exist "%qmtemp%\height.txt" (del "%qmtemp%\height.txt")
+if exist "%qmtemp%\width.txt" (del "%qmtemp%\width.txt")
 :: sets the output height and makes sure it's an even number since x264 doesn't support odd widths or heights
 set /a desiredheight=%height%/%scaleq%
 set /a desiredheight=(%desiredheight%/2)*2
@@ -2129,11 +2123,11 @@ if %tts% == y (
 )
 set nextline=n
 :: encode the video to hex
-certutil -encodehex %outputvar% "%temp%\%filename% hexed.txt"
+certutil -encodehex %outputvar% "%qmtemp%\%filename% hexed.txt"
 set theline=n
 :: loop through the file's lines until the line containing duration is found and replacde
 set linenum=0
-for /f "usebackq tokens=*" %%a in ("%temp%\%filename% hexed.txt") do (
+for /f "usebackq tokens=*" %%a in ("%qmtemp%\%filename% hexed.txt") do (
     set /a linenum+=1
     set "linecontent=%%~a"
     if !nextline! == y (
@@ -2160,10 +2154,10 @@ for /f "usebackq tokens=*" %%a in ("%temp%\%filename% hexed.txt") do (
 )
 :enddurationspoofloop
 :: decode the hex back into a video, with the changed duration
-certutil -decodehex "%temp%\%filename% hexed.txt" "%filename% hexed.mp4"
+certutil -decodehex "%qmtemp%\%filename% hexed.txt" "%filename% hexed.mp4"
 del %outputvar%
 ren "%filename% hexed.mp4" "%filename%.mp4"
-del "%temp%\%filename% hexed.txt"
+del "%qmtemp%\%filename% hexed.txt"
 set outputvar="%cd%\%filename%.mp4"
 goto :eof
 
@@ -2183,10 +2177,10 @@ if "!linecontent:~%lineloop%,1!" == " " (
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
 :: calling powershell to replace the line content
-powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
+powershell -Command "(Get-Content '%qmtemp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%qmtemp%\myFile.txt'"
 :: deleting the old file and renaming the new one
-del "%temp%\%filename% hexed.txt"
-ren "%temp%\myFile.txt" "%filename% hexed.txt"
+del "%qmtemp%\%filename% hexed.txt"
+ren "%qmtemp%\myFile.txt" "%filename% hexed.txt"
 goto :eof
 
 :: replace the information with super long duration
@@ -2220,10 +2214,10 @@ if "!linecontent:~%lineloop%,1!" == " " (
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 00 01=00 00 00 00 00 00 00 01%
 set linecontentnew=%linecontentnew:00 FF 67 69 81 00 00 00 01=FF 67 69 81 00 00 00 01%
 :: calling powershell to replace the line content
-powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
+powershell -Command "(Get-Content '%qmtemp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%qmtemp%\myFile.txt'"
 :: deleting the old file and renaming the new one
-del "%temp%\%filename% hexed.txt"
-ren "%temp%\myFile.txt" "%filename% hexed.txt"
+del "%qmtemp%\%filename% hexed.txt"
+ren "%qmtemp%\myFile.txt" "%filename% hexed.txt"
 if %numofloops% == 2 echo [93mWhile this video might crash some video players, it will embed perfectly fine in discord.[0m
 goto :eof
 
@@ -2243,25 +2237,25 @@ if "!linecontent:~%lineloop%,1!" == " " (
 :: making sure everything works okay-ish
 set linecontentnew=%linecontentnew:00 00 00 00 00 00 00 ff ff=00 00 00 00 00 00 ff ff%
 :: calling powershell to replace the line content
-powershell -Command "(Get-Content '%temp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%temp%\myFile.txt'"
+powershell -Command "(Get-Content '%qmtemp%\%filename% hexed.txt') -replace '%linecontentog%', '%linecontentnew%' | Out-File -encoding ASCII '%qmtemp%\myFile.txt'"
 :: deleting the old file and renaming the new one
-del "%temp%\%filename% hexed.txt"
-ren "%temp%\myFile.txt" "%filename% hexed.txt"
+del "%qmtemp%\%filename% hexed.txt"
+ren "%qmtemp%\myFile.txt" "%filename% hexed.txt"
 goto :eof
 
 :: encoding bouncy webm
 :encodebouncy
 :: remencode to webm so the codecs can be copied
-ffmpeg -hide_banner -stats_period 0.05 -loglevel warning -stats -i %outputvar% -c:a libopus -b:a %badaudiobitrate%k -c:v libvpx "%temp%\%filename% webmifed.webm" && echo FFmpeg call 7 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 7 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period 0.05 -loglevel warning -stats -i %outputvar% -c:a libopus -b:a %badaudiobitrate%k -c:v libvpx "%qmtemp%\%filename% webmifed.webm" && echo FFmpeg call 7 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 7 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: get the frame count so we know how many times to loop
-ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -i "%temp%\%filename% webmifed.webm" -of csv=p=0 > "%temp%\framecount.txt"
-set /p framecount=<"%temp%\framecount.txt"
+ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -i "%qmtemp%\%filename% webmifed.webm" -of csv=p=0 > "%qmtemp%\framecount.txt"
+set /p framecount=<"%qmtemp%\framecount.txt"
 set /a framecount=%framecount%
-del "%temp%\framecount.txt"
+del "%qmtemp%\framecount.txt"
 :: remove old directory just in case
-rmdir "%temp%\qmframes" /s /q > nul 2> nul
+rmdir "%qmtemp%\qmframes" /s /q > nul 2> nul
 :: make the directory
-mkdir "%temp%\qmframes"
+mkdir "%qmtemp%\qmframes"
 :: looping through all of the frames
 echo Encoding WebM Frame 0 of %framecount%
 :loopframes
@@ -2269,22 +2263,22 @@ set /a "loopcount+=1"
 echo [1A[2KEncoding WebM Frame %loopcount% of %framecount%
 set /a "frametograb=%loopcount%-1"
 if %bouncetype% == width (
-    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 8 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 8 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 8 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 8 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ) else (
     if %bouncetype% == height (
-    ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 9 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 9 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 9 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 9 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     ) else (
-        ffmpeg -hide_banner -loglevel error -vsync drop -i "%temp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%temp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 10 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 10 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+        ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 10 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 10 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     )
 )
-echo file '%temp%\qmframes\framenum%loopcount%.webm' >> "%temp%\qmframes\filelist.txt"
+echo file '%qmtemp%\qmframes\framenum%loopcount%.webm' >> "%qmtemp%\qmframes\filelist.txt"
 if %loopcount% lss %framecount% goto loopframes
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel warning -stats -f concat -safe 0 -i %temp%\qmframes\filelist.txt -i "%temp%\%filename% webmifed.webm" -map 1:a -map 0:v -c copy "%filename%.webm" && echo FFmpeg call 11 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 11 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-del "%temp%\%filename% webmifed.webm"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel warning -stats -f concat -safe 0 -i %qmtemp%\qmframes\filelist.txt -i "%qmtemp%\%filename% webmifed.webm" -map 1:a -map 0:v -c copy "%filename%.webm" && echo FFmpeg call 11 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 11 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+del "%qmtemp%\%filename% webmifed.webm"
 set container=.webm
 del %outputvar%
 set outputvar="%cd%\%filename%.webm"
-rmdir "%temp%\qmframes" /s /q
+rmdir "%qmtemp%\qmframes" /s /q
 goto :eof
 
 :: set the stretched width/height
@@ -2300,16 +2294,16 @@ goto :eof
 echo Doing text math>>"%temp%\qualitymuncherdebuglog.txt"
 :: remove spaces and count the characters in the text
 set toptextnospace=%toptext: =_%
-echo "%toptextnospace%" > %temp%\toptext.txt
-for %%? in (%temp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
-if exist "%temp%\toptext.txt" (del "%temp%\toptext.txt")
+echo "%toptextnospace%" > %qmtemp%\toptext.txt
+for %%? in (%qmtemp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
+if exist "%qmtemp%\toptext.txt" (del "%qmtemp%\toptext.txt")
 :: if below 16 characters, set it to 16 (essentially caps the font size)
 if %strlength% LSS 16 set strlength=16
 :: bottom text
 set bottomtextnospace=%bottomtext: =_%
-echo "%bottomtextnospace%" > %temp%\bottomtext.txt
-for %%? in (%temp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
-if exist "%temp%\bottomtext.txt" (del "%temp%\bottomtext.txt")
+echo "%bottomtextnospace%" > %qmtemp%\bottomtext.txt
+for %%? in (%qmtemp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
+if exist "%qmtemp%\bottomtext.txt" (del "%qmtemp%\bottomtext.txt")
 if %strlengthb% LSS 16 set strlengthb=16
 :: use width and size of the text, and the user's inputted text size to determine font size
 set /a fontsize=(%desiredwidth%/%strlength%)*2
@@ -2393,14 +2387,14 @@ goto :eof
 echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
 echo Frying video...
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%temp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%temp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%temp%\scaledinput%container%" -i "%temp%\noisemapscaled%container%" -i "%temp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%temp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%qmtemp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%qmtemp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%qmtemp%\scaledinput%container%" -i "%qmtemp%\noisemapscaled%container%" -i "%qmtemp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%qmtemp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: use the output of the 5th ffmpeg call as the input for the final encoding
-set "videoinp=%temp%\scaledandfriedvideotempfix%container%"
-if exist "%temp%\noisemapscaled%container%" (del "%temp%\noisemapscaled%container%")
-if exist "%temp%\scaledinput%container%" (del "%temp%\scaledinput%container%")
+set "videoinp=%qmtemp%\scaledandfriedvideotempfix%container%"
+if exist "%qmtemp%\noisemapscaled%container%" (del "%qmtemp%\noisemapscaled%container%")
+if exist "%qmtemp%\scaledinput%container%" (del "%qmtemp%\scaledinput%container%")
 echo Done frying video>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
@@ -2715,17 +2709,17 @@ if %errorlevel% == 2 (
     goto :eof
 )
 :: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
-ffmpeg > nul 2>>"%temp%\ffmpegQM.txt"
-> nul find "libflite" "%temp%\ffmpegQM.txt" || (
+ffmpeg > nul 2>>"%qmtemp%\ffmpegQM.txt"
+> nul find "libflite" "%qmtemp%\ffmpegQM.txt" || (
     echo USER DOES NOT HAVE FLITE INSTALLED>>"%temp%\qualitymuncherdebuglog.txt"
-    del "%temp%\ffmpegQM.txt"
+    del "%qmtemp%\ffmpegQM.txt"
     echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
     set tts=n
     pause
     call :clearlastprompt
     goto :eof
 )
-del "%temp%\ffmpegQM.txt"
+del "%qmtemp%\ffmpegQM.txt"
 :: text to speech text and volume
 echo What do you want the text-to-speech to say?
 set /p "ttstext="
@@ -2801,7 +2795,7 @@ for %%a in (%*) do (
         echo.
         set /a progbarcall=!filenum!-1
         call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
-        echo [38;2;254;165;0m[!filenumold!/%totalfiles%] Encoding "%%~nxa"[0m
+        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
         if !filenum! gtr 1 set /a filenumold+=1
         set /a filenum=!filenum!+1
     ) else (
@@ -2811,7 +2805,6 @@ for %%a in (%*) do (
 )
 title [Done] Quality Muncher v%version%
 if %clearaftereachrender% == y (echo [10;1H)
-echo.
 echo. [0J
 if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
@@ -2864,7 +2857,7 @@ goto :eof
 :: display the title for the extra options
 :titledisplayextra
 cls
-if %showtitle% == n (
+if "%showtitle%" == "n" (
     goto :eof
 ) else (
     echo [s
@@ -2887,7 +2880,7 @@ set guiextratitleisshowing=y
 call :autosaveconfig
 call :checktogglesaudio
 :: display the title if it isn't already showing
-if %guiextratitleisshowing% == y (
+if "%guiextratitleisshowing%" == "y" (
     call :titledisplayextra
 ) else (
     call :clearlastprompt
@@ -2934,30 +2927,36 @@ goto :eof
 :: provides the user a list of recent announcements from the devs
 :announcement
 :: checks if github is able to be accessed
+call :loadinganimation
 ping /n 1 github.com  | find "Reply" > nul
 if %errorlevel% == 1 goto fetchannouncementfail
 set internet=y
+call :loadinganimation
 :: grabs the announcements from github
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %temp%\anouncementQM.txt || (
+call :loadinganimation
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %qmtemp%\anouncementQM.txt || (
+    call :clearlastprompt
     echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
     echo Press any key to go to the menu
     pause > nul
     goto :eof
 )
-set /p announce=<%temp%\anouncementQM.txt
+call :clearlastprompt
+set /p announce=<%qmtemp%\anouncementQM.txt
 echo [38;2;255;190;0mAnnouncements:[0m
 :: echo each announcement
-for /f "tokens=*" %%s in (%temp%\anouncementQM.txt) do (
+for /f "tokens=*" %%s in (%qmtemp%\anouncementQM.txt) do (
     set /a "g+=1"
     echo [38;2;90;90;90m[!g!][0m %%s
 )
-if exist "%temp%\anouncementQM.txt" del "%temp%\anouncementQM.txt"
+if exist "%qmtemp%\anouncementQM.txt" del "%qmtemp%\anouncementQM.txt"
 echo.
 pause
 goto :eof
 
 :: fails to access github
 :fetchannouncementfail
+call :clearlastprompt
 set internet=n
 echo Failed to fetch announcements>>"%temp%\qualitymuncherdebuglog.txt"
 echo [91mAnnouncements were not able to be accessed. Either you are not connected to the internet or GitHub is offline.[0m
@@ -3055,7 +3054,7 @@ goto :eof
 :: display the title for the image options
 :titledisplayimage
 cls
-if %showtitle% == n (
+if "%showtitle%" == "n" (
     goto :eof
 ) else (
     echo [s
@@ -3080,7 +3079,7 @@ set guivideotitleisshowing=y
 call :autosaveconfig
 call :checktogglesvideo
 :: display the title if it isn't already showing
-if %guiimagetitleisshowing% == y (
+if "%guiimagetitleisshowing%" == "y" (
     call :titledisplayimage
 ) else (
     call :clearlastprompt
@@ -3130,15 +3129,15 @@ set filenum=1
 set filenumold=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
-    if %clearaftereachrender% == y (echo [10;1H)
+    if "%clearaftereachrender%" == "y" echo [10;1H
     title [!filenum!/%totalfiles%] Quality Muncher v%version%
     echo Encoding image !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    if %ismultiqueue% == y (
+    if "%ismultiqueue%" == "y" (
         echo.
         set /a progbarcall=!filenum!-1
         call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
         echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
-        echo [38;2;254;165;0m[!filenumold!/%totalfiles%] Encoding "%%~nxa"[0m
+        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
         echo.
         if !filenum! gtr 1 set /a filenumold+=1
         set /a filenum=!filenum!+1
@@ -3149,9 +3148,9 @@ for %%a in (%*) do (
     call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
 )
 title [Done] Quality Muncher v%version%
-if %clearaftereachrender% == y (echo [10;1H)
+if "%clearaftereachrender%" == "y" (echo [10;1H)
 echo.[0J
-if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
+if "%ismultiqueue%" == "y" call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
 goto exiting
@@ -3168,16 +3167,16 @@ set imagequal=%3
 :: imagequal*3 is used for webp/vp9, imagequal is used for -q:v in mjpeg
 set /a imagequal3=%imagequal%*3
 set /a imagesc=%4
-set "tempfolder=%temp%\processingvideo"
+set "tempfolder=%qmtemp%\processingvideo"
 if exist "%tempfolder%" (rmdir "%tempfolder%" /q /s)
 mkdir "%tempfolder%"
 :: grab width and height of the input video
-ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %temp%\width.txt
-ffprobe -v error -select_streams v:0 -show_entries stream=height -i %1 -of csv=p=0 > %temp%\height.txt
-set /p height=<%temp%\height.txt
-set /p width=<%temp%\width.txt
-if exist "%temp%\height.txt" (del "%temp%\height.txt")
-if exist "%temp%\width.txt" (del "%temp%\width.txt")
+ffprobe -v error -select_streams v:0 -show_entries stream=width -i %1 -of csv=p=0 > %qmtemp%\width.txt
+ffprobe -v error -select_streams v:0 -show_entries stream=height -i %1 -of csv=p=0 > %qmtemp%\height.txt
+set /p height=<%qmtemp%\height.txt
+set /p width=<%qmtemp%\width.txt
+if exist "%qmtemp%\height.txt" (del "%qmtemp%\height.txt")
+if exist "%qmtemp%\width.txt" (del "%qmtemp%\width.txt")
 :: basic height scaling and checks to make sure they're even
 set /a height=%height%/%imagesc%
 set /a height=(%height%/2)*2
@@ -3189,7 +3188,7 @@ set /a heightalt=%height%-2
 set imagecontainerbackup=%imagecontainer%
 set webp=webp
 set weblib=libwebp
-if %imagecontainer% == .gif (
+if "%imagecontainer%" == ".gif" (
     set imagecontainer=.mkv
     set webp=webm
     set weblib=libvpx
@@ -3243,7 +3242,7 @@ set "filename=%filename% (%f%)"
 :afterrenameimage
 :: if it's a gif, encode it as a video then reencode it to a gif
 :: otherwisem encode it as a picture
-if %imagecontainerbackup% == .gif (
+if "%imagecontainerbackup%" == ".gif" (
     ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt rgb24 -c:v libx264 -vf "scale=%width%x%height%:flags=%scalingalg%" -crf %imagequal% -f h264 "%tempfolder%\%~n1%i%final%imagecontainer%" && echo FFmpeg call 18 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 18 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%final%imagecontainer%" -f gif "%filename%%imagecontainerbackup%" && echo FFmpeg call 19 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 19 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ) else (
@@ -3309,7 +3308,7 @@ goto :eof
 :: progress bar
 :: first parameter is amount completed, second is total amount, for example "call :progressbar 5 8" would show 62.5% complete and a progress bar like ##########
 :progressbar
-if not %progressbar% == y (
+if not "%progressbar%" == "y" (
     echo.
     goto :eof
 )
@@ -3323,7 +3322,7 @@ set /a progressbar_total=%~2
 set /a progressbar_percentofhundred=(%progressbar_amount%*100/%progressbar_total%*100)/100
 set /a progressbar_percentofdonechars=(%progressbar_amount%*%progressbar_size%/%progressbar_total%*%progressbar_size%)/%progressbar_size%
 :: if they aren't already set, set a two variables, each consisting of the maximum number of done characters of the done character and not yet done character
-if %progressbar_charisdefined% == n call :hashloop
+if "%progressbar_charisdefined%" == "n" call :hashloop
 :: set the amount of non-done characters needed to fill the progress bar
 set /a progressbar_spaceamount=%progressbar_size%-%progressbar_percentofdonechars%
 :: progress bar
@@ -3368,8 +3367,8 @@ goto :eof
 :renamefile
 :: start of the repeat until loop (repeats until the file doesn't exist)
 :renamefileloop
-if %isimage% == y set container=%imagecontainer%
-if %hasvideo% == n set "container=%audiocontainer%"
+if "%isimage%" == "y" set container=%imagecontainer%
+if "%hasvideo%" == "n" set "container=%audiocontainer%"
 set /a "i+=1"
 if exist "%filename% (%i%)%container%" goto renamefileloop
 set "filename=%filename% (%i%)"
@@ -3383,11 +3382,11 @@ goto :eof
 :: makes a variable display as either white or green, can be a toggle or implcitly set to on or off
 :togglethis
 set "temptogglevar=!%1!"
-if a%2 == aon (
+if "%~2" == "on" (
     set "%1=[92m%temptogglevar:[0m=%[0m"
     goto :eof
 )
-if a%2 == aoff (
+if "%~2" == "off" (
     set "%1=[0m%temptogglevar:[92m=%"
     goto :eof
 )
@@ -3409,8 +3408,18 @@ echo [38;2;123;169;181m!messages%quoteindex%![0m
 echo.
 goto :eof
 
+:: little spinning bar animation
+:loadinganimation
+set /a loadinganimation_counter+=1
+if %loadinganimation_counter% gtr 4 set loadinganimation_counter=1
+if %loadinganimation_counter% == 1 echo [14;60H[0J[14;60H\  [15;60H \ [16;60H  \
+if %loadinganimation_counter% == 2 echo [14;60H[0J[14;60H ^| [15;60H ^| [16;60H ^| 
+if %loadinganimation_counter% == 3 echo [14;60H[0J[14;60H  /[15;60H / [16;60H/  
+if %loadinganimation_counter% == 4 echo [14;60H[0J[15;59H-----
+goto :eof
+
 :: leaves the script
 :ending
-if %animate% == y goto closingbar
+if "%animate%" == "y" goto closingbar
 endlocal
 exit /b
