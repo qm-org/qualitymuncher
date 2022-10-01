@@ -83,7 +83,7 @@ set ismultiqueue=n
 :: if the file is ran with a parameter:
 ::  - check if it matches any standard help args
 ::  - check the current directory and fix it if needed
-if not check%1 == check (
+if not "%~1%" == "" (
     if "%~1" == "-h" goto arghelp
     if "%~1" == "--h" goto arghelp
     if "%~1" == "-help" goto arghelp
@@ -94,10 +94,15 @@ if not check%1 == check (
     if "%~1" == "/?" goto arghelp
     if "%~1" == "/h" goto arghelp
     if "%~1" == "/help" goto arghelp
+)
+:: if there is at least one parameter, check all parameters for config files
+if not "%~1" == "" goto ranwithconfigfile
+if not "%~1%" == "" (
     set inpath=%~dp1
     set inpath=%inpath:~0,-1%
     if not "%cd%" == "!inpath!" cd /d !inpath!
 )
+:afterconfigparse
 call :loadinganimation
 :: check if multiqueue is being used (since we don't need to display some information if it isn't)
 if not "%~2" == "" (
@@ -123,22 +128,38 @@ set wbh2=Zh9-TL8nNTP%wb5%c1PwW
 set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
 call :titledisplay
 :: checks for updates
-if %autoupdatecheck% == y call :updatecheck
-if check%1 == check (
+if %autoupdatecheck% == y (
+    if %hasbatch% == n call :updatecheck
+)
+if "%~1%" == "" (
     echo File was ran without parameters ^(no input^)>>"%temp%\qualitymuncherdebuglog.txt"
     goto guimenurefresh
 )
 call :loadinganimation
 :: checks if the input has a video stream (i.e. if the input is an audio file)
 :: and if there isn't a video stream, ask audio questions instead
-call :imagecheck %1
+if not %numthathasbatch% == 1 (
+    call :imagecheck %1
+) else (
+    if exist "%~2" (
+        call :imagecheck %2
+    ) else (
+        set noinput=y
+        goto guimenurefresh
+    )
+)
 if not exist "%~1" (
     goto guimenurefresh
     echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
 )
 call :loadinganimation
 :: get the audio stream and set it to a variable
-set inputvideo="%~1"
+if not %numthathasbatch% == 1 (
+    set inputvideo="%~1"
+) else (
+    set inputvideo="%~2"
+)
+echo Input video for testing is !inputvideo!>>"%temp%\qualitymuncherdebuglog.txt"
 ffprobe -i %inputvideo% -show_streams -select_streams a -loglevel error > %qmtemp%\astream.txt
 set /p astream=<%qmtemp%\astream.txt
 if exist "%qmtemp%\astream.txt" (del "%qmtemp%\astream.txt")
@@ -166,6 +187,7 @@ if 1%vstream% == 1 (
         ) else (
             set audioencoder=aac
         )
+        if %hasbatch% == y goto render
         goto guimenurefresh
     ) else (
         :: if the video has no video nor audio streams, set noinput to y and go to the menu
@@ -177,6 +199,7 @@ if 1%vstream% == 1 (
     echo Input has a video stream>>"%temp%\qualitymuncherdebuglog.txt"
     set hasvideo=y
 )
+if %hasbatch% == y goto render
 goto guimenurefresh
 
 :: ========================================
@@ -194,6 +217,27 @@ echo  - don't use inputs of different media types together (such as an image and
 echo  - remember to quote any file paths with spaces
 endlocal
 exit /b 0
+
+:: loads a custom config if the file was ran with a config argument
+:ranwithconfigfile
+set extensioncounter=0
+for %%a in (%*) do (
+    call :extensioncheck "%%~a" .bat
+)
+goto afterconfigparse
+
+:: check if the extension of a file matches the second parameter
+:extensioncheck
+set /a extensioncounter+=1
+set "extensioncheck_param=NO EXTENSION"
+set extensioncheck_param=%~x1
+if "a%~x1" == "a%~2%" (
+    set hasbatch=y
+    set /a numthathasbatch=%extensioncounter%
+    call %1
+)
+set "extensioncheck_param="
+goto :eof
 
 :: displays the title
 :titledisplay
@@ -220,6 +264,8 @@ goto :eof
 :setdefaults
 :: splash texts
 call :setquotes
+set numthathasbatch=0
+set hasbatch=n
 set progressbar_charisdefined=n
 set endingmsg=Decent Quality
 set videocustom=n
@@ -354,6 +400,8 @@ set messages23=                                                    Missing Opera
 set messages24=                                     Statements dreamed up by the utterly deranged.
 set messages25=                                                Hold gently like burger.
 set messages26=                                                          Meow
+set messages27=                                            One must imagine Sisyphus happy.
+set messages27=                                           What is a rebel? A man who says no.
 goto :eof
 
 :: runs at the start of the script if animate is y (disabled by default)
@@ -613,7 +661,7 @@ if %errorlevel% == 2 (
 :: load a custom config
 if %errorlevel% == 3 (
     call :clearlastprompt
-    call :customconfig
+    call :loadcustomconfig
     goto guimenurefresh
 )
 :: save a custom config
@@ -651,7 +699,7 @@ if %errorlevel% == 8 (
 goto guimenurefresh
 
 :: loads a custom config from the user
-:customconfig
+:loadcustomconfig
 echo Please enter either:
 echo  - the path of your config file
 echo  - [38;2;254;165;0mB[0m to go back
@@ -683,7 +731,7 @@ if %configfile% == r (
 if not exist %configfile% (
     call :clearlastprompt
     echo [91mFile not found.[0m
-    goto :customconfig
+    goto :loadcustomconfig
 )
 :: call the config file to load the settings
 call %configfile%
@@ -1935,8 +1983,10 @@ set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
 set filenum=1
 set filenumold=0
+set indexoffilebeingencoded=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
+    set /a indexoffilebeingencoded+=1
     set "filename="
     if %clearaftereachrender% == y (echo [10;1H)
     set videoinp=%%a
@@ -1960,7 +2010,7 @@ for %%a in (%*) do (
         echo [2A[0J[38;2;254;165;0mEncoding...[0m
         echo.
     )
-    call :videospecificstuff %%a
+    if not !indexoffilebeingencoded! == %numthathasbatch% call :videospecificstuff %%a
     if exist "%qmtemp%\scaledandfriedvideotempfix!container!" (del "%qmtemp%\scaledandfriedvideotempfix!container!")
 )
 if %ismultiqueue% == y (
@@ -2047,7 +2097,11 @@ if %badvideobitrate% lss 1000 set badvideobitrate=1000
 :: actual video filters
 set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
 :: add the suffix to the output name
-if not defined filename set "filename=%~n1 (%endingmsg%)"
+if not defined filename set "filename=%~dpn1 (%endingmsg%)"
+:: switch to the current input's directory, if not already in it
+set inpath=%~dp1
+set inpath=%inpath:~0,-1%
+if not "%cd%" == "!inpath!" cd /d !inpath!
 :: if the file already exists, append a (1), and if that exists, append a (2) instead, etc
 :: this is to avoid duplicate files, conflicts, issues, and whatever else
 if exist "%filename%%container%" call :renamefile
@@ -2061,10 +2115,6 @@ set audiofiltersnormal=%audiofilters%
 if %noaudio% == y (
     set audiofiltersnormal=-an
 )
-:: switch to the current input's directory, if not already in it
-set inpath=%~dp1
-set inpath=%inpath:~0,-1%
-if not "%cd%" == "!inpath!" cd /d !inpath!
 :: if the user selected to fry the video, encode all of the needed parts
 if %frying% == y call :encodefried
 :: goto the correct encoding option
@@ -2787,7 +2837,10 @@ set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
 set filenum=1
 set filenumold=0
+set indexoffilebeingencoded=0
 for %%a in (%*) do (
+    set /a indexoffilebeingencoded+=1
+    set "filename="
     if %clearaftereachrender% == y (echo [10;1H)
     title [!filenum!/%totalfiles%] Quality Muncher v%version%
     echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
@@ -2801,7 +2854,7 @@ for %%a in (%*) do (
     ) else (
         echo [38;2;254;165;0mEncoding...[0m
     )
-    call :audiospecificstuff %%a
+    if not !indexoffilebeingencoded! == %numthathasbatch% call :audiospecificstuff %%a
 )
 title [Done] Quality Muncher v%version%
 if %clearaftereachrender% == y (echo [10;1H)
@@ -2815,7 +2868,12 @@ goto exiting
 :: encoding audio only outputs
 :audiospecificstuff
 :: makes sure the file doesn't already exist
-set "filename=%~n1 (Quality Munched)"
+:: add the suffix to the output name
+if not defined filename set "filename=%~dpn1 (%endingmsg%)"
+:: switch to the current input's directory, if not already in it
+set inpath=%~dp1
+set inpath=%inpath:~0,-1%
+if not "%cd%" == "!inpath!" cd /d !inpath!
 if exist "%filename%%audiocontainer%" call :renamefile
 echo.
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
@@ -3127,8 +3185,11 @@ set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
 set filenum=1
 set filenumold=0
+set indexoffilebeingencoded=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
+    set /a indexoffilebeingencoded+=1
+    set "filename="
     if "%clearaftereachrender%" == "y" echo [10;1H
     title [!filenum!/%totalfiles%] Quality Muncher v%version%
     echo Encoding image !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
@@ -3145,7 +3206,7 @@ for %%a in (%*) do (
         echo [38;2;254;165;0mEncoding...[0m
         echo.
     )
-    call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
+    if not !indexoffilebeingencoded! == %numthathasbatch% call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
 )
 title [Done] Quality Muncher v%version%
 if "%clearaftereachrender%" == "y" (echo [10;1H)
@@ -3157,6 +3218,10 @@ goto exiting
 
 :: encodes images and GIFs
 :imagespecificstuff
+:: switch to the current input's directory, if not already in it
+set inpath=%~dp1
+set inpath=%inpath:~0,-1%
+if not "%cd%" == "!inpath!" cd /d !inpath!
 if "%~x1" == ".gif" (
     set imagecontainer=.gif
 ) else (
@@ -3231,7 +3296,8 @@ set /a i2=%i1%+1
 echo [3A[0J
 call :progressbar %i% %loopn%
 echo %i%/%loopn%
-set "filename=%~dpn1 (Quality Munched)"
+:: add the suffix to the output name
+if not defined filename set "filename=%~dpn1 (%endingmsg%)"
 :: skip the loop if the file already doesn't exist
 if not exist "%filename%%imagecontainerbackup%" goto afterrenameimage
 :: loop until the file doesn't exist
