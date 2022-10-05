@@ -777,12 +777,6 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set audiospeedq=%audiospeedq%
 
     echo set addedtextq=%addedtextq%
-    echo set tsize=%tsize%
-    echo set toptext=%toptext%
-    echo set textonepos=%textoneposesc%
-    echo set tsize2=%tsize2%
-    echo set bottomtext=%bottomtext%
-    echo set texttwopos=%texttwoposesc%
 
     echo set colorq=%colorq%
     echo set colorfilter=%colorfilter%
@@ -843,9 +837,10 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set loopn=%loopn%
     echo set qv=%qv%
     echo set imagesc=%imagesc%
-
-    echo exit /b 0
 ) >> "%configname%.bat"
+if %addedtextq% == y goto makelogtextadditions
+:donewithtextloop
+echo exit /b 0 >> "%configname%.bat"
 echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
 :: skip the message and pausing if it is being saved automatically
 if "%~1" == "temp" goto :eof
@@ -853,6 +848,18 @@ echo You config file is located at "%cd%\%configname%.bat"
 pause
 call :clearlastprompt
 goto :eof
+
+:makelogtextadditions
+set makelogcounter=0
+:makelogtextadditionsloop
+set /a makelogcounter+=1
+echo set textamount=%textamount%>>"%configname%.bat"
+echo set tsize!makelogcounter!=!tsize%makelogcounter%!>>"%configname%.bat"
+echo set text!makelogcounter!=!text%makelogcounter%!>>"%configname%.bat"
+echo set texthpos!makelogcounter!=!texthpos%makelogcounter%!>>"%configname%.bat"
+echo set textcolor!makelogcounter!=!textcolor%makelogcounter%!>>"%configname%.bat"
+if not %makelogcounter% == %textamount% goto makelogtextadditionsloop
+goto donewithtextloop
 
 :: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
 :render
@@ -1571,32 +1578,40 @@ if %errorlevel% == 1 (
     call :clearlastprompt
     goto :eof
 )
-:: first text size
-set tsize=1
-echo                         What size should text one be? [B]ig, [M]edium, [S]mall, or [V]ery small?
-choice /c BMSV /n
-set tsize=%errorlevel%
-:: if very small, set it to half the size of small
-if %tsize% == 4 set tsize=6
-:: top text
-set "toptext= "
-echo                                             Enter your text for text one now:
-set /p "toptext="
-:: ask the user where the font should go on the video
-call :screenlocation "text one" textonepos
-:: THE NEXT LINES UNTIL setting the text filter IS THE SAME AS THE TOP TEXT, BUT WITH DIFFERENT VARIABLE NAMES
-set tsize2=1
-echo                         What size should text two be? [B]ig, [M]edium, [S]mall, or [V]ery small?
-choice /c BMSV /n
-set tsize2=%errorlevel%
-if %tsize2% == 4 set tsize2=6
-:: secoond text
-set "bottomtext= "
-echo                                             Enter your text for text two now:
-set /p "bottomtext="
-call :screenlocation "text two" texttwopos
-:: setting text filter
+echo                                          How many text boxes do you want to add?
+set /p "textamount="
+set textcounter=0
 call :clearlastprompt
+:textlooping
+set /a textcounter+=1
+set tsize!textcounter!=1
+echo                         What size should text !textcounter! be? [B]ig, [M]edium, [S]mall, or [V]ery small?
+choice /c BMSV /n
+set tsize!textcounter!=%errorlevel%
+if "!tsize%textcounter%!" == "4" set tsize!textcounter!=6
+set "text!textcounter!= "
+echo                                             Enter your text for text !textcounter! now:
+set /p "text!textcounter!="
+echo                 What color should the text be?
+echo   This can be in one of two formats, either the name (like White or Brown), or the hexadecmial value with 0x in front
+echo                                                (like 0xFFFFFF or 0x964B00)
+set /p "textcolor!textcounter!="
+echo Do you want more [C]ustomizable text positions or the [D]efault 9 positions?
+choice /n /c CD" 
+if %errorlevel% == 2 (
+    call :screenlocation "text !textcounter!" texthpos!textcounter!
+    goto afteradvtextplacement
+)
+echo     From 0 to 100, where should the text be placed horizontally? (0 is the furthest left, 100 is the furthest right)
+set /p "texthposh="
+echo        From 0 to 100, where should the text be placed vertically? (0 is the furthest up, 100 is the furthest down)
+set /p "texthposv="
+set texthpos!textcounter!=x=(w-(tw/2))*(%texthposh%/100):y=(h-(th/2))*(%texthposv%/100)
+:afteradvtextplacement
+echo %textamount% a>>"%temp%\qualitymuncherdebuglog.txt"
+call :titledisplay
+if not %textcounter% == %textamount% goto textlooping
+echo "going done with text">>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
 :: prompts the user of where to place an item
@@ -2097,7 +2112,7 @@ if %badvideobitrate% lss 1000 set badvideobitrate=1000
 :: actual video filters
 set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
 :: add the suffix to the output name
-if not defined filename set "filename=%~dpn1 (%endingmsg%)"
+if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: switch to the current input's directory, if not already in it
 set inpath=%~dp1
 set inpath=%inpath:~0,-1%
@@ -2219,7 +2234,7 @@ set "linecontentog=%linecontent%"
 set /a lineloop=4
 :loopsuperlongduration
 if "!linecontent:~%lineloop%,1!" == " " (
-    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01"
 ) else (
     set /a lineloop+=1
     goto loopsuperlongduration
@@ -2243,7 +2258,7 @@ set linecontentog=%linecontentog:~0,55%
 if %numofloops% == 2 goto secondlinething
 :loopsuperlongnegativeduration
 if "!linecontent:~%lineloop%,1!" == " " (
-    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01   ................"
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 00 01  00 00 00 00 00 00 00 01"
 ) else (
     set /a lineloop+=1
     goto loopsuperlongnegativeduration
@@ -2279,7 +2294,7 @@ set "linecontentog=%linecontent%"
 set /a lineloop=4
 :loopincreasingduration
 if "!linecontent:~%lineloop%,1!" == " " (
-    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff   ................"
+    set "linecontentnew=!linecontent:~0,%lineloop%! 00 00 00 00 00 00 ff ff  00 00 00 00 00 00 ff ff"
 ) else (
     set /a lineloop+=1
     goto loopincreasingduration
@@ -2341,40 +2356,44 @@ goto :eof
 
 :: does the math for the text that is dependant on video-specific variables such as resolution
 :textmath
-echo Doing text math>>"%temp%\qualitymuncherdebuglog.txt"
+set textmathcounter=0
+:textloopingmath
+set /a textmathcounter+=1
+echo "Doing text %textmathcounter% math">>"%temp%\qualitymuncherdebuglog.txt"
 :: remove spaces and count the characters in the text
-set toptextnospace=%toptext: =_%
-echo "%toptextnospace%" > %qmtemp%\toptext.txt
-for %%? in (%qmtemp%\toptext.txt) do ( set /a strlength=%%~z? - 2 )
-if exist "%qmtemp%\toptext.txt" (del "%qmtemp%\toptext.txt")
+set text!textmathcounter!nospace=!text%textmathcounter%: =_!
+echo "1">>"%temp%\qualitymuncherdebuglog.txt"
+echo "!text%textmathcounter%nospace!" > %qmtemp%\text!textmathcounter!.txt
+echo "2" %qmtemp%\text!textmathcounter!.txt>>"%temp%\qualitymuncherdebuglog.txt"
+for %%? in (%qmtemp%\text!textmathcounter!.txt) do ( set /a strlength=%%~z? - 2 )
+echo "3">>"%temp%\qualitymuncherdebuglog.txt"
+if exist "%qmtemp%\text!textmathcounter!.txt" (del "%qmtemp%\text!textmathcounter!.txt")
+echo "4">>"%temp%\qualitymuncherdebuglog.txt"
 :: if below 16 characters, set it to 16 (essentially caps the font size)
+echo %strlength% text !textmathcounter! a>>"%temp%\qualitymuncherdebuglog.txt"
 if %strlength% LSS 16 set strlength=16
-:: bottom text
-set bottomtextnospace=%bottomtext: =_%
-echo "%bottomtextnospace%" > %qmtemp%\bottomtext.txt
-for %%? in (%qmtemp%\bottomtext.txt) do ( set /a strlengthb=%%~z? - 2 )
-if exist "%qmtemp%\bottomtext.txt" (del "%qmtemp%\bottomtext.txt")
-if %strlengthb% LSS 16 set strlengthb=16
-:: use width and size of the text, and the user's inputted text size to determine font size
-set /a fontsize=(%desiredwidth%/%strlength%)*2
-set /a fontsize=(%fontsize%)/%tsize%
-set /a fontsizebottom=(%desiredwidth%/%strlengthb%)*2
-set /a fontsizebottom=(%fontsizebottom%)/%tsize2%
+echo %strlength% text !textmathcounter! a>>"%temp%\qualitymuncherdebuglog.txt"
+echo "5">>"%temp%\qualitymuncherdebuglog.txt"
+set /a fontsize!textmathcounter!=(%desiredwidth%/%strlength%)*2
+echo !fontsize%textmathcounter%! aaaaaa>>"%temp%\qualitymuncherdebuglog.txt"
+echo "6">>"%temp%\qualitymuncherdebuglog.txt"
+set /a fontsize!textmathcounter!=(!fontsize%textmathcounter%!)/!tsize%textmathcounter%!
+echo fontsize!textmathcounter!=(!fontsize%textmathcounter%!)/!tsize%textmathcounter%! a>>"%temp%\qualitymuncherdebuglog.txt"
+echo !fontsize%textmathcounter%! aaaaaa>>"%temp%\qualitymuncherdebuglog.txt"
+echo "7">>"%temp%\qualitymuncherdebuglog.txt"
 :fontcheck
-set /a triplefontsize=%fontsize%*3
-if %triplefontsize% gtr %desiredheight% (
-    set /a fontsize=%fontsize%-5
+set /a triplefontsize!textmathcounter!=!fontsize%textmathcounter%!*3
+if !triplefontsize%textmathcounter%! gtr %desiredheight% (
+    set /a fontsize!textmathcounter!=!fontsize%textmathcounter%!-5
     goto fontcheck
 )
-:: does the same thing but for text two
-:fontcheck2
-set /a triplefontsizebottom=%fontsizebottom%*3
-if %triplefontsizebottom% gtr %desiredheight% (
-    set /a fontsizebottom=%fontsizebottom%-5
-    goto fontcheck2
-)
-:: setting text filter
-set "textfilter=drawtext=borderw=(%fontsize%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%toptext%':fontcolor=white:fontsize=%fontsize%:%textonepos%,drawtext=borderw=(%fontsizebottom%/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='%bottomtext%':fontcolor=white:fontsize=%fontsizebottom%:%texttwopos%,"
+echo "8">>"%temp%\qualitymuncherdebuglog.txt"
+set "textfilter=%textfilter%drawtext=borderw=(!fontsize%textmathcounter%!/12):fontfile=C\\:/Windows/Fonts/impact.ttf:text='!text%textmathcounter%!':fontcolor=!textcolor%textmathcounter%!:fontsize=!fontsize%textmathcounter%!:!texthpos%textmathcounter%!,"
+echo %textfilter% AAAAAAAA>>"%temp%\qualitymuncherdebuglog.txt"
+echo fontsize=!fontsize%textmathcounter%!:!texthpos%textmathcounter%! AAAAAAAAAAAA>>"%temp%\qualitymuncherdebuglog.txt"
+echo "9">>"%temp%\qualitymuncherdebuglog.txt"
+if not %textmathcounter% == %textamount% goto textloopingmath
+echo done doing text math>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
 :: asks if the user wants a custom output name
@@ -2869,7 +2888,7 @@ goto exiting
 :audiospecificstuff
 :: makes sure the file doesn't already exist
 :: add the suffix to the output name
-if not defined filename set "filename=%~dpn1 (%endingmsg%)"
+if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: switch to the current input's directory, if not already in it
 set inpath=%~dp1
 set inpath=%inpath:~0,-1%
@@ -3297,7 +3316,7 @@ echo [3A[0J
 call :progressbar %i% %loopn%
 echo %i%/%loopn%
 :: add the suffix to the output name
-if not defined filename set "filename=%~dpn1 (%endingmsg%)"
+if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: skip the loop if the file already doesn't exist
 if not exist "%filename%%imagecontainerbackup%" goto afterrenameimage
 :: loop until the file doesn't exist
