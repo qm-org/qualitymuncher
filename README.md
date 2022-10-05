@@ -16,6 +16,7 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
  - fade out
  - different temp file
  - config files as parameters
+ - much more customizable text, probably (somewhat tested, might not 100% work)
 
 # Planned
 
