@@ -327,6 +327,7 @@ set frying=n
 set stretchres=n
 set colorq=n
 set addedtextq=n
+set textmode=s
 set resample=n
 set stutter=n
 set internet=undetermined
@@ -1569,7 +1570,7 @@ goto :eof
 :addtext
 :: asks if they want to add text
 echo                                       Do you want to add text to the video? [Y/N]
-choice /c YN /n
+choice /n
 :: if yes, set the variable, if no, skip
 if %errorlevel% == 1 (
     set addedtextq=y
@@ -1578,11 +1579,45 @@ if %errorlevel% == 1 (
     call :clearlastprompt
     goto :eof
 )
+echo                                            [A]dvanced text or [S]imple text?
+choice /c AS /n
+:: if yes, set the variable, if no, skip
+if %errorlevel% == 1 (
+    set textmode=a
+) else (
+    set textmode=s
+)
 echo                                          How many text boxes do you want to add?
 set /p "textamount="
+echo "%textamount%" textamount>>"%temp%\qualitymuncherdebuglog.txt"
 set textcounter=0
 call :clearlastprompt
-:textlooping
+if %textmode% == a (
+    echo doing advanced text>>"%temp%\qualitymuncherdebuglog.txt"
+    goto :textloopingadvanced
+) else (
+    echo doing simple text>>"%temp%\qualitymuncherdebuglog.txt"
+    goto :textloopingsimple
+)
+
+:textloopingsimple
+set /a textcounter+=1
+set tsize!textcounter!=1
+echo                         What size should text !textcounter! be? [B]ig, [M]edium, [S]mall, or [V]ery small?
+choice /c BMSV /n
+set tsize!textcounter!=%errorlevel%
+if "!tsize%textcounter%!" == "4" set tsize!textcounter!=6
+set "text!textcounter!= "
+echo                                             Enter your text for text !textcounter! now:
+set /p "text!textcounter!="
+set "textcolor!textcounter!=white"
+call :screenlocation "text !textcounter!" texthpos!textcounter!
+call :titledisplay
+if not %textcounter% == %textamount% goto textloopingsimple
+echo "going done with text">>"%temp%\qualitymuncherdebuglog.txt"
+goto :eof
+
+:textloopingadvanced
 set /a textcounter+=1
 set tsize!textcounter!=1
 echo                         What size should text !textcounter! be? [B]ig, [M]edium, [S]mall, or [V]ery small?
@@ -1596,21 +1631,13 @@ echo                                              What color should the text be?
 echo   This can be in one of two formats, either the name (like White or Brown), or the hexadecmial value with 0x in front
 echo                                                (like 0xFFFFFF or 0x964B00)
 set /p "textcolor!textcounter!="
-echo Do you want more [C]ustomizable text positions or the [D]efault 9 positions?
-choice /n /c CD
-if %errorlevel% == 2 (
-    call :screenlocation "text !textcounter!" texthpos!textcounter!
-    goto afteradvtextplacement
-)
 echo     From 0 to 100, where should the text be placed horizontally? (0 is the furthest left, 100 is the furthest right)
 set /p "texthposh="
 echo        From 0 to 100, where should the text be placed vertically? (0 is the furthest up, 100 is the furthest down)
 set /p "texthposv="
 set texthpos!textcounter!=x=(w-(tw))*(%texthposh%/100):y=(h-(th))*(%texthposv%/100)
-:afteradvtextplacement
-echo %textamount% a>>"%temp%\qualitymuncherdebuglog.txt"
 call :titledisplay
-if not %textcounter% == %textamount% goto textlooping
+if not %textcounter% == %textamount% goto textloopingadvanced
 echo "going done with text">>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
