@@ -853,7 +853,7 @@ goto :eof
 set makelogcounter=0
 :makelogtextadditionsloop
 set /a makelogcounter+=1
-echo set textamount=%textamount%>>"%configname%.bat"
+echo set "textamount=%textamount%">>"%configname%.bat"
 echo set tsize!makelogcounter!=!tsize%makelogcounter%!>>"%configname%.bat"
 echo set text!makelogcounter!=!text%makelogcounter%!>>"%configname%.bat"
 echo set texthpos!makelogcounter!=!texthpos%makelogcounter%!>>"%configname%.bat"
@@ -1592,12 +1592,12 @@ if "!tsize%textcounter%!" == "4" set tsize!textcounter!=6
 set "text!textcounter!= "
 echo                                             Enter your text for text !textcounter! now:
 set /p "text!textcounter!="
-echo                 What color should the text be?
+echo                                              What color should the text be?
 echo   This can be in one of two formats, either the name (like White or Brown), or the hexadecmial value with 0x in front
 echo                                                (like 0xFFFFFF or 0x964B00)
 set /p "textcolor!textcounter!="
 echo Do you want more [C]ustomizable text positions or the [D]efault 9 positions?
-choice /n /c CD" 
+choice /n /c CD
 if %errorlevel% == 2 (
     call :screenlocation "text !textcounter!" texthpos!textcounter!
     goto afteradvtextplacement
@@ -1606,7 +1606,7 @@ echo     From 0 to 100, where should the text be placed horizontally? (0 is the 
 set /p "texthposh="
 echo        From 0 to 100, where should the text be placed vertically? (0 is the furthest up, 100 is the furthest down)
 set /p "texthposv="
-set texthpos!textcounter!=x=(w-(tw/2))*(%texthposh%/100):y=(h-(th/2))*(%texthposv%/100)
+set texthpos!textcounter!=x=(w-(tw))*(%texthposh%/100):y=(h-(th))*(%texthposv%/100)
 :afteradvtextplacement
 echo %textamount% a>>"%temp%\qualitymuncherdebuglog.txt"
 call :titledisplay
