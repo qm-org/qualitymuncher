@@ -30,7 +30,7 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - text-to-speech
  - interpolation
  - resampling
- - adding text to video
+ - adding text
  - trimming
  - deep frying
  - video stretching
@@ -39,6 +39,10 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - saturation, contrast, and brightness modification
  - variable resolution videos
  - fake video duration (super long, super long negative, and ever-increasing)
+ - fade in/out
+ - vignette
+ - CQP
+ - visual noise
  - active development
  - and more!
  
