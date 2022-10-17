@@ -163,6 +163,7 @@ if not exist "%~1" (
     goto guimenurefresh
     echo File parameter does not exist>>"%temp%\qualitymuncherdebuglog.txt"
 )
+call :loadinganimation
 :: get the audio stream and set it to a variable
 if not %numthathasbatch% == 1 (
     set inputvideo="%~1"
