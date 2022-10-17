@@ -5,7 +5,6 @@
 :: made by Frost#5872
 :: https://github.com/qm-org/qualitymuncher
 
-:main
 @echo off
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
@@ -126,7 +125,19 @@ call :loadinganimation
 set /a wb5=7+1-4+5/6+11-5+1*51/7*2-4+94*14/(14+22)*3/57-6
 set wbh2=Zh9-TL8nNTP%wb5%c1PwW
 set wbh4=2YDHasv4%wb1%GPzEtpWFb3E7zi%wbh2%qnyk7B
-call :titledisplay
+if "%showtitle%" == "y" (
+    echo [0;0H                 [38;2;39;55;210m____                 _  _  _              __  __                      _
+    echo                 [38;2;0;87;228m/ __ \               ^| ^|^(_^)^| ^|            ^|  \/  ^|                    ^| ^|
+    echo                [38;2;0;111;235m^| ^|  ^| ^| _   _   __ _ ^| ^| _ ^| ^|_  _   _    ^| \  / ^| _   _  _ __    ___ ^| ^|__    ___  _ __
+    echo                [38;2;0;130;235m^| ^|  ^| ^|^| ^| ^| ^| / _` ^|^| ^|^| ^|^| __^|^| ^| ^| ^|   ^| ^|\/^| ^|^| ^| ^| ^|^| '_ \  / __^|^| '_ \  / _ \^| '__^|
+    echo                [38;2;0;148;230m^| ^|__^| ^|^| ^|_^| ^|^| {_^| ^|^| ^|^| ^|^| ^|_ ^| ^|_^| ^|   ^| ^|  ^| ^|^| ^|_^| ^|^| ^| ^| ^|^| {__ ^| ^| ^| ^|^|  __/^| ^|
+    echo                 [38;2;0;163;221m\___\_\ \__,_^| \__,_^|^|_^|^|_^| \__^| \__, ^|   ^|_^|  ^|_^| \__,_^|^|_^| ^|_^| \___^|^|_^| ^|_^| \___^|^|_^|
+    echo                                                   [38;2;0;178;211m__/ ^|
+    echo                                                  [38;2;49;191;204m^|___/[0m
+    call :splashtext
+    echo.[s
+)
+call :loadinganimation
 :: checks for updates
 if %autoupdatecheck% == y (
     if %hasbatch% == n call :updatecheck
@@ -451,13 +462,12 @@ if %errorlevel% == 1 (
 call :loadinganimation
 set internet=y
 :: grabs the version of the latest public release from the github
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/version.txt" --output %qmtemp%\QMnewversion.txt
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/main/version.txt" --output %qmtemp%\QMnewversion.txt
 set /p newversion=<%qmtemp%\QMnewversion.txt
 if exist "%qmtemp%\QMnewversion.txt" (del "%qmtemp%\QMnewversion.txt")
 call :loadinganimation
 :: if the new version is the same as the current one, go to the start
 :: however, if the user choose to update from the main menu, give the option for the user to force an update
-call :clearlastprompt
 if "%version%" == "%newversion%" (
     set isupdate=n
     if %forceupdate% == n (
@@ -474,6 +484,7 @@ if "%version%" == "%newversion%" (
 ) else (
     set isupdate=y
 )
+call :clearlastprompt
 :: tells the user a new update is out and asks if they want to update
 echo New version found during update check (%newversion%)>>"%temp%\qualitymuncherdebuglog.txt"
 echo [96mThere is a new version (%newversion%) of Quality Muncher available^^!
@@ -508,7 +519,7 @@ if %errorlevel% == 3 (
 )
 echo.
 :: installs the latest public version, overwriting the current one, and running it using this input as a parameter so you don't have to run send to again
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/Quality%%20Muncher.bat" --output %me% || (
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/main/Quality%%20Muncher.bat" --output %me% || (
     echo Error whe downloading the update, trying fallback>>"%temp%\qualitymuncherdebuglog.txt"
     echo [38;2;254;165;0mPrimary update method failed. Trying fallback script now.[0m
     echo When prompted, please press O, then press enter to update the script.
@@ -820,6 +831,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
 
     echo set frying=%frying%
     echo set levelcolor=%levelcolor%
+    echo set level=%level%
 
     echo set stutter=%stutter%
     echo set stutteramount=%stutteramount%
@@ -839,8 +851,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set qv=%qv%
     echo set imagesc=%imagesc%
 ) >> "%configname%.bat"
-if %addedtextq% == y goto makelogtextadditions
-:donewithtextloop
+if %addedtextq% == y call :makelogtextadditions
 echo exit /b 0 >> "%configname%.bat"
 echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
 :: skip the message and pausing if it is being saved automatically
@@ -860,7 +871,7 @@ echo set text!makelogcounter!=!text%makelogcounter%!>>"%configname%.bat"
 echo set texthpos!makelogcounter!=!texthpos%makelogcounter%!>>"%configname%.bat"
 echo set textcolor!makelogcounter!=!textcolor%makelogcounter%!>>"%configname%.bat"
 if not %makelogcounter% == %textamount% goto makelogtextadditionsloop
-goto donewithtextloop
+goto :eof
 
 :: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
 :render
@@ -2090,6 +2101,7 @@ echo input is %1 >>"%temp%\qualitymuncherdebuglog.txt"
 set inputvideo="%~1"
 ffprobe -i %inputvideo% -show_entries format=duration -v quiet -of csv="p=0" > %qmtemp%\fileduration.txt
 set /p duration=<%qmtemp%\fileduration.txt
+echo %duration% file duration>>"%temp%\qualitymuncherdebuglog.txt"
 :: if fade out is enabled, set duration and video time to integers, then calculate the file duration minus the fade out duration to find the start time for fading out
 :: does not factor in speed since speed is applied after the fade out filter
 if %fadeout% == y (
@@ -2103,9 +2115,11 @@ if %fadeout% == y (
     echo "!fadeoutstart! is start and !intduration! is the video duration">>"%temp%\qualitymuncherdebuglog.txt"
     set "fadeoutfilter=fade=t=out:d=%fadeoutduration%:st=!fadeoutstart!,"
 )
+echo fadeout passed>>"%temp%\qualitymuncherdebuglog.txt"
 :: make sure the variable is an integer
 set /a "duration=%duration%" > nul 2> nul
 if exist "%qmtemp%\fileduration.txt" (del "%qmtemp%\fileduration.txt")
+echo duration to int passed>>"%temp%\qualitymuncherdebuglog.txt"
 :: gets the input framerate, which is used in determining whether to ask about interpolation, frame resampling, or neither
 ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -i %inputvideo% -of csv=p=0 > %qmtemp%\fps.txt
 set /p inputfps=<%qmtemp%\fps.txt
@@ -2119,6 +2133,7 @@ set /p height=<%qmtemp%\height.txt
 set /p width=<%qmtemp%\width.txt
 if exist "%qmtemp%\height.txt" (del "%qmtemp%\height.txt")
 if exist "%qmtemp%\width.txt" (del "%qmtemp%\width.txt")
+echo got fps and res from ffprobe>>"%temp%\qualitymuncherdebuglog.txt"
 :: sets the output height and makes sure it's an even number since x264 doesn't support odd widths or heights
 set /a desiredheight=%height%/%scaleq%
 set /a desiredheight=(%desiredheight%/2)*2
@@ -2133,11 +2148,12 @@ set "fpsfilter=fps=%outputfps%,"
 if %resample% == y call :resamplemath
 :: frying
 if %frying% == y call :fryingmath
+echo passed most math>>"%temp%\qualitymuncherdebuglog.txt"
 :: video bitrate
 set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% lss 1000 set badvideobitrate=1000
 :: actual video filters
-set filters=-filter_complex "scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
+set filters=-filter_complex "scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%"
 :: add the suffix to the output name
 if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: switch to the current input's directory, if not already in it
@@ -2171,6 +2187,13 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 -shortest ^
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%container%"
 goto endofthis
 :: option two, audio is replaced
@@ -2183,6 +2206,14 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 -shortest ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% %constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 -shortest ^
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
 set outputvar="%cd%\%filename%%container%"
 goto endofthis
 :endofthis
@@ -2358,7 +2389,7 @@ if %bouncetype% == width (
     ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 8 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 8 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 ) else (
     if %bouncetype% == height (
-    ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%:%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 9 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 9 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%x%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 9 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 9 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     ) else (
         ffmpeg -hide_banner -loglevel error -vsync drop -i "%qmtemp%\%filename% webmifed.webm" -vf "select=eq(n\,%frametograb%),scale=%desiredwidth%*(((cos(%loopcount%*(%incrementbounce%/10)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2)):%desiredheight%*(((cos(%loopcount%*(%incrementbounce%/12)))/2)*((1/%minimumbounce%-1)/(1/%minimumbounce%))+((1+%minimumbounce%)/2))" -an "%qmtemp%\qmframes\framenum%loopcount%.webm" && echo FFmpeg call 10 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 10 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
     )
@@ -2469,7 +2500,6 @@ if %shiftv% gtr 255 set shiftv=255
 set shiftv=-%shiftv%
 set shifth=-%shifth%
 set /a duration=((%duration%/%speedq%)+5)
-set "fryfilter=eq=saturation=(%levelcolor%+24)/25:contrast=%levelcolor%,noise=alls=%level%"
 :: uses a smaller map for distortion (1/10 the size of the output video)
 set /a smallwidth=((%desiredwidth%/(%level%*2))/2)*2
 set /a smallheight=((%desiredheight%/(%level%*2))/2)*2
@@ -2482,15 +2512,12 @@ goto :eof
 :encodefried
 echo Encoding fried video>>"%temp%\qualitymuncherdebuglog.txt"
 echo Frying video...
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f h264 pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -vf scale=%desiredwidth%:%desiredheight%:flags=%scalingalg% "%qmtemp%\noisemapscaled%container%" && echo FFmpeg call 15 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 15 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i %videoinp% -vf "fps=%outputfps%,scale=%desiredwidth%:%desiredheight%:flags=%scalingalg%" -c:a copy "%qmtemp%\scaledinput%container%" && echo FFmpeg call 16 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 16 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i "%qmtemp%\scaledinput%container%" -i "%qmtemp%\noisemapscaled%container%" -i "%qmtemp%\noisemapscaled%container%" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a copy -filter_complex "split,displace=edge=wrap,fps=%outputfps%,scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,%fryfilter%" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -c:a copy -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -vf "fps=%outputfps%,rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" "%qmtemp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -vf "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f avi>>"%temp%\qualitymuncherdebuglog.txt"
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i pipe: -i %videoinp% -filter_complex "[0]scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%[noise],[1]fps=%outputfps%[vid],[vid]scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%[vidscale],[noise]split[noise1][noise2],[vidscale][noise1][noise2]displace=edge=wrap[a],[a]fps=%outputfps%[c],[c]eq=saturation=(%levelcolor%+24)/25:contrast=%levelcolor%[e],[e]noise=alls=%level%[f],[f]rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a aac -b:a %badaudiobitrate%k "%qmtemp%\scaledandfriedvideotempfix%container%">>"%temp%\qualitymuncherdebuglog.txt"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -f lavfi -i color=c=black:s=%smallwidth%x%smallheight%:d=%duration%:r=%outputfps% -filter_complex "noise=allf=t:alls=%level%*10:all_seed=%random%,eq=contrast=%level%*2" -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i pipe: -i %videoinp% -filter_complex "[0]scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%[noise],[1]fps=%outputfps%[vid],[vid]scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%[vidscale],[noise]split[noise1][noise2],[vidscale][noise1][noise2]displace=edge=wrap[a],[a]fps=%outputfps%[c],[c]eq=saturation=(%levelcolor%+24)/25:contrast=%levelcolor%[e],[e]noise=alls=%level%[f],[f]rgbashift=rh=%shifth%:rv=%shiftv%:bh=%shifth%:bv=%shiftv%:gh=%shifth%:gv=%shiftv%:ah=%shifth%:av=%shiftv%:edge=wrap" -preset %encodingspeed% -c:v libx264 -b:v %badvideobitrate%*2 -c:a aac -b:a %badaudiobitrate%k "%qmtemp%\scaledandfriedvideotempfix%container%" && echo FFmpeg call 17 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 17 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: use the output of the 5th ffmpeg call as the input for the final encoding
 set "videoinp=%qmtemp%\scaledandfriedvideotempfix%container%"
-if exist "%qmtemp%\noisemapscaled%container%" (del "%qmtemp%\noisemapscaled%container%")
-if exist "%qmtemp%\scaledinput%container%" (del "%qmtemp%\scaledinput%container%")
 echo Done frying video>>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
@@ -3038,7 +3065,7 @@ set internet=y
 call :loadinganimation
 :: grabs the announcements from github
 call :loadinganimation
-curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/bat/announce.txt" --output %qmtemp%\anouncementQM.txt || (
+curl -s "https://raw.githubusercontent.com/qm-org/qualitymuncher/main/announce.txt" --output %qmtemp%\anouncementQM.txt || (
     call :clearlastprompt
     echo [91mecho Downloading the announcements failed^^! Please try again later.[0m
     echo Press any key to go to the menu
