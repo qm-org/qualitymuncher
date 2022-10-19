@@ -4,23 +4,11 @@ This is the unstable branch of Quality Muncher. Everything you see here will mos
 
 # Current New Features
 
- - fallback for updating
- - backend changes
- - animated progress bar
- - information page
- - vignette
- - CQP
- - visual noise
- - zoom
- - fade in
- - fade out
- - different temp file
- - config files as parameters
- - much more customizable text, probably (somewhat tested, might not 100% work)
 
 # Planned
 
- - ???
+ - optimizations
+ - additional comments
 
 # Bugs
 

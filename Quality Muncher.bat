@@ -47,7 +47,7 @@ call :loadinganimation
     set "progressbar_donechar= "
     :: prefix of all the characters (a color code is useful here)
     set "progressbar_donecharprefix=[48;2;49;191;204m"
-    :: suffix of all the characters (set something here that undoes whatever you used for a prefix)
+    :: suffix of all the characters (again, a color code or something similar is useful here)
     set "progressbar_donecharsuffix=[48;2;71;71;71m"
     :: character to represent amount not yet completed
     set "progressbar_unfinishedchar= "
@@ -57,7 +57,7 @@ call :loadinganimation
     set progressbaranimated_speed=3
 :: END OF OPTIONS
 :: ################################################################################################################################
-:: ######################    WARNING: modifying any lines past here might result in the program breaking!    ######################
+:: #########################    WARNING: modifying any lines beyond this point could break the script!    #########################
 :: ################################################################################################################################
 
 :: ========================================
@@ -68,12 +68,14 @@ call :loadinganimation
 call :setdefaults
 if "%animate%" == "y" call :loadingbar
 call :loadinganimation
-:: code page, version, and title
+:: code page for proper character display
 chcp 437 > nul
+:: resetting quality muncher's temp folder
 set "qmtemp=%temp%\qualitymunchertemp"
 rmdir "%qmtemp%" > nul
 mkdir "%qmtemp%" > nul
-set version=1.5.2
+set version=1.5.3
+:: start of the debug log
 echo Quality Muncher v%version% successfully started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
 echo %*>>"%temp%\qualitymuncherdebuglog.txt"
@@ -94,8 +96,9 @@ if not "%~1%" == "" (
     if "%~1" == "/h" goto arghelp
     if "%~1" == "/help" goto arghelp
 )
-:: if there is at least one parameter, check all parameters for config files
+:: if there is at least one parameter, check all parameters for config files (anything with a .bat extension)
 if not "%~1" == "" goto ranwithconfigfile
+:: if there is at least one parameter, make sure you're in the right directory
 if not "%~1%" == "" (
     set inpath=%~dp1
     set inpath=%inpath:~0,-1%
@@ -115,7 +118,7 @@ echo Default variables set>>"%temp%\qualitymuncherdebuglog.txt"
 where /q ffmpeg.exe || (
     echo FFmpeg not found, sending error, pausing, then exiting>>"%temp%\qualitymuncherdebuglog.txt"
     echo [91mERROR: You either don't have ffmpeg installed or don't have it in PATH.[0m
-    echo Please install it as it's needed for this program to work.
+    echo Please install it as it's needed for this script to work.
     choice /n /c gc /m "Press [G] for a guide on installing it, or [C] to close the script."
     if %errorlevel% == 1 start "" https://www.youtube.com/watch?v=WwWITnuWQW4
     goto closingbar
@@ -851,7 +854,7 @@ echo :: Created at %time% on %date% >> "%configname%.bat"
     echo set qv=%qv%
     echo set imagesc=%imagesc%
 ) >> "%configname%.bat"
-if %addedtextq% == y call :makelogtextadditions
+if %addedtextq% == y call :addtologtextadditions
 echo exit /b 0 >> "%configname%.bat"
 echo Saved settings to "%configname%.bat">>"%temp%\qualitymuncherdebuglog.txt"
 :: skip the message and pausing if it is being saved automatically
@@ -861,16 +864,17 @@ pause
 call :clearlastprompt
 goto :eof
 
-:makelogtextadditions
+:: add text settings to the config file
+:addtologtextadditions
 set makelogcounter=0
-:makelogtextadditionsloop
+:addtologtextadditionsloop
 set /a makelogcounter+=1
 echo set "textamount=%textamount%">>"%configname%.bat"
 echo set tsize!makelogcounter!=!tsize%makelogcounter%!>>"%configname%.bat"
 echo set text!makelogcounter!=!text%makelogcounter%!>>"%configname%.bat"
 echo set texthpos!makelogcounter!=!texthpos%makelogcounter%!>>"%configname%.bat"
 echo set textcolor!makelogcounter!=!textcolor%makelogcounter%!>>"%configname%.bat"
-if not %makelogcounter% == %textamount% goto makelogtextadditionsloop
+if not %makelogcounter% == %textamount% goto addtologtextadditionsloop
 goto :eof
 
 :: first step to rendering - checks the audio filters, makes sure variables are set correctly, adds things to a log and then calls the right render function (video, audio, or image/gif)
@@ -927,7 +931,7 @@ if "%hasvideo%" == "y" (
 )
 goto guimenu
 
-:: where most things direct to when the program is done - plays a nice sound if possible, pauses, then prompts the user for some input
+:: where most things direct to when the script is done - plays a nice sound if possible, pauses, then prompts the user for some input
 :exiting
 echo Made it to exit>>"%temp%\qualitymuncherdebuglog.txt"
 echo.
@@ -1061,10 +1065,7 @@ echo outputvar: %outputvar% >> "Quality Muncher Log.txt"
     echo         saturation: %saturationvalue%
     echo         brightness: %brightnessvalue%
     echo     addedtextq: %addedtextq%
-    echo         toptext: %toptext%
-    echo         tsize: %tsize%
-    echo         bottomtext: %bottomtext%
-    echo         tsize2: %tsize2%
+    echo         textamount: %textamount%
     echo     distortaudio {audio distortion}: %distortaudio%
     echo         method: %method%
     echo         distortionseverity: %distortionseverity%
@@ -1099,6 +1100,10 @@ ffmpeg > nul 2>>"Quality Muncher Log.txt"
 if %fromrender% == y goto :eof
 :: prompt to upload to the webhook for the devs
 call :titledisplay
+echo ==================>>"Quality Muncher Log.txt"
+echo BEGIN FULL DEBUG LOG>>"Quality Muncher Log.txt"
+echo ==================>>"Quality Muncher Log.txt"
+type "%temp%\qualitymuncherdebuglog.txt">>"Quality Muncher Log.txt"
 choice /m "Log has been made. Upload and send to developers?"
 if %errorlevel% == 2 goto :eof
 choice /m "Do you want to provide more details about the log? For example, what might've caused it or what the error was."
@@ -1198,61 +1203,39 @@ choice /c 123456789RFSGMBNVQIZPO /n
 call :clearlastprompt
 echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
 set /a gui_video_var=%errorlevel%
-:: quality
 if %gui_video_var% == 1 call :qualityselect
-:: start time and duration
 if %gui_video_var% == 2 call :durationquestions
-:: speed
 if %gui_video_var% == 3 call :speedquestions
-:: text
 if %gui_video_var% == 4 call :addtext
-:: color
 if %gui_video_var% == 5 call :colorquestions
-:: stretch
 if %gui_video_var% == 6 call :stretch
-:: corruption
 if %gui_video_var% == 7 call :corruption
-:: duration spoof
 if %gui_video_var% == 8 call :durationspoof
-:: bouncy webm
 if %gui_video_var% == 9 call :webmstretch
-:: resampling/interpolation
 if %gui_video_var% == 10 if %resample% == y (
     set resample=n
 ) else (
     set resample=y
 )
-:: frying
 if %gui_video_var% == 11 call :videofrying
-:: frame stutter
 if %gui_video_var% == 12 call :stutter
-:: output as gif
 if %gui_video_var% == 13 if %outputasgif% == y (
     set outputasgif=n
 ) else (
     set outputasgif=y
 )
-:: miscellaneous filters
 if %gui_video_var% == 14 call :filterlist
-:: back
 if %gui_video_var% == 15 goto guimenu
-:: no video
 if %gui_video_var% == 16 if %novideo% == y (
     set novideo=n
 ) else (
     set novideo=y
 )
-:: visual noise
 if %gui_video_var% == 17 call :visualnoise
-:: constant quantizer
 if %gui_video_var% == 18 call :constantquantizer
-:: vignette
 if %gui_video_var% == 19 call :vignette
-:: zoom
 if %gui_video_var% == 20 call :zoom
-:: fade in
 if %gui_video_var% == 21 call :fadein
-:: fade out
 if %gui_video_var% == 22 call :fadeout
 goto guivideooptionsrefresh
 
@@ -2175,65 +2158,90 @@ if %noaudio% == y (
 )
 :: if the user selected to fry the video, encode all of the needed parts
 if %frying% == y call :encodefried
-:: goto the correct encoding option
-if %replaceaudio% == n goto encodewithnormalaudio
-if %replaceaudio% == y goto encodereplacedaudio
-:: option one, audio is not replaced
-:encodewithnormalaudio
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
-set outputvar="%cd%\%filename%%container%"
-goto endofthis
-:: option two, audio is replaced
-:encodereplacedaudio
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% %constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 ^
--map 0:v:0 -map 1:a:0 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%" && echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% -i %videoinp% -ss %musicstarttime% -i %lowqualmusic% %constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 ^
--map 0:v:0 -map 1:a:0 -shortest ^
--vsync vfr -movflags +use_metadata_tags+faststart "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
-set outputvar="%cd%\%filename%%container%"
-goto endofthis
-:endofthis
-:: if text to speech, encode the voice and merge outputs
-:: if doesn't have video, skip to skipvideoencodingoptions
-if %hasvideo% == n goto skipvideoencodingoptions
-if %tts% == y call :encodevoice
-:: if duration is spoofed, spoof it
-if %spoofduration% == y call :outputdurationspoof
-:: if output is bouncy, uh... bounce it?
-if %bouncy% == y call :encodebouncy
-:: if the output is corrupted, corrupt it
-if "%corrupt%"=="y" call :corruptoutput
-:skipvideoencodingoptions
+:: goto the correct encoding option, based on whether or not audio is being replaced
+if %replaceaudio% == n call :encodewithnormalaudio
+if %replaceaudio% == y call :encodereplacedaudio
+if %hasvideo% == y (
+    :: if text to speech, encode the voice and merge outputs
+    if %tts% == y call :encodevoice
+    :: if duration is spoofed, spoof it
+    if %spoofduration% == y call :outputdurationspoof
+    :: if output is bouncy, uh... bounce it?
+    if %bouncy% == y call :encodebouncy
+    :: if the output is corrupted, corrupt it
+    if "%corrupt%"=="y" call :corruptoutput
+)
 :: if the video is supposed to be a GIF, convert it to a GIF
 if %outputasgif% == y (
     ffmpeg -hide_banner -stats_period %updatespeed% -loglevel fatal -stats -i %outputvar% -f gif -an "%filename%.gif" && echo FFmpeg call 4 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 4 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+    :: remove the old video and replace it with the gif
     del %outputvar%
     set outputvar="%cd%\%filename%.gif"
 )
+goto :eof
+
+:: option one, audio is not replaced
+:encodewithnormalaudio
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% ^
+-i %videoinp% ^
+%constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+"%filename%%container%" ^
+&& echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
+|| echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+:: print the ffmpeg call to the debug file
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% ^
+-i %videoinp% ^
+%constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+"%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+:: set the output var for piping and whatnot
+set outputvar="%cd%\%filename%%container%"
+goto :eof
+
+:: option two, audio is replaced
+:encodereplacedaudio
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% ^
+-i %videoinp% ^
+-ss %musicstarttime% ^
+-i %lowqualmusic% ^
+%constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+"%filename%%container%" ^
+&& echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
+|| echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+:: print the ffmpeg call to the debug file
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% ^
+-i %videoinp% ^
+-ss %musicstarttime% ^
+-i %lowqualmusic% ^
+%constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+"%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+:: set the output var for piping and whatnot
+set outputvar="%cd%\%filename%%container%"
 goto :eof
 
 :: spoofs the duration of the video
@@ -2853,9 +2861,9 @@ goto :eof
 
 :: combines text to speech with output since the main encoders don't factor in text to speech
 :encodevoice
-set "af2="
+set "audiofilterstts="
 :: if no audio filters already exist, set them to -af (which is the audio filter flag)
-if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
+if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
 :: makes sure that the file doesn't already exist
 set "ttsuffix= tts"
 :ttexist
@@ -2866,7 +2874,7 @@ if exist "%cd%\%filename% %ttsuffix%%container%" (
 )
 :: encode and merge to output
 echo Encoding and merging text-to-speech...
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB"  -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB"  -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: delete the old file and update the name
 if exist "%filename%%container%" (del "%filename%%container%")
@@ -2907,16 +2915,21 @@ goto :eof
 :: sending each audio only input to be encoded
 :encodeaudiomultiqueue
 set totalfiles=0
+:: gets the total num of files
 for %%x in (%*) do set /a totalfiles+=1
 set filenum=1
 set filenumold=0
 set indexoffilebeingencoded=0
+:: runs for each file, counting which file number it is and calling the progress bar, setting the file name, changing the title, and calling the encoding label
 for %%a in (%*) do (
     set /a indexoffilebeingencoded+=1
     set "filename="
+    :: if the option is set to clear after each render, clear the last render from the screen
     if %clearaftereachrender% == y (echo [10;1H)
     title [!filenum!/%totalfiles%] Quality Muncher v%version%
     echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+    :: if using multiqueue (has more than one input file), use a progress bar and actually do the math for the file index number
+    :: otherwise just say "encoding" with some color
     if %ismultiqueue% == y (
         echo.
         set /a progbarcall=!filenum!-1
@@ -2927,6 +2940,7 @@ for %%a in (%*) do (
     ) else (
         echo [38;2;254;165;0mEncoding...[0m
     )
+    :: if the current file index doesn't match the index of the batch file (if it exists) then call the encoding label with the file as input
     if not !indexoffilebeingencoded! == %numthathasbatch% call :audiospecificstuff %%a
 )
 title [Done] Quality Muncher v%version%
@@ -2940,8 +2954,7 @@ goto exiting
 
 :: encoding audio only outputs
 :audiospecificstuff
-:: makes sure the file doesn't already exist
-:: add the suffix to the output name
+:: if the user didn't specify a custom filename, set it now
 if not defined filename set "filename=%~n1 (%endingmsg%)"
 :: switch to the current input's directory, if not already in it
 set inpath=%~dp1
@@ -2962,9 +2975,10 @@ goto :eof
 :: text-to-speech encoding for no video stream
 :: seperate from the video one since it has some options that aren't the same
 :encodevoiceNV
-set "af2="
-if not "%audiofilters%e" == "e" set "af2=,%audiofilters:-af =%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%af2%,volume=%volume%dB" -f avi pipe: | ^
+:: if there are custom audio options, set them to a custom variable and apply it to the text to speech
+set "audiofilterstts="
+if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB" -f avi pipe: | ^
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 if exist "%filename%%audiocontainer%" (del "%filename%%audiocontainer%")
 set outputvar="%cd%\%filename% tts%audiocontainer%"
@@ -3042,7 +3056,7 @@ goto guiextrarefresh
 
 :: displays information about qm
 :information
-echo Quality Muncher is an open-source batch program developed with the purpose of making advanced low-quality videos, audios,
+echo Quality Muncher is an open-source batch script developed with the purpose of making advanced low-quality videos, audios,
 echo images, and GIFs easier to produce. Quality Muncher is developed by Frost, with the help of Atzur.
 echo.
 pause
