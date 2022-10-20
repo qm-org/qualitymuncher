@@ -9,7 +9,6 @@
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 set me=%0
-call :loadinganimation
 
 :: OPTIONS - THESE RESET AFTER UPDATING SO KEEP A COPY SOMEWHERE (unless you use the defaults)
     :: clear the screen when each render finishes
@@ -28,6 +27,8 @@ call :loadinganimation
     set animate=n
     :: animation speed (default is 5)
     set animatespeed=5
+    :: spinning loading bar
+    set loadingbar=y
     :: encoding speed, doesn't change much - ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo
     set encodingspeed=ultrafast
     :: scaling algorithm - fast_bilinear, bilinear, bicubic, expiramental, neighbor, area, bicublin, gauss, sinc, lanczos, spline
@@ -66,8 +67,8 @@ call :loadinganimation
 
 :: default values for variables
 call :setdefaults
+echo Default variables set>>"%temp%\qualitymuncherdebuglog.txt"
 if "%animate%" == "y" call :loadingbar
-call :loadinganimation
 :: code page for proper character display
 chcp 437 > nul
 :: resetting quality muncher's temp folder
@@ -97,23 +98,19 @@ if not "%~1%" == "" (
     if "%~1" == "/help" goto arghelp
 )
 :: if there is at least one parameter, check all parameters for config files (anything with a .bat extension)
-if not "%~1" == "" goto ranwithconfigfile
-:: if there is at least one parameter, make sure you're in the right directory
-if not "%~1%" == "" (
-    set inpath=%~dp1
-    set inpath=%inpath:~0,-1%
-    if not "%cd%" == "!inpath!" cd /d !inpath!
+if not "%~1" == "" (
+    set extensioncounter=0
+    for %%a in (%*) do (
+        call :extensioncheck "%%~a" .bat
+    )
 )
-:afterconfigparse
 call :loadinganimation
 :: check if multiqueue is being used (since we don't need to display some information if it isn't)
 if not "%~2" == "" (
     set ismultiqueue=y
     echo More than one parameter is being used to run the file>>"%temp%\qualitymuncherdebuglog.txt"
 )
-:: set the title
 title Quality Muncher v%version%
-echo Default variables set>>"%temp%\qualitymuncherdebuglog.txt"
 :: checks if ffmpeg is installed, and if it isn't, it'll send a tutorial to install it. 
 where /q ffmpeg.exe || (
     echo FFmpeg not found, sending error, pausing, then exiting>>"%temp%\qualitymuncherdebuglog.txt"
@@ -232,14 +229,6 @@ echo  - remember to quote any file paths with spaces
 endlocal
 exit /b 0
 
-:: loads a custom config if the file was ran with a config argument
-:ranwithconfigfile
-set extensioncounter=0
-for %%a in (%*) do (
-    call :extensioncheck "%%~a" .bat
-)
-goto afterconfigparse
-
 :: check if the extension of a file matches the second parameter
 :extensioncheck
 set /a extensioncounter+=1
@@ -247,6 +236,10 @@ set "extensioncheck_param=NO EXTENSION"
 set extensioncheck_param=%~x1
 if "a%~x1" == "a%~2%" (
     set hasbatch=y
+    set showtitle=n
+    set progressbar=n
+    set clearaftereachrender=n
+    set loadingbar=n
     set /a numthathasbatch=%extensioncounter%
     call %1
 )
@@ -2017,43 +2010,39 @@ goto :eof
 :: set up a counter for the number of files encoded and the total
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
+if %hasbatch% == y set /a totalfiles-=1
 set filenum=1
 set filenumold=0
 set indexoffilebeingencoded=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
     set /a indexoffilebeingencoded+=1
-    set "filename="
-    if %clearaftereachrender% == y (echo [10;1H)
-    set videoinp=%%a
-    title [!filenum!/%totalfiles%] Quality Muncher v%version%
-    echo Encoding video !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    if %ismultiqueue% == y (
-        if %frying% == y (
-            if %spoofduration% == y (
-                call :titledisplay
+    if not !indexoffilebeingencoded! == %numthathasbatch% (
+        set "filename="
+        if %clearaftereachrender% == y (echo [10;1H)
+        set videoinp=%%a
+        title [!filenum!/%totalfiles%] Quality Muncher v%version%
+        echo Encoding video !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+        if %ismultiqueue% == y (
+            echo.
+            set /a progbarcall=!filenum!-1
+            call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+            echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
+            echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
+            if !filenum! gtr 1 set /a filenumold+=1
+            set /a filenum=!filenum!+1
+            if %frying% == y (
+                if %spoofduration% == y (
+                    if %clearaftereachrender% == y call :titledisplay
+                )
             )
+        ) else (
+            call :outputquestion
+            echo [2A[0J[38;2;254;165;0mEncoding...[0m
+            echo.
         )
-        echo.
-        set /a progbarcall=!filenum!-1
-        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
-        echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
-        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
-        if !filenum! gtr 1 set /a filenumold+=1
-        set /a filenum=!filenum!+1
-    ) else (
-        call :outputquestion
-        echo [2A[0J[38;2;254;165;0mEncoding...[0m
-        echo.
-    )
-    if not !indexoffilebeingencoded! == %numthathasbatch% call :videospecificstuff %%a
-    if exist "%qmtemp%\scaledandfriedvideotempfix!container!" (del "%qmtemp%\scaledandfriedvideotempfix!container!")
-)
-if %ismultiqueue% == y (
-    if %frying% == y (
-        if %spoofduration% == y (
-            call :titledisplay
-        )
+        call :videospecificstuff %%a
+        if exist "%qmtemp%\scaledandfriedvideotempfix!container!" (del "%qmtemp%\scaledandfriedvideotempfix!container!")
     )
 )
 title [Done] Quality Muncher v%version%
@@ -2182,64 +2171,61 @@ goto :eof
 
 :: option one, audio is not replaced
 :encodewithnormalaudio
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% ^
--i %videoinp% ^
-%constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 ^
--shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
-"%filename%%container%" ^
-&& echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
-|| echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: print the ffmpeg call to the debug file
 echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% ^
--i %videoinp% ^
-%constantquantizerfilter%^
+-i %videoinp% %constantquantizerfilter%^
 %filters% %audiofiltersnormal% ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
-"%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+ "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+:: actual ffmpeg call
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+ "%filename%%container%" ^
+ && echo FFmpeg call 1 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
+ || echo FFmpeg call 1 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: set the output var for piping and whatnot
 set outputvar="%cd%\%filename%%container%"
 goto :eof
 
 :: option two, audio is replaced
 :encodereplacedaudio
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
--ss %starttime% -t %vidtime% ^
--i %videoinp% ^
--ss %musicstarttime% ^
--i %lowqualmusic% ^
-%constantquantizerfilter%^
-%filters% %audiofiltersnormal% ^
--preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
--c:a aac -b:a %badaudiobitrate%000 ^
--map 0:v:0 -map 1:a:0 ^
--shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
-"%filename%%container%" ^
-&& echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
-|| echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: print the ffmpeg call to the debug file
 echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% ^
 -i %videoinp% ^
 -ss %musicstarttime% ^
--i %lowqualmusic% ^
-%constantquantizerfilter%^
+-i %lowqualmusic% %constantquantizerfilter%^
 %filters% %audiofiltersnormal% ^
 -preset %encodingspeed% ^
 -c:v libx264 %metadata% -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
-"%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+ "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
+:: actual ffmpeg call
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% ^
+-i %videoinp% ^
+-ss %musicstarttime% ^
+-i %lowqualmusic% %constantquantizerfilter%^
+%filters% %audiofiltersnormal% ^
+-preset %encodingspeed% ^
+-c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:a aac -b:a %badaudiobitrate%000 ^
+-map 0:v:0 -map 1:a:0 ^
+-shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
+ "%filename%%container%" ^
+ && echo FFmpeg call 2 succeded>>"%temp%\qualitymuncherdebuglog.txt" ^
+ || echo FFmpeg call 2 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
 :: set the output var for piping and whatnot
 set outputvar="%cd%\%filename%%container%"
 goto :eof
@@ -2383,9 +2369,9 @@ ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read
 set /p framecount=<"%qmtemp%\framecount.txt"
 set /a framecount=%framecount%
 del "%qmtemp%\framecount.txt"
-:: remove old directory just in case
+:: remove old temporary frames folder just in case
 rmdir "%qmtemp%\qmframes" /s /q > nul 2> nul
-:: make the directory
+:: make the directory for the frames
 mkdir "%qmtemp%\qmframes"
 :: looping through all of the frames
 echo Encoding WebM Frame 0 of %framecount%
@@ -2409,6 +2395,7 @@ del "%qmtemp%\%filename% webmifed.webm"
 set container=.webm
 del %outputvar%
 set outputvar="%cd%\%filename%.webm"
+:: delete the file used for temp frames
 rmdir "%qmtemp%\qmframes" /s /q
 goto :eof
 
@@ -2418,6 +2405,29 @@ goto :eof
 set /a "widthmod=(%desiredwidth%*%widthratio%) %% %heightratio%"
 set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
 set /a desiredwidth=(%desiredwidth%/2)*2
+goto :eof
+
+:: combines text to speech with output since the main encoders don't factor in text to speech
+:encodevoice
+set "audiofilterstts="
+:: if no audio filters already exist, set them to -af (which is the audio filter flag)
+if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
+:: makes sure that the file doesn't already exist
+set "ttsuffix= tts"
+:ttexist
+set /a "q+=1"
+if exist "%cd%\%filename% %ttsuffix%%container%" (
+    set "ttsuffix= tts (%q%)"
+    goto ttexist
+)
+:: encode and merge to output
+echo Encoding and merging text-to-speech...
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB"  -f avi pipe: | ^
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
+:: delete the old file and update the name
+if exist "%filename%%container%" (del "%filename%%container%")
+set outputvar="%cd%\%filename%%ttsuffix%%container%"
+set "filename=%filename%%ttsuffix%"
 goto :eof
 
 :: does the math for the text that is dependant on video-specific variables such as resolution
@@ -2859,29 +2869,6 @@ set /p "volume=How much should the volume of the text-to-speech be boosted by (i
 call :clearlastprompt
 goto :eof
 
-:: combines text to speech with output since the main encoders don't factor in text to speech
-:encodevoice
-set "audiofilterstts="
-:: if no audio filters already exist, set them to -af (which is the audio filter flag)
-if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
-:: makes sure that the file doesn't already exist
-set "ttsuffix= tts"
-:ttexist
-set /a "q+=1"
-if exist "%cd%\%filename% %ttsuffix%%container%" (
-    set "ttsuffix= tts (%q%)"
-    goto ttexist
-)
-:: encode and merge to output
-echo Encoding and merging text-to-speech...
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB"  -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-:: delete the old file and update the name
-if exist "%filename%%container%" (del "%filename%%container%")
-set outputvar="%cd%\%filename%%ttsuffix%%container%"
-set "filename=%filename%%ttsuffix%"
-goto :eof
-
 :: asks if they want music and if so, the file to get it from and the start time
 :replaceaudioquestion
 echo                                         Do you want to replace the audio? [Y/N]                                        
@@ -2917,31 +2904,34 @@ goto :eof
 set totalfiles=0
 :: gets the total num of files
 for %%x in (%*) do set /a totalfiles+=1
+if %hasbatch% == y set /a totalfiles-=1
 set filenum=1
 set filenumold=0
 set indexoffilebeingencoded=0
 :: runs for each file, counting which file number it is and calling the progress bar, setting the file name, changing the title, and calling the encoding label
 for %%a in (%*) do (
     set /a indexoffilebeingencoded+=1
-    set "filename="
-    :: if the option is set to clear after each render, clear the last render from the screen
-    if %clearaftereachrender% == y (echo [10;1H)
-    title [!filenum!/%totalfiles%] Quality Muncher v%version%
-    echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    :: if using multiqueue (has more than one input file), use a progress bar and actually do the math for the file index number
-    :: otherwise just say "encoding" with some color
-    if %ismultiqueue% == y (
-        echo.
-        set /a progbarcall=!filenum!-1
-        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
-        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
-        if !filenum! gtr 1 set /a filenumold+=1
-        set /a filenum=!filenum!+1
-    ) else (
-        echo [38;2;254;165;0mEncoding...[0m
+    if not !indexoffilebeingencoded! == %numthathasbatch% (
+        set "filename="
+        :: if the option is set to clear after each render, clear the last render from the screen
+        if %clearaftereachrender% == y (echo [10;1H)
+        title [!filenum!/%totalfiles%] Quality Muncher v%version%
+        echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+        :: if using multiqueue (has more than one input file), use a progress bar and actually do the math for the file index number
+        :: otherwise just say "encoding" with some color
+        if %ismultiqueue% == y (
+            echo.
+            set /a progbarcall=!filenum!-1
+            call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+            echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
+            if !filenum! gtr 1 set /a filenumold+=1
+            set /a filenum=!filenum!+1
+        ) else (
+            echo [38;2;254;165;0mEncoding...[0m
+        )
+        :: if the current file index doesn't match the index of the batch file (if it exists) then call the encoding label with the file as input
+        if not !indexoffilebeingencoded! == %numthathasbatch% call :audiospecificstuff %%a
     )
-    :: if the current file index doesn't match the index of the batch file (if it exists) then call the encoding label with the file as input
-    if not !indexoffilebeingencoded! == %numthathasbatch% call :audiospecificstuff %%a
 )
 title [Done] Quality Muncher v%version%
 if %clearaftereachrender% == y (echo [10;1H)
@@ -3270,30 +3260,33 @@ set originalimagecontainer=%imagecontainer%
 :: set a counter for the number of images being encoded
 set totalfiles=0
 for %%x in (%*) do set /a totalfiles+=1
+if %hasbatch% == y set /a totalfiles-=1
 set filenum=1
 set filenumold=0
 set indexoffilebeingencoded=0
 :: for each file in the parameters, encode it, set the title to the current file number and total, and echo the file being rendered
 for %%a in (%*) do (
     set /a indexoffilebeingencoded+=1
-    set "filename="
-    if "%clearaftereachrender%" == "y" echo [10;1H
-    title [!filenum!/%totalfiles%] Quality Muncher v%version%
-    echo Encoding image !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-    if "%ismultiqueue%" == "y" (
-        echo.
-        set /a progbarcall=!filenum!-1
-        call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
-        echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
-        echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
-        echo.
-        if !filenum! gtr 1 set /a filenumold+=1
-        set /a filenum=!filenum!+1
-    ) else (
-        echo [38;2;254;165;0mEncoding...[0m
-        echo.
+    if not !indexoffilebeingencoded! == %numthathasbatch% (
+        set "filename="
+        if "%clearaftereachrender%" == "y" echo [10;1H
+        title [!filenum!/%totalfiles%] Quality Muncher v%version%
+        echo Encoding image !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
+        if "%ismultiqueue%" == "y" (
+            echo.
+            set /a progbarcall=!filenum!-1
+            call :progressbaranimated !progbarcall! %totalfiles% !filenumold!
+            echo "!filenumold! %totalfiles% !filenumold!">>"%temp%\qualitymuncherdebuglog.txt"
+            echo [38;2;254;165;0m[!filenum!/%totalfiles%] Encoding "%%~nxa"[0m
+            echo.
+            if !filenum! gtr 1 set /a filenumold+=1
+            set /a filenum=!filenum!+1
+        ) else (
+            echo [38;2;254;165;0mEncoding...[0m
+            echo.
+        )
+        if not !indexoffilebeingencoded! == %numthathasbatch% call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
     )
-    if not !indexoffilebeingencoded! == %numthathasbatch% call :imagespecificstuff %%a %loopn% %qvnew% %imagesc%
 )
 title [Done] Quality Muncher v%version%
 if "%clearaftereachrender%" == "y" (echo [10;1H)
@@ -3352,33 +3345,12 @@ set /a loopnreal=%loopn%-1
 call :progressbar 0 %loopn%
 echo 0/%loopn%
 set /a i=0
-:startmunch
-set /a i+=1
-set /a i1=%i%+1
-echo [3A[0J
-call :progressbar %i% %loopn%
-echo %i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-set /a i+=1
-set /a i1=%i%+1
-echo [3A[0J
-call :progressbar %i% %loopn%
-echo %i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-set /a i+=1
-set /a i1=%i%+1
-echo [3A[0J
-call :progressbar %i% %loopn%
-echo %i%/%loopn%
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
-if %i% geq %loopnreal% goto endmunch
-del "%tempfolder%\%~n1%i%%imagecontainer%"
-goto startmunch
-:endmunch
+:imagemunchingloop
+call :encodeimagelibx264 %1
+call :encodeimagemjpeg %1
+call :encodeimagewebp %1
+if not %i% geq %loopnreal% goto imagemunchingloop
+goto imagemunchingloop
 set /a i2=%i1%+1
 echo [3A[0J
 call :progressbar %i% %loopn%
@@ -3405,7 +3377,41 @@ rmdir "%tempfolder%" /q /s
 set outputvar="%filename%%imagecontainerbackup%"
 goto :eof
 
+:: encodes images with libx264
+:encodeimagelibx264
+set /a i+=1
+set /a i1=%i%+1
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -preset ultrafast -pix_fmt yuv410p -c:v libx264 -crf %imagequal% -f h264 "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto :eof
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+goto :eof
 
+:: encodes images with mjpeg
+:encodeimagemjpeg
+set /a i+=1
+set /a i1=%i%+1
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%widthalt%x%heightalt%:flags=%scalingalg% -preset ultrafast -pix_fmt yuv422p -c:v mjpeg -q:v %imagequal% -f mjpeg "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto :eof
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+goto :eof
+
+:: encodes images with webp
+:encodeimagewebp
+set /a i+=1
+set /a i1=%i%+1
+echo [3A[0J
+call :progressbar %i% %loopn%
+echo %i%/%loopn%
+ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -i "%tempfolder%\%~n1%i%%imagecontainer%" -vf scale=%width%x%height%:flags=%scalingalg% -c:v %weblib% -pix_fmt yuv411p -compression_level 0 -quality %imagequal3% -f %webp% "%tempfolder%\%~n1%i1%%imagecontainer%"
+if %i% geq %loopnreal% goto :eof
+del "%tempfolder%\%~n1%i%%imagecontainer%"
+goto :eof
 
 
 
@@ -3563,6 +3569,7 @@ goto :eof
 
 :: little spinning bar animation
 :loadinganimation
+if %loadingbar% == n goto :eof
 set /a loadinganimation_counter+=1
 if %loadinganimation_counter% gtr 4 set loadinganimation_counter=1
 if %loadinganimation_counter% == 1 echo [14;60H[0J[14;60H\  [15;60H \ [16;60H  \
