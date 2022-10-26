@@ -876,46 +876,26 @@ echo Rendering process started on %date% at "%time%">>"%temp%\qualitymuncherdebu
 if not "%isimage%" == "y" (
     set /a badaudiobitrate=80/%audiobr%
     :: set audio filters (since sometimes they won't be set correctly, depending on the order things were enabled)
-    if %hasvideo% == y (
-            if %distortaudio% == n (
-            if not %audiospeedq% == 1 (
-                    set "audiofilters=,atempo=%audiospeedq%"
-                ) else (
-                    set "audiofilters="
-                )
-        ) else (
-            if %method% == simple (
-                set "audiofilters=,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                if not %audiospeedq% == 1 (
-                    set "audiofilters=,atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-                )
+    if %distortaudio% == n (
+        if not %audiospeedq% == 1 (
+                set "audiofilters=atempo=%audiospeedq%"
+                if %hasvideo% == y set "audiofilters=,%audiofilters%"
             ) else (
-                set "audiofilters=,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                if not %audiospeedq% == 1 (
-                    set "audiofilters=,atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                )
+                set "audiofilters="
             )
-        )
     ) else (
-        if %distortaudio% == n (
+        if %method% == simple (
+            set "audiofilters=firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
             if not %audiospeedq% == 1 (
-                    set "audiofilters=-af atempo=%audiospeedq%"
-                ) else (
-                    set "audiofilters="
-                )
+                set "audiofilters=atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
+            )
         ) else (
-            if %method% == simple (
-                set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                if not %audiospeedq% == 1 (
-                    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-                )
-            ) else (
-                set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                if not %audiospeedq% == 1 (
-                    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-                )
+            set "audiofilters=firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
+            if not %audiospeedq% == 1 (
+                set "audiofilters=atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
             )
         )
+        if %hasvideo% == y set "audiofilters=,%audiofilters%"
     )
 )
 :: saves the final config and a log to the debug logs
@@ -2152,7 +2132,7 @@ set /a badvideobitrate=(%desiredheight%/2*%desiredwidth%*%outputfps%/%videobr%)
 if %badvideobitrate% lss 1000 set badvideobitrate=1000
 :: actual video filters
 if %tts% == y (
-    set "ttsfilter=,flite=text='%ttstext%':voice=kal16[tts],[tts]volume=%volume%dB[ttsboost],[ttsboost]apad[ttsboostpad],[0][ttsboostpad]amerge=inputs=2"
+    set "ttsfilter=,flite=text='%ttstext%':voice=kal16[tts],[tts]volume=%volume%dB[ttsboost],[0][ttsboost]amix=inputs=2:duration=longest"
 )
 set filters=-filter_complex "scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%%ttsfilter%%audiofilters%"
 :: add the suffix to the output name
@@ -2203,7 +2183,7 @@ echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -i %videoinp% %constantquantizerfilter%^
 %filters%%noaudioarg% ^
 -preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:v libx264 -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
  "%filename%%container%">>"%temp%\qualitymuncherdebuglog.txt"
@@ -2212,7 +2192,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %videoinp% %constantquantizerfilter%^
 %filters%%noaudioarg% ^
 -preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:v libx264 -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
  "%filename%%container%" ^
@@ -2225,7 +2205,7 @@ goto :eof
 :: option two, audio is replaced
 :encodereplacedaudio
 if %tts% == y (
-    set "ttsfilter=,flite=text='%ttstext%':voice=kal16[tts],[tts]volume=%volume%dB[ttsboost],[ttsboost]apad[ttsboostpad],[1][ttsboostpad]amerge=inputs=2"
+    set "ttsfilter=,flite=text='%ttstext%':voice=kal16[tts],[tts]volume=%volume%dB[ttsboost],[1][ttsboost]amix=inputs=2:duration=longest"
 )
 set filters=-filter_complex "scale=%desiredwidth%x%desiredheight%:flags=%scalingalg%,setsar=1:1,%textfilter%%fpsfilter%%colorfilter%%fadeoutfilter%%speedfilter%format=yuv410p%stutterfilter%%filtercl%%visualnoisefilter%%vignettefilter%%fadeinfilter%%ttsfilter%%audiofilters%"
 :: print the ffmpeg call to the debug file
@@ -2236,7 +2216,7 @@ echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -i %lowqualmusic% %constantquantizerfilter%^
 %filters%%noaudioarg% ^
 -preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:v libx264 -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
@@ -2249,7 +2229,7 @@ ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -i %lowqualmusic% %constantquantizerfilter%^
 %filters%%noaudioarg% ^
 -preset %encodingspeed% ^
--c:v libx264 %metadata% -b:v %badvideobitrate% ^
+-c:v libx264 -b:v %badvideobitrate% ^
 -c:a aac -b:a %badaudiobitrate%000 ^
 -map 0:v:0 -map 1:a:0 ^
 -shortest -vsync vfr -movflags +use_metadata_tags+faststart ^
@@ -2431,33 +2411,6 @@ set /a "widthmod=(%desiredwidth%*%widthratio%) %% %heightratio%"
 set /a "desiredwidth=((%desiredwidth%*%widthratio%)+%widthmod%)/%heightratio%"
 set /a desiredwidth=(%desiredwidth%/2)*2
 goto :eof
-
-:: -------------------
-:: DEPRECATED AND ARCHIVED
-:: this function is no longer used as it has been implemented into the main ffmpeg calls.
-:: -------------------
-:: :: combines text to speech with output since the main encoders don't factor in text to speech
-:: :encodevoice
-:: set "audiofilterstts="
-:: :: if no audio filters already exist, set them to -af (which is the audio filter flag)
-:: if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
-:: :: makes sure that the file doesn't already exist
-:: set "ttsuffix= tts"
-:: :ttexist
-:: set /a "q+=1"
-:: if exist "%cd%\%filename% %ttsuffix%%container%" (
-::     set "ttsuffix= tts (%q%)"
-::     goto ttexist
-:: )
-:: :: encode and merge to output
-:: echo Encoding and merging text-to-speech...
-:: ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB" -f avi pipe: | ^
-:: ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%container%" -movflags +use_metadata_tags -map_metadata 1 -c:v copy -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename%%ttsuffix%%container%" && echo FFmpeg call 12 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 12 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-:: :: delete the old file and update the name
-:: if exist "%filename%%container%" (del "%filename%%container%")
-:: set outputvar="%cd%\%filename%%ttsuffix%%container%"
-:: set "filename=%filename%%ttsuffix%"
-:: goto :eof
 
 :: does the math for the text that is dependant on video-specific variables such as resolution
 :textmath
@@ -2820,12 +2773,6 @@ choice /n
 if %errorlevel% == 1 (
     set distortaudio=y
 ) else (
-    if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%"
-    ) else (
-        set "audiofilters="
-    )
-    echo.
     call :clearlastprompt
     goto :eof
 )
@@ -2844,44 +2791,30 @@ goto :eof
 
 :: advanced method - boosts frequencies, swaps channels, adds echo and delay
 :audiodistortionadv
-set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
+echo                                         How distorted should the audio be, [93m1-10[0m:
+set /p "distortionseverity="
 set /a distsev=%distortionseverity%*10
 set /a bb1=0
 set /a bb2=(%distsev%*25)
 set /a bb3=2*(%distsev%*25)
-set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-:: if the audio speed isn't one, add it to the audio filters
-if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)',adelay=%bb1%^|%bb2%^|%bb3%,channelmap=1^|0,aecho=0.8:0.3:%distsev%*2:0.9"
-)
 call :clearlastprompt
 goto :eof
 
 :: simple method - just boosts frequencies
 :audiodistortionsim
-set /p "distortionseverity=How distorted should the audio be, [93m1-10[0m: "
+echo                                         How distorted should the audio be, [93m1-10[0m:
+set /p "distortionseverity="
 set /a distsev=%distortionseverity%*10
-set "audiofilters=-af firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-:: if the audio speed isn't one, add it to the audio filters
-if not %audiospeedq% == 1 (
-    set "audiofilters=-af atempo=%audiospeedq%,firequalizer=gain_entry='entry(0,%distsev%);entry(600,%distsev%);entry(1500,%distsev%);entry(3000,%distsev%);entry(6000,%distsev%);entry(12000,%distsev%);entry(16000,%distsev%)'"
-)
 call :clearlastprompt
 goto :eof
 
 :: asks if the user wants to use text to speech and gets the text to be spoken and volume
 :voicesynth
-choice /m "Do you want to add text-to-speech?"
-if %errorlevel% == 1 set tts=y
-if %errorlevel% == 2 (
-    set tts=n
-    call :clearlastprompt
-    goto :eof
-)
 :: verify that the ffmpeg build contains flite by saving the output of ffmpeg to a file and searching for libflite
 ffmpeg > nul 2>>"%qmtemp%\ffmpegQM.txt"
 > nul find "libflite" "%qmtemp%\ffmpegQM.txt" || (
-    echo USER DOES NOT HAVE FLITE INSTALLED>>"%temp%\qualitymuncherdebuglog.txt"
+    echo USER DOES NOT HAVE FLITE INSTALLED, FOLLOWING WITH FFMPEG COMMAND>>"%temp%\qualitymuncherdebuglog.txt"
+    type "%qmtemp%\ffmpegQM.txt">>"%temp%\qualitymuncherdebuglog.txt"
     del "%qmtemp%\ffmpegQM.txt"
     echo [91mError^^! Your installation of FFmpeg does not have libflite ^(the text to speech library^)^^![0m
     set tts=n
@@ -2890,6 +2823,13 @@ ffmpeg > nul 2>>"%qmtemp%\ffmpegQM.txt"
     goto :eof
 )
 del "%qmtemp%\ffmpegQM.txt"
+choice /m "Do you want to add text-to-speech?"
+if %errorlevel% == 1 set tts=y
+if %errorlevel% == 2 (
+    set tts=n
+    call :clearlastprompt
+    goto :eof
+)
 :: text to speech text and volume
 echo What do you want the text-to-speech to say?
 set /p "ttstext="
@@ -2900,7 +2840,7 @@ goto :eof
 
 :: asks if they want music and if so, the file to get it from and the start time
 :replaceaudioquestion
-echo                                         Do you want to replace the audio? [Y/N]                                        
+echo                                         Do you want to replace the audio? [Y/N]
 choice /n
 if %errorlevel% == 2 (
     set replaceaudio=n
@@ -2930,6 +2870,19 @@ goto :eof
 
 :: sending each audio only input to be encoded
 :encodeaudiomultiqueue
+if %tts% == y (
+    set "ttsfilter=flite=text='%ttstext%':voice=kal16[tts],[tts]volume=%volume%dB[ttsboost],[0][ttsboost]amix=inputs=2:duration=longest,"
+    if "%audiofilters%" == "" (s
+        set "audiofilters=!ttsfilter!"
+    ) else (
+        set "audiofilters=!ttsfilter!%audiofilters%"
+    )
+    echo "!ttsfilter!" >> "%temp%\qualitymuncherdebuglog.txt"
+)
+if not "%audiofilters%" == "" (
+    set audiofilters=-filter_complex "%audiofilters%"
+    echo !audiofilters! >>"%temp%\qualitymuncherdebuglog.txt"
+)
 set totalfiles=0
 :: gets the total num of files
 for %%x in (%*) do set /a totalfiles+=1
@@ -2946,8 +2899,7 @@ for %%a in (%*) do (
         if %clearaftereachrender% == y (echo [10;1H)
         title [!filenum!/%totalfiles%] Quality Muncher v%version%
         echo Encoding audio !filenum!/%totalfiles%>>"%temp%\qualitymuncherdebuglog.txt"
-        :: if using multiqueue (has more than one input file), use a progress bar and actually do the math for the file index number
-        :: otherwise just say "encoding" with some color
+        :: if using more than one input file, aka multiqueue, use a progress bar and actually do the math for the file index number, otherwise just show the "Encoding..." text
         if %ismultiqueue% == y (
             echo.
             set /a progbarcall=!filenum!-1
@@ -2963,8 +2915,16 @@ for %%a in (%*) do (
     )
 )
 title [Done] Quality Muncher v%version%
-if %clearaftereachrender% == y (echo [10;1H)
-echo. [0J
+if %clearaftereachrender% == y (
+    if %ismultiqueue% == y (
+        echo [10;1H
+        echo.[0J
+    ) else (
+        echo.
+    )
+) else (
+    echo.
+)
 if %ismultiqueue% == y call :progressbar %totalfiles% %totalfiles%
 echo [92mDone^^![0m
 set done=y
@@ -2981,27 +2941,21 @@ set inpath=%inpath:~0,-1%
 if not "%cd%" == "!inpath!" cd /d !inpath!
 if exist "%filename%%audiocontainer%" call :renamefile
 echo.
+echo ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
+-ss %starttime% -t %vidtime% -i %1 ^
+%audiofilters% ^
+-vn -preset %encodingspeed% ^
+-c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
+-vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%">>"%temp%\qualitymuncherdebuglog.txt"
 ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats ^
 -ss %starttime% -t %vidtime% -i %1 ^
--vn %metadata% -preset %encodingspeed% ^
+-vn -preset %encodingspeed% ^
 -c:a %audioencoder% -b:a %badaudiobitrate%000 -shortest ^
 %audiofilters% ^
 -vsync vfr -movflags +use_metadata_tags+faststart "%filename%%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-set outputvar="%cd%\%filename%%audiocontainer%
-if %tts% == y call :encodevoiceNV
+set outputvar="%cd%\%filename%%audiocontainer%"
 goto :eof
 
-:: text-to-speech encoding for no video stream
-:: seperate from the video one since it has some options that aren't the same
-:encodevoiceNV
-:: if there are custom audio options, set them to a custom variable and apply it to the text to speech
-set "audiofilterstts="
-if not "%audiofilters%e" == "e" set "audiofilterstts=,%audiofilters:-af =%"
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -f lavfi -i anullsrc -filter_complex "flite=text='%ttstext%':voice=kal16%audiofilterstts%,volume=%volume%dB" -f avi pipe: | ^
-ffmpeg -hide_banner -stats_period %updatespeed% -loglevel error -stats -i pipe: -i "%filename%%audiocontainer%" -movflags +use_metadata_tags -map_metadata 1 -filter_complex apad,amerge=inputs=2 -ac 1 -b:a %badaudiobitrate%000 "%filename% tts%audiocontainer%" && echo FFmpeg call 14 succeded>>"%temp%\qualitymuncherdebuglog.txt" || echo FFmpeg call 14 failed with an errorlevel of !errorlevel!>>"%temp%\qualitymuncherdebuglog.txt"
-if exist "%filename%%audiocontainer%" (del "%filename%%audiocontainer%")
-set outputvar="%cd%\%filename% tts%audiocontainer%"
-goto :eof
 
 
 
@@ -3199,6 +3153,7 @@ echo.
 pause
 call :clearlastprompt
 goto :eof
+
 
 
 
