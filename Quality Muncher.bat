@@ -86,16 +86,16 @@ set ismultiqueue=n
 ::  - check if it matches any standard help args
 ::  - check the current directory and fix it if needed
 if not "%~1%" == "" (
-    if "%~1" == "-h" goto arghelp
-    if "%~1" == "--h" goto arghelp
-    if "%~1" == "-help" goto arghelp
-    if "%~1" == "--help" goto arghelp
-    if "%~1" == "-?" goto arghelp
-    if "%~1" == "--?" goto arghelp
-    if "%~1" == "?" goto arghelp
-    if "%~1" == "/?" goto arghelp
-    if "%~1" == "/h" goto arghelp
-    if "%~1" == "/help" goto arghelp
+    if /i "%~1" == "-h" goto arghelp
+    if /i "%~1" == "--h" goto arghelp
+    if /i "%~1" == "-help" goto arghelp
+    if /i "%~1" == "--help" goto arghelp
+    if /i "%~1" == "-?" goto arghelp
+    if /i "%~1" == "--?" goto arghelp
+    if /i "%~1" == "?" goto arghelp
+    if /i "%~1" == "/?" goto arghelp
+    if /i "%~1" == "/h" goto arghelp
+    if /i "%~1" == "/help" goto arghelp
 )
 :: if there is at least one parameter, check all parameters for config files (anything with a .bat extension)
 if not "%~1" == "" (
@@ -535,48 +535,31 @@ exit /b 0
 :: assumes the first parameter it was ran with is a file
 :imagecheck
 echo First file extension is "%~x1">>"%temp%\qualitymuncherdebuglog.txt"
-:: make a variable with the first file extension in lowercase
-set "firstex=%~x1"
-set "_UCASE=ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-set "_LCASE=abcdefghijklmnopqrstuvwxyz"
-for /l %%a in (0,1,25) do (
-    call :makelowercase %%a
-)
 echo Lowercase first file extension is "%firstex%">>"%temp%\qualitymuncherdebuglog.txt"
-if "%firstex%" == ".png" set isimage=y
-if "%firstex%" == ".jpg" set isimage=y
-if "%firstex%" == ".jpeg" set isimage=y
-if "%firstex%" == ".jfif" set isimage=y
-if "%firstex%" == ".jpe" set isimage=y
-if "%firstex%" == ".jif" set isimage=y
-if "%firstex%" == ".jfi" set isimage=y
-if "%firstex%" == ".pjpeg" set isimage=y
-if "%firstex%" == ".bmp" set isimage=y
-if "%firstex%" == ".tiff" set isimage=y
-if "%firstex%" == ".tif" set isimage=y
-if "%firstex%" == ".raw" set isimage=y
-if "%firstex%" == ".heif" set isimage=y
-if "%firstex%" == ".heic" set isimage=y
-if "%firstex%" == ".webp" set isimage=y
-if "%firstex%" == ".jp2" set isimage=y
-if "%firstex%" == ".j2k" set isimage=y
-if "%firstex%" == ".jpx" set isimage=y
-if "%firstex%" == ".jpm" set isimage=y
-if "%firstex%" == ".jpm" set isimage=y
-if "%firstex%" == ".mj2" set isimage=y
-if "%firstex%" == ".gif" set isimage=y
+if /i "%firstex%" == ".png" set isimage=y
+if /i "%firstex%" == ".jpg" set isimage=y
+if /i "%firstex%" == ".jpeg" set isimage=y
+if /i "%firstex%" == ".jfif" set isimage=y
+if /i "%firstex%" == ".jpe" set isimage=y
+if /i "%firstex%" == ".jif" set isimage=y
+if /i "%firstex%" == ".jfi" set isimage=y
+if /i "%firstex%" == ".pjpeg" set isimage=y
+if /i "%firstex%" == ".bmp" set isimage=y
+if /i "%firstex%" == ".tiff" set isimage=y
+if /i "%firstex%" == ".tif" set isimage=y
+if /i "%firstex%" == ".raw" set isimage=y
+if /i "%firstex%" == ".heif" set isimage=y
+if /i "%firstex%" == ".heic" set isimage=y
+if /i "%firstex%" == ".webp" set isimage=y
+if /i "%firstex%" == ".jp2" set isimage=y
+if /i "%firstex%" == ".j2k" set isimage=y
+if /i "%firstex%" == ".jpx" set isimage=y
+if /i "%firstex%" == ".jpm" set isimage=y
+if /i "%firstex%" == ".jpm" set isimage=y
+if /i "%firstex%" == ".mj2" set isimage=y
+if /i "%firstex%" == ".gif" set isimage=y
 echo Image check succeded, image status: "%isimage%">>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
-
-:: makes the first file extension lowercase, letter by letter
-:: assumes the first parameter it was ran with is a string
-:makelowercase
-set counterex=%1
-set _FROM=!_UCASE:~%counterex%,1!!
-set _TO=!_LCASE:~%counterex%,1!
-set firstex=!firstex:%_FROM%=%_TO%!
-goto :eof
-
 
 
 
@@ -713,19 +696,8 @@ echo  - the path of your config file
 echo  - [38;2;254;165;0mB[0m to go back
 echo  - or [38;2;254;165;0mR[0m to use your last used settings
 set /p "configfile="
-if %configfile% == b goto :eof
-if %configfile% == B goto :eof
-if %configfile% == R (
-    :: if the file doesn't exist, tell the user and go back
-    if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
-        echo [91mMost recent settings were unable to be found.[0m
-        pause
-        goto :eof
-    )
-    call "%temp%\qualitymuncherconfig_autosave.bat"
-    goto :eof
-)
-if %configfile% == r (
+if /i %configfile% == b goto :eof
+if /i %configfile% == r (
     :: if the file doesn't exist, tell the user and go back
     if not exist "%temp%\qualitymuncherconfig_autosave.bat" (
         echo [91mMost recent settings were unable to be found.[0m
@@ -1165,7 +1137,7 @@ call :splashtext
 echo.[s
 goto :eof
 
-:: video options
+::  video options
 :guivideooptions
 set guivideotitleisshowing=y
 :guivideooptionsrefresh
@@ -1181,19 +1153,19 @@ if %guivideotitleisshowing% == y (
 set guivideotitleisshowing=n
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo               %gui_video_quality%                     %gui_video_starttimeandduration%                     %gui_video_speed%
+echo               %gui_video_quality%                     %gui_video_starttimeandduration%                      %gui_video_speed%
 echo.
-echo                %gui_video_text%                                %gui_video_color%                             %gui_video_stretch%
+echo                 %gui_video_text%                               %gui_video_color%                              %gui_video_stretch%
 echo.
-echo             %gui_video_corruption%                        %gui_video_durationspoof%                       %gui_video_bouncywebm%
+echo              %gui_video_corruption%                        %gui_video_durationspoof%                       %gui_video_bouncywebm%
 echo.
-echo        %gui_video_resamplinginterpolation%                   %gui_video_frying%                          %gui_video_framestutter%
+echo       %gui_video_resamplinginterpolation%                     %gui_video_frying%                          %gui_video_framestutter%
 echo.
-echo            %gui_video_outputasgif%                   %gui_video_miscellaneousfilters%                     %gui_video_novideo%
+echo            %gui_video_outputasgif%                   %gui_video_miscellaneousfilters%                      %gui_video_novideo%
 echo.
-echo         %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
+echo          %gui_video_constantquantizer%                     %gui_video_visualnoise%                          %gui_video_vignette%
 echo.
-echo                %gui_video_zoom%                              %gui_video_fadein%                             %gui_video_fadeout%
+echo                 %gui_video_zoom%                              %gui_video_fadein%                             %gui_video_fadeout%
 choice /c 123456789RFSGMBNVQIZPO /n
 call :clearlastprompt
 echo Video GUI option is %errorlevel% >>"%temp%\qualitymuncherdebuglog.txt"
@@ -2580,6 +2552,7 @@ call :splashtext
 echo.[s
 goto :eof
 
+:: audio options
 :guiaudiooptions
 set guiaudiotitleisshowing=y
 :guiaudiooptionsrefresh
@@ -2595,9 +2568,9 @@ if %guiaudiotitleisshowing% == y (
 set guiaudiotitleisshowing=n
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                %gui_audio_quality%                     %gui_audio_starttimeandduration%                      %gui_audio_speed%
+echo               %gui_audio_quality%                     %gui_audio_starttimeandduration%                      %gui_audio_speed%
 echo.
-echo               %gui_audio_distortion%                       %gui_audio_texttospeech%                         %gui_audio_replacing%
+echo              %gui_audio_distortion%                        %gui_audio_texttospeech%                        %gui_audio_replacing%
 echo.
 echo                                                       %gui_audio_noaudio%
 echo.
@@ -2965,7 +2938,6 @@ goto :eof
 
 
 
-
 :: ################################################################################################################################################################
 :: ################################################################################################################################################################
 :: extra menu and extra menu functions
@@ -3163,7 +3135,6 @@ goto :eof
 
 
 
-
 :: ################################################################################################################################################################
 :: ################################################################################################################################################################
 :: image options and image option functions
@@ -3191,6 +3162,7 @@ call :splashtext
 echo.[s
 goto :eof
 
+:: image options
 :guiimageoptions
 set guivideotitleisshowing=y
 :guiimageoptionsrefresh
@@ -3206,7 +3178,7 @@ if "%guiimagetitleisshowing%" == "y" (
 set guiimagetitleisshowing=n
 echo                                                          [38;2;254;165;0m[B]ack[0m
 echo.
-echo                [Q]uality                            [T]imes to Compress                          [S]cale
+echo                [Q]uality                          [T]imes to Compress                           [S]cale
 echo.
 echo.
 choice /n /c BQTS
