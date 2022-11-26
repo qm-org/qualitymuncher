@@ -43,7 +43,6 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - vignette
  - CQP
  - visual noise
- - active development
  - and more!
  
 ## Experimental Features
@@ -54,4 +53,4 @@ Before: https://youtu.be/CKkuxUq6WQw
 After: https://youtu.be/MxctZRHzquE
 
 # Compatability
-Since Quality Muncher is a batch file, it is only compatable with Windows systems. However, Atzur is developing a [python version of Quality Muncher](https://github.com/qm-org/qm-py) that works on all systems.
+Since Quality Muncher is a batch file, it is only compatable with Windows systems. However, Atzur is developing a [python version of Quality Muncher](https://github.com/qm-org/qm-py) that works on all systems, and I'm working on a version written in Go.
