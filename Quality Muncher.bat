@@ -21,6 +21,11 @@
 :: https://github.com/qm-org/qualitymuncher
 
 @echo off
+if defined wt_session (
+    set wt_session=
+    start conhost.exe %0
+    exit /b 0
+)
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 set me=%0
@@ -90,7 +95,7 @@ chcp 437 > nul
 set "qmtemp=%temp%\qualitymunchertemp"
 rmdir "%qmtemp%" > nul
 mkdir "%qmtemp%" > nul
-set version=1.5.3
+set version=1.5.4-alpha-1
 :: start of the debug log
 echo Quality Muncher v%version% successfully started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
