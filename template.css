@@ -61,7 +61,10 @@ a {
 }
 
 @media screen and (max-width: 600px) {
-  .topnav a:not(:first-child) {display: none;}
+  .topnav a:not(:first-child) {
+    display: none;
+  }
+
   .topnav a.icon {
     float: right;
     display: block;
@@ -69,17 +72,23 @@ a {
 }
 
 body {
-	background-color:rgb(0, 0, 0);
-    margin: 0px 0px;
+  background-color: rgb(16, 16, 16);
+  margin: 0px 0px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @media screen and (max-width: 600px) {
-  .topnav.responsive {position: fixed;}
+  .topnav.responsive {
+    position: fixed;
+  }
+
   .topnav.responsive .icon {
     position: fixed;
     right: 0;
     top: 0;
   }
+
   .topnav.responsive a {
     float: none;
     display: block;
@@ -274,7 +283,11 @@ img {
 }
 
 .subtitle {
-    font-size: max(20px, 1.5vw);
+  font-size: max(26px, 2vw);
+}
+
+.medtitle {
+  font-size: max(30px, 3vw);
 }
 
 .seperator {

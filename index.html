@@ -1,7 +1,179 @@
 <!DOCTYPE html>
 <html>
+<style>
+  /* .border-flip {
+    display: inline-block;
+    padding: 15px;
+    width: 180px;
+    position: relative;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 600;
+    background: none;
+    border: medium none;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .border-flip::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    transform: perspective(350px) rotateX(0deg);
+    transition: all 0.35s ease 0s;
+  }
+
+  .border-flip:hover {
+    transition: all 0.35s ease-out 0s;
+    transform: perspective(350px) rotateX(20deg);
+  }
+
+  .border-flip:active {
+    transition: all 0.45s ease 0s;
+    transform: perspective(350px) rotateX(-190deg);
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .border-flip--black {
+    color: rgb(51, 51, 51);
+  }
+
+  .border-flip--black::before {
+    border: 3px solid rgb(51, 51, 51);
+  }
+
+  .btn {
+    font-family: Arial, Helvetica, sans-serif;
+    text-transform: uppercase;
+  }
+
+  .btn:hover .btn-slide-show-text1 {
+    margin-left: 65px;
+  } */
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    width: 95vw;
+    max-width: 700px;
+  }
+
+  #additionalOptions {
+    align-items: center;
+    text-align: center;
+    width: 95vw;
+    max-width: min(700px, 95vh);
+    /* Adjust the maximum width as needed */
+    /* Align the text to the left within the container */
+  }
+
+  button {
+    font-family: quicksand;
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    background-color: #404040;
+    /* Dark gray background color for buttons */
+    color: #fff;
+    /* Text color for buttons */
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+
+  button:hover {
+    background-color: #555;
+    /* Dark gray background color for buttons on hover */
+  }
+
+  p {
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+
+  /* Popup container */
+  .popup {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  /* The actual popup (appears on top) */
+  .popup .popuptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+  }
+
+  /* Popup arrow */
+  .popup .popuptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+
+  /* Toggle this class when clicking on the popup container (hide and show the popup) */
+  .popup .show {
+    visibility: visible;
+    -webkit-animation: fadeIn 1s;
+    animation: fadeIn 1s
+  }
+
+  /* Add animation (fade in the popup) */
+  @-webkit-keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* yeah this is lazy but no i am not changing these names. w3schools ftw */
+  .hide {
+    display: none;
+  }
+
+  .myDIV:hover+.hide {
+    display: block;
+    color: red;
+  }
+</style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <head>
   <link rel="icon" type="image/x-icon" href="images/icon.png" />
   <title>Quality Muncher</title>
@@ -30,19 +202,19 @@
   <meta property="twitter:image" content="https://qualitymuncher.lgbt/images/qualitymuncherbanner.png">
   <link rel="stylesheet" href="template.css" />
 </head>
-  <div class="topnav" id="myTopnav">
-	<a class="activepage" href="index">Home</a>
-	<a href="features">Features</a>
-	<a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
-	<a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
-	<a href="faq">FAQ</a>
-	<a href="about">About</a>
-	<a href="devblogs">Blog</a>
+<div class="topnav" id="myTopnav">
+  <a class="activepage" href="index">Home</a>
+  <a href="features">Features</a>
+  <a href="https://github.qualitymuncher.lgbt" target="_blank">GitHub</a>
+  <a href="https://discord.qualitymuncher.lgbt" target="_blank">Discord</a>
+  <a href="faq">FAQ</a>
+  <a href="about">About</a>
+  <a href="devblogs">Blog</a>
   <a href="docs">Documentation</a>
-	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
-      <i class="fa fa-bars"></i>
-    </a>
-  </div>
+  <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+    <i class="fa fa-bars"></i>
+  </a>
+</div>
 <script>
   function copyEvent(id) {
     document.getElementById('boldStuff').innerHTML =
@@ -55,44 +227,76 @@
   }
 </script>
 
-<body class="noscrollbar" style="background-color:rgb(0, 0, 0);">
+<body class="noscrollbar">
   <div style="font-size: 8px;"><br /><br /><br /><br /><br /></div>
-  <div class="header centertext fadein divtext"
+  <div class="header centertext divtext"
     style="text-shadow: 3px 3px 10px rgb(153, 153, 153); animation-duration: 1.9s;" id="p1"><strong>Quality
       Muncher</strong></div>
-  <p class="centertext fadein subtitle" style="text-shadow: 3px 3px 15px rgb(153, 153, 153); animation-duration: 2s;"><b>Next
+  <p class="centertext subtitle"
+    style="text-shadow: 3px 3px 15px rgb(153, 153, 153); animation-duration: 3s; animation-timing-function: ease-in-out;">
+    <b>Next
       Level Compression</b></p>
-  <p style="word-break: keep-all; animation-duration: 0.8s;" class="center textbox moveup">Quality Muncher is a script
-    for creating extremely customizable low-quality videos. Once installed, using it is as easy as right clicking a
-    video, hovering over send to and clicking Quality Muncher.</p>
-  <p id="boldStuff" class="centertext center textbox" style="animation-duration: 0.9s; font-size: 18px;">
-    <strong></strong></p>
-    <div style="height: 1vh;"></div>
-  <button id="soldBuff" class="button buttontextoverlay center moveup" style="animation-duration: 1s;"
-    onclick="copyEvent('copy')" value='Automated Installer' type='button'>Automated Installer</button>
-  <div style="height: 2vh;"></div>
-  <button class="button button5 center moveup" type="submit" onclick="window.open('Quality Muncher.bat')"
-    style="animation-duration: 1.15s;" type='button'>Manual Download</button>
+  <p style="word-break: keep-all; animation-duration: 0.8s;" class="center textbox moveup">Quality Muncher is a simple program made to be the best at making the worst videos. It's extremely customizable, with tons of features, and is easy to install and use.</p>
   <div style="height: 1vh;"></div>
-  <p class="centertext moveup center textbox smallertext" style="animation-duration: 1.3s;"><i>Click <u><span
-          style="cursor: pointer;" onclick="window.open('faq')" class="link">here</span></u> if you're having trouble installing
-      Quality Muncher manually.</i></p>
-  <div style="height: 1vh;"></div>
-  <video controls autoplay muted loop style="animation-duration: 1.5s;" class="previewimage secret center moveup image">
+
+  <p class="centertext moveup medtitle"
+    style="text-shadow: 3px 3px 15px rgb(153, 153, 153); animation-duration: 0.87s;">
+
+    <b>Installation</b></p>
+  <div class="container center">
+    <div id="mainButtons" style="flex-direction: column; display: flex; align-items: center;">
+      <button id="batchBtn">Batch</button>
+      <button id="goBtn">Go</button>
+    </div>
+    <div id="additionalOptions" style="flex-direction: column; display: flex;">
+      <!-- Additional buttons will be added here based on user selection -->
+    </div>
+    <button class="center" id="backBtn" style="display: none;">Back</button>
+  </div>
+  <div>
+    <button class="center" id="customTextBtn" style="display: block;" onclick="popup()">What's the difference?</button>
+    <p class="centertext" id="hidden-text" style="display: none;">The Batch version is a Windows-only script made to be used with Send-To, which is fairly easy-to-use with a text-based GUI. The Go version is a cross-platform CLI utility. This is recommended only for users familiar with CLIs - or those who are willing to learn!</p>
+  </div>
+  </div>
+  <video controls autoplay muted loop style="animation-duration: 1.5s; padding-bottom: 20px;"
+    class="previewimage secret center moveup image">
     <source src="videos/qualitymuncherdemo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
-  <div class="textboxwide center moveup secret" style="animation-duration: 1.7s;">
-  </div>
 </body>
+<script src="script.js"></script>
 <script>
-function myFunction() {
-  var x = document.getElementById("myTopnav");
-  if (x.className === "topnav") {
-    x.className += " responsive";
-  } else {
-    x.className = "topnav";
+  function myFunction() {
+    var x = document.getElementById("myTopnav");
+    if (x.className === "topnav") {
+      x.className += " responsive";
+    } else {
+      x.className = "topnav";
+    }
   }
-}
 </script>
+<script>
+  // Get references to the button and hidden text
+  const button = document.getElementById('customTextBtn');
+  const hiddenText = document.getElementById('hidden-text');
+
+  // Track the state of the text
+  let isTextVisible = false;
+
+  // Add a click event listener to the button
+  button.addEventListener('click', () => {
+    // Toggle the visibility of the text
+    isTextVisible = !isTextVisible;
+
+    // Update the text and button label based on the state
+    if (isTextVisible) {
+      hiddenText.style.display = 'block';
+      button.textContent = 'Hide Text';
+    } else {
+      hiddenText.style.display = 'none';
+      button.textContent = 'What\'s the difference?';
+    }
+  });
+</script>
+
 </html>
