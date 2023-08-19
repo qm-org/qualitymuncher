@@ -1,26 +1,20 @@
-:: Quality Muncher - a program to make videos lower in quality
-:: Copyright (C) 2022 Quality Muncher Organization
+:: This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+:: This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+:: You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
-:: This program is free software: you can redistribute it and/or modify
-:: it under the terms of the GNU General Public License as published by
-:: the Free Software Foundation, either version 3 of the License, or
-:: (at your option) any later version.
+:: Copyright 2023 Thqrn. Licensed under the GNU General Public License v3.0.
 
-:: This program is distributed in the hope that it will be useful,
-:: but WITHOUT ANY WARRANTY; without even the implied warranty of
-:: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-:: GNU General Public License for more details.
+:: @froest on Discord
+:: https://github.com/Thqrn/ffmpeg-scripts
 
-:: You should have received a copy of the GNU General Public License
-:: along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
-
-
-:: made by Frost#5872
 :: https://github.com/qm-org/qualitymuncher
 
 @echo off
+if defined wt_session (
+    set wt_session=
+    start conhost.exe %0
+    exit /b 0
+)
 echo Log has been started>"%temp%\qualitymuncherdebuglog.txt"
 setlocal enabledelayedexpansion
 set me=%0
@@ -90,7 +84,7 @@ chcp 437 > nul
 set "qmtemp=%temp%\qualitymunchertemp"
 rmdir "%qmtemp%" > nul
 mkdir "%qmtemp%" > nul
-set version=1.5.3
+set version=1.5.3.1
 :: start of the debug log
 echo Quality Muncher v%version% successfully started on %date% at "%time%">>"%temp%\qualitymuncherdebuglog.txt"
 echo ---------------INPUTS---------------->>"%temp%\qualitymuncherdebuglog.txt"
@@ -550,29 +544,29 @@ exit /b 0
 :: assumes the first parameter it was ran with is a file
 :imagecheck
 echo First file extension is "%~x1">>"%temp%\qualitymuncherdebuglog.txt"
-echo Lowercase first file extension is "%firstex%">>"%temp%\qualitymuncherdebuglog.txt"
-if /i "%firstex%" == ".png" set isimage=y
-if /i "%firstex%" == ".jpg" set isimage=y
-if /i "%firstex%" == ".jpeg" set isimage=y
-if /i "%firstex%" == ".jfif" set isimage=y
-if /i "%firstex%" == ".jpe" set isimage=y
-if /i "%firstex%" == ".jif" set isimage=y
-if /i "%firstex%" == ".jfi" set isimage=y
-if /i "%firstex%" == ".pjpeg" set isimage=y
-if /i "%firstex%" == ".bmp" set isimage=y
-if /i "%firstex%" == ".tiff" set isimage=y
-if /i "%firstex%" == ".tif" set isimage=y
-if /i "%firstex%" == ".raw" set isimage=y
-if /i "%firstex%" == ".heif" set isimage=y
-if /i "%firstex%" == ".heic" set isimage=y
-if /i "%firstex%" == ".webp" set isimage=y
-if /i "%firstex%" == ".jp2" set isimage=y
-if /i "%firstex%" == ".j2k" set isimage=y
-if /i "%firstex%" == ".jpx" set isimage=y
-if /i "%firstex%" == ".jpm" set isimage=y
-if /i "%firstex%" == ".jpm" set isimage=y
-if /i "%firstex%" == ".mj2" set isimage=y
-if /i "%firstex%" == ".gif" set isimage=y
+echo Lowercase first file extension is "%~x1">>"%temp%\qualitymuncherdebuglog.txt"
+if /i "%~x1" == ".png" set isimage=y
+if /i "%~x1" == ".jpg" set isimage=y
+if /i "%~x1" == ".jpeg" set isimage=y
+if /i "%~x1" == ".jfif" set isimage=y
+if /i "%~x1" == ".jpe" set isimage=y
+if /i "%~x1" == ".jif" set isimage=y
+if /i "%~x1" == ".jfi" set isimage=y
+if /i "%~x1" == ".pjpeg" set isimage=y
+if /i "%~x1" == ".bmp" set isimage=y
+if /i "%~x1" == ".tiff" set isimage=y
+if /i "%~x1" == ".tif" set isimage=y
+if /i "%~x1" == ".raw" set isimage=y
+if /i "%~x1" == ".heif" set isimage=y
+if /i "%~x1" == ".heic" set isimage=y
+if /i "%~x1" == ".webp" set isimage=y
+if /i "%~x1" == ".jp2" set isimage=y
+if /i "%~x1" == ".j2k" set isimage=y
+if /i "%~x1" == ".jpx" set isimage=y
+if /i "%~x1" == ".jpm" set isimage=y
+if /i "%~x1" == ".jpm" set isimage=y
+if /i "%~x1" == ".mj2" set isimage=y
+if /i "%~x1" == ".gif" set isimage=y
 echo Image check succeded, image status: "%isimage%">>"%temp%\qualitymuncherdebuglog.txt"
 goto :eof
 
@@ -3321,7 +3315,6 @@ call :encodeimagelibx264 %1
 call :encodeimagemjpeg %1
 call :encodeimagewebp %1
 if not %i% geq %loopnreal% goto imagemunchingloop
-goto imagemunchingloop
 set /a i2=%i1%+1
 echo [3A[0J
 call :progressbar %i% %loopn%

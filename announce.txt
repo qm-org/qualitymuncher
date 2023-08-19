@@ -1,3 +1,3 @@
-1.5.3 has been released, which includes small optimizations and bug fixes.
-This may be the last update for a while, and possibly the last major update unless I get more ideas.
-Quality Muncher will be rewritten in the Go programming language at some point in the future.
+1.5.3.1 has been released. This is because I broke image munching. Whoopsies.
+Do not expect any further updates - I consider both this version and the
+go version to be somewhat complete.
