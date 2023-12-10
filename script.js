@@ -29,7 +29,7 @@ function showAdditionalOptions(selectedOption) {
             );
         });
     } else if (selectedOption === "Go") {
-        option1.textContent = "Standalone Executable";
+        option1.textContent = "Executable (requires FFmpeg)";
         option2.textContent = "GitHub";
         option1.addEventListener("click", () => {
             window.open(
