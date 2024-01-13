@@ -33,7 +33,7 @@ function showAdditionalOptions(selectedOption) {
         option2.textContent = "GitHub";
         option1.addEventListener("click", () => {
             window.open(
-                "https://github.com/qm-org/qm-go/releases/download/v1.0.0/qm-go.exe",
+                "https://github.com/qm-org/qm-go/releases/download/v1.0.1/qm-go.exe",
                 "_blank"
             );
         });
