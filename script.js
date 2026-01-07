@@ -38,7 +38,7 @@ function showAdditionalOptions(selectedOption) {
             );
         });
         option2.addEventListener("click", () => {
-            window.open("https://go.qualitymuncher.lgbt", "_blank");
+            window.open("https://github.com/qm-org/qm-go/", "_blank");
         });
     }
 
@@ -59,7 +59,7 @@ function showAutomatedInstaller() {
     additionalOptionsDiv.innerHTML = "";
     const automatedInstallerText = document.createElement("p");
     automatedInstallerText.innerHTML =
-        'Press WIN + R, then type in <span class="highlight" id="copy">powershell "iex(iwr -useb install.qualitymuncher.lgbt)"</span> and press enter. This text has been automatically copied.';
+        'Press WIN + R, then type in <span class="highlight" id="copy">powershell "iex(iwr -useb https://raw.githubusercontent.com/qm-org/qualitymuncher/refs/heads/main/install/install.ps1)"</span> and press enter. This text has been automatically copied.';
     additionalOptionsDiv.appendChild(automatedInstallerText);
     document.getElementById("boldStuff").classList.add("fadein");
     document.getElementById("soldBuff").classList.add("gone");
