@@ -5,7 +5,7 @@ Quality Muncher is a batch script designed for making extremely customizable low
 # Installation
 Press WIN + R and paste in the following command:
 ```powershell
-powershell "iex(iwr -useb install.qualitymuncher.lgbt)"
+powershell "iex(iwr -useb https://raw.githubusercontent.com/qm-org/qualitymuncher/refs/heads/main/install/install.ps1)"
 ```
 
 This will:
