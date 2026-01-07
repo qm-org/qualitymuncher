@@ -2,6 +2,8 @@
 ## About
 Quality Muncher is a batch script designed for making extremely customizable low quality videos, audios, images, and GIFs, with [tons of features](https://github.com/qm-org/qualitymuncher#features). If you have any bugs, issues, questions, or suggestions, feel free to make an issue here or [join the discord server](https://discord.gg/9tRZ6C7tYz).
 
+Also check out the [Go version](https://github.com/qm-org/qm-go) (CLI) and [Python version](https://github.com/qm-org/qm-py) (CLI)!
+
 # Installation
 Press WIN + R and paste in the following command:
 ```powershell
@@ -45,9 +47,6 @@ Please answer the prompts correctly and read carefully, as answering incorrectly
  - visual noise
  - and more!
  
-## Experimental Features
-If you're interested in the latest features, check out the [unstable branch](https://github.com/qm-org/qualitymuncher/tree/unstable).
-
 # Examples
 Before: https://youtu.be/CKkuxUq6WQw
 After: https://youtu.be/MxctZRHzquE
